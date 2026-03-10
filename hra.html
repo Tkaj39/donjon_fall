@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pád Donjonu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── CUSTOM PROPERTIES ───────────────────────────── */
+:root {
+  --bg-deep:       #0a0914;
+  --bg-panel:      #12111f;
+  --bg-card:       #1a1830;
+  --bg-card-hover: #24223a;
+  --border:        #2e2c48;
+  --border-light:  #3d3a60;
+  --text:          #ddd6c8;
+  --text-dim:      #8a8478;
+  --gold:          #e8b830;
+  --gold-light:    #f5d060;
+  --gold-glow:     rgba(232,184,48,0.25);
+  --red:           #e8384f;
+  --red-light:     #ff6b7a;
+  --red-bg:        #2a1218;
+  --red-border:    #6b2030;
+  --red-glow:      rgba(232,56,79,0.3);
+  --blue:          #3b82f6;
+  --blue-light:    #7cb3ff;
+  --blue-bg:       #121828;
+  --blue-border:   #203a6b;
+  --blue-glow:     rgba(59,130,246,0.3);
+  --green:         #34d399;
+  --green-glow:    rgba(52,211,153,0.3);
+  --font-display:  'Cinzel', serif;
+  --font-body:     'Inter', 'Segoe UI', system-ui, sans-serif;
+  --radius:        10px;
+  --radius-lg:     16px;
+  --shadow:        0 4px 24px rgba(0,0,0,0.5);
+  --transition:    0.2s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── RESET & LAYOUT ──────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse at 20% 80%, rgba(232,56,79,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(232,184,48,0.02) 0%, transparent 60%);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── ANIMATIONS ──────────────────────────────────── */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+@keyframes pulseStar {
+  0%, 100% { transform: scale(1); opacity: 0.35; }
+  50% { transform: scale(1.1); opacity: 0.55; }
+}
+@keyframes selectionPulse {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.5; }
+}
+@keyframes attackPulse {
+  0%, 100% { stroke-opacity: 1; stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -18; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes vpPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+/* ── TOP BAR ─────────────────────────────────────── */
+#topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 28px;
+  background: linear-gradient(180deg, #16142a 0%, #12111f 100%);
+  border-bottom: 1px solid var(--border);
+  min-height: 64px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  position: relative;
+  z-index: 10;
+}
+#topBar h1 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--gold-glow);
+}
+.score-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.score-box .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.5;
+  font-weight: 600;
+}
+.score-red { color: var(--red-light); }
+.score-blue { color: var(--blue-light); }
+.score-val { font-size: 26px; min-width: 28px; text-align: center; font-weight: 800; }
+.vp-dots {
+  display: flex;
+  gap: 5px;
+  margin-top: 4px;
+}
+.vp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  opacity: 0.25;
+  transition: all 0.3s;
+}
+.vp-dot.filled {
+  opacity: 1;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  animation: vpPop 0.4s ease;
+}
+
+#turnIndicator {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+#turnIndicator.red {
+  background: linear-gradient(135deg, #3a1020, #2a0818);
+  color: var(--red-light);
+  border: 1px solid var(--red-border);
+  box-shadow: 0 0 16px var(--red-glow), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+#turnIndicator.blue {
+  background: linear-gradient(135deg, #102040, #081830);
+  color: var(--blue-light);
+  border: 1px solid var(--blue-border);
+  box-shadow: 0 0 16px var(--blue-glow), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* ── MAIN AREA ───────────────────────────────────── */
+#mainArea {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── BOARD ────────────────────────────────────────── */
+#boardContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background:
+    radial-gradient(ellipse at center, rgba(30,28,50,0.5) 0%, transparent 70%);
+}
+#boardSvg {
+  width: 100%;
+  height: 100%;
+}
+
+/* hex styles */
+.hex-cell {
+  cursor: pointer;
+  transition: fill var(--transition), stroke var(--transition), filter var(--transition);
+}
+.hex-cell.neutral     { fill: #1c1b30; stroke: #33305a; stroke-width: 1.2; }
+.hex-cell.red_base    { fill: #281218; stroke: #5a2028; stroke-width: 1.5; }
+.hex-cell.blue_base   { fill: #121828; stroke: #20305a; stroke-width: 1.5; }
+.hex-cell.focal_point { fill: #28250e; stroke: #8a7820; stroke-width: 2; }
+
+.hex-cell:hover {
+  filter: brightness(1.35);
+  stroke-width: 2;
+}
+.hex-cell.highlight {
+  stroke: var(--green);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px var(--green-glow));
+}
+.hex-cell.selected {
+  stroke: var(--gold);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px var(--gold-glow));
+  animation: selectionPulse 1.5s ease-in-out infinite;
+}
+.hex-cell.attack-target {
+  stroke: var(--red);
+  stroke-width: 2.5;
+  stroke-dasharray: 5 3;
+  filter: drop-shadow(0 0 4px var(--red-glow));
+  animation: attackPulse 0.8s linear infinite;
+}
+
+/* focal star */
+.focal-star {
+  fill: var(--gold);
+  opacity: 0.35;
+  pointer-events: none;
+  transform-origin: center;
+  animation: pulseStar 3s ease-in-out infinite;
+}
+/* focal glow ring (added by JS) */
+.focal-glow {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1;
+  opacity: 0.12;
+  pointer-events: none;
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* coord labels */
+.hex-coord {
+  font-family: var(--font-body);
+  font-size: 7px;
+  fill: #444060;
+  text-anchor: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── DICE on board ───────────────────────────────── */
+.die-group { pointer-events: none; }
+.die-body { stroke-width: 1.5; }
+.die-body.red  { fill: url(#dieRedGrad); stroke: var(--red-light); }
+.die-body.blue { fill: url(#dieBlueGrad); stroke: var(--blue-light); }
+.die-text {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 800;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.die-type-badge {
+  font-family: var(--font-body);
+  font-size: 6.5px;
+  font-weight: 700;
+  fill: rgba(255,255,255,0.55);
+  text-anchor: middle;
+  pointer-events: none;
+  user-select: none;
+}
+.tower-count {
+  font-family: var(--font-body);
+  font-size: 9px;
+  fill: var(--gold);
+  font-weight: 800;
+  text-anchor: middle;
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px var(--gold-glow));
+}
+/* selected die glow ring */
+.die-select-ring {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+  animation: selectionPulse 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px var(--gold-glow));
+}
+
+/* ── SIDEBAR ─────────────────────────────────────── */
+#sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, var(--bg-panel) 0%, #0e0d1a 100%);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+}
+#actionPanel {
+  padding: 18px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#actionPanel h3 {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  opacity: 0.7;
+}
+.action-btn {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--bg-card) 0%, #161528 100%);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.02));
+  pointer-events: none;
+}
+.action-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--bg-card-hover) 0%, #2a2848 100%);
+  border-color: var(--green);
+  color: #fff;
+  transform: translateX(-2px);
+  box-shadow: 0 0 12px var(--green-glow);
+}
+.action-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+.action-btn.active {
+  background: linear-gradient(135deg, #142818 0%, #0e2010 100%);
+  border-color: var(--green);
+  color: var(--green);
+  box-shadow: 0 0 16px var(--green-glow), inset 0 0 20px rgba(52,211,153,0.05);
+}
+.action-btn .icon {
+  font-size: 17px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.action-btn.end-turn-btn {
+  margin-top: 10px;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+}
+.action-btn.end-turn-btn:hover:not(:disabled) {
+  box-shadow: 0 0 16px var(--gold-glow);
+  border-color: var(--gold-light) !important;
+  color: var(--gold-light) !important;
+}
+
+/* ── INFO PANEL ──────────────────────────────────── */
+#infoPanel {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  flex: 1;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.6;
+}
+#infoPanel .info-title {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+#infoPanel .info-line {
+  margin: 3px 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+}
+.tag-red  { color: var(--red-light); font-weight: 600; }
+.tag-blue { color: var(--blue-light); font-weight: 600; }
+.tag-gold { color: var(--gold-light); font-weight: 600; }
+.tag-green { color: var(--green); font-weight: 600; }
+
+/* ── LOG ─────────────────────────────────────────── */
+#logPanel {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  max-height: 160px;
+  overflow-y: auto;
+  font-size: 11px;
+  color: #666;
+  line-height: 1.5;
+}
+#logPanel .log-entry {
+  margin: 2px 0;
+  padding: 2px 0;
+  animation: slideIn 0.25s ease;
+}
+#logPanel .log-entry.combat { color: var(--red-light); }
+#logPanel .log-entry.score  { color: var(--gold); }
+#logPanel .log-entry.move   { color: var(--green); }
+
+/* ── SCROLLBAR STYLE ─────────────────────────────── */
+#infoPanel::-webkit-scrollbar,
+#logPanel::-webkit-scrollbar {
+  width: 4px;
+}
+#infoPanel::-webkit-scrollbar-track,
+#logPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+#infoPanel::-webkit-scrollbar-thumb,
+#logPanel::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+/* ── MODAL (combat choice etc.) ──────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal {
+  background: linear-gradient(160deg, #1e1d34 0%, #141322 100%);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-lg);
+  padding: 28px 36px;
+  max-width: 420px;
+  min-width: 320px;
+  text-align: center;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.6), 0 0 40px var(--gold-glow);
+  animation: fadeIn 0.25s ease;
+}
+.modal h2 {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: 20px;
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px var(--gold-glow);
+}
+.modal p {
+  font-size: 14px;
+  margin-bottom: 18px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.modal-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.modal-btn {
+  padding: 11px 26px;
+  border-radius: var(--radius);
+  border: 2px solid;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.modal-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.04));
+  pointer-events: none;
+}
+.modal-btn.displace {
+  background: linear-gradient(135deg, #122040, #0e1830);
+  border-color: var(--blue);
+  color: var(--blue-light);
+}
+.modal-btn.displace:hover {
+  background: linear-gradient(135deg, #1a3060, #142848);
+  box-shadow: 0 0 16px var(--blue-glow);
+}
+.modal-btn.occupy {
+  background: linear-gradient(135deg, #301218, #280e14);
+  border-color: var(--red);
+  color: var(--red-light);
+}
+.modal-btn.occupy:hover {
+  background: linear-gradient(135deg, #401820, #381018);
+  box-shadow: 0 0 16px var(--red-glow);
+}
+.modal-btn.cancel {
+  background: var(--bg-card);
+  border-color: #555;
+  color: #888;
+}
+.modal-btn.cancel:hover {
+  background: var(--bg-card-hover);
+  border-color: #777;
+  color: #aaa;
+}
+
+/* ── WINNER SCREEN ───────────────────────────────── */
+#winScreen {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+#winScreen.show { display: flex; }
+#winScreen .win-content {
+  text-align: center;
+  animation: fadeIn 0.6s ease;
+}
+#winScreen .win-title {
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+}
+#winScreen .win-title.red {
+  color: var(--red-light);
+  text-shadow: 0 0 50px var(--red-glow), 0 0 100px rgba(232,56,79,0.15);
+}
+#winScreen .win-title.blue {
+  color: var(--blue-light);
+  text-shadow: 0 0 50px var(--blue-glow), 0 0 100px rgba(59,130,246,0.15);
+}
+#winScreen .win-sub {
+  font-size: 17px;
+  color: var(--text-dim);
+  margin-bottom: 28px;
+  letter-spacing: 0.5px;
+}
+#winScreen .restart-btn {
+  padding: 14px 40px;
+  background: linear-gradient(135deg, var(--gold) 0%, #d4a020 100%);
+  color: var(--bg-deep);
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all var(--transition);
+  box-shadow: 0 4px 20px var(--gold-glow);
+}
+#winScreen .restart-btn:hover {
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px var(--gold-glow);
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOP BAR ──────────────────────────────────── -->
+<div id="topBar">
+  <div class="score-box score-red">
+    <div>
+      <div class="label">Cerveny</div>
+      <div class="score-val" id="scoreRed">0</div>
+      <div class="vp-dots" id="vpDotsRed">
+        <span class="vp-dot"></span><span class="vp-dot"></span><span class="vp-dot"></span><span class="vp-dot"></span><span class="vp-dot"></span>
+      </div>
+    </div>
+  </div>
+  <div id="turnIndicator" class="red">Tah: Cerveny</div>
+  <h1>Pad Donjonu</h1>
+  <div id="turnIndicator2" style="visibility:hidden;width:0;overflow:hidden">x</div>
+  <div class="score-box score-blue">
+    <div>
+      <div class="label">Modry</div>
+      <div class="score-val" id="scoreBlue">0</div>
+      <div class="vp-dots" id="vpDotsBlue">
+        <span class="vp-dot"></span><span class="vp-dot"></span><span class="vp-dot"></span><span class="vp-dot"></span><span class="vp-dot"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN ─────────────────────────────────────── -->
+<div id="mainArea">
+  <div id="boardContainer">
+    <svg id="boardSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+  <div id="sidebar">
+    <div id="actionPanel">
+      <h3>Akce</h3>
+      <button class="action-btn" id="btnMove" data-action="move"><span class="icon">🎲</span> Pohyb kostkou</button>
+      <button class="action-btn" id="btnTowerMove" data-action="towerMove"><span class="icon">🏰</span> Pohyb celé věže</button>
+      <button class="action-btn" id="btnTowerJump" data-action="towerJump"><span class="icon">⬆</span> Skok z věže</button>
+      <button class="action-btn" id="btnEscapeTower" data-action="escapeTower"><span class="icon">🏃‍♂️</span> Útěk z věže</button>
+
+      <button class="action-btn" id="btnReform" data-action="reform"><span class="icon">🔄</span> Přeformování</button>
+      <button class="action-btn" id="btnCollapse" data-action="collapse"><span class="icon">💥</span> Kolaps věže</button>
+      <button class="action-btn end-turn-btn" id="btnEndTurn" data-action="endTurn">
+        <span class="icon">⏭</span> Ukončit tah
+      </button>
+    </div>
+    <div id="infoPanel">
+      <div class="info-title">Vyberte akci nebo kostku</div>
+      <div class="info-line">Kliknete na kostku na desce pro vyber,</div>
+      <div class="info-line">pak zvolte akci v panelu.</div>
+    </div>
+    <div id="logPanel"></div>
+  </div>
+</div>
+
+<!-- ── WIN SCREEN ───────────────────────────────── -->
+<div id="winScreen">
+  <div class="win-content">
+    <div class="win-title" id="winTitle">VITEZ!</div>
+    <div class="win-sub" id="winSub"></div>
+    <button class="restart-btn" onclick="restartGame()">Nova hra</button>
+  </div>
+</div>
+
+<!-- ── MODAL ────────────────────────────────────── -->
+<div id="modalOverlay" class="modal-overlay" style="display:none"></div>
+
+<script src="src/game.js"></script>
+<script>
+"use strict";
+
+// ═══════════════════════════════════════════════════════════════
+// RENDERER — Hex Grid SVG
+// ═══════════════════════════════════════════════════════════════
+
+const HEX_SIZE = 36;          // px — outer radius of pointy-top hex
+const SQRT3 = Math.sqrt(3);
+
+/** Axial (q, r) → pixel center for POINTY-TOP hex. */
+function hexToPixel(q, r) {
+  const x = HEX_SIZE * (SQRT3 * q + SQRT3 / 2 * r);
+  const y = HEX_SIZE * (3 / 2 * r);
+  return { x, y };
+}
+
+/** 6 corner points of a pointy-top hex centered at (cx, cy). */
+function hexCorners(cx, cy, size) {
+  const pts = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = Math.PI / 180 * (60 * i - 30);
+    pts.push({
+      x: cx + size * Math.cos(angle),
+      y: cy + size * Math.sin(angle),
+    });
+  }
+  return pts;
+}
+
+function cornersToString(corners) {
+  return corners.map(p => p.x.toFixed(2) + "," + p.y.toFixed(2)).join(" ");
+}
+
+/** Small 6-pointed star path for focal points. */
+function starPath(cx, cy, outerR, innerR, points) {
+  const pts = [];
+  for (let i = 0; i < points * 2; i++) {
+    const angle = Math.PI / 180 * (360 / (points * 2) * i - 90);
+    const r = i % 2 === 0 ? outerR : innerR;
+    pts.push(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+  }
+  let d = "M" + pts[0] + "," + pts[1];
+  for (let i = 2; i < pts.length; i += 2) {
+    d += "L" + pts[i] + "," + pts[i + 1];
+  }
+  return d + "Z";
+}
+
+// ═══════════════════════════════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════════════════════════════
+
+let gs = new GameState();
+let selectedDie = null;        // currently selected die object
+let selectedCoord = null;      // coord of selected hex
+let currentAction = null;      // "move" | "towerMove" | "towerJump" | "escapeTower" | "reform" | "collapse"
+let validTargets = [];         // array of {target, ...} for current selection
+let actionUsed = false;        // has the player used their action this turn?
+
+// SVG element refs
+const svgEl = document.getElementById("boardSvg");
+const hexElements = new Map();   // hexKey → <polygon>
+const diceLayer = null;          // will be a <g> element
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+
+document.addEventListener("DOMContentLoaded", () => {
+  initGame();
+});
+
+function initGame() {
+  gs = new GameState();
+  gs.setup();
+  selectedDie = null;
+  selectedCoord = null;
+  currentAction = null;
+  validTargets = [];
+  actionUsed = false;
+  document.getElementById("winScreen").classList.remove("show");
+  document.getElementById("logPanel").innerHTML = "";
+  buildBoard();
+  renderAll();
+  logMsg("Hra začíná! " + (gs.turn === Player.Red ? "Červený" : "Modrý") + " je na tahu.", "move");
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BUILD SVG BOARD (once)
+// ═══════════════════════════════════════════════════════════════
+
+function buildBoard() {
+    // Debug: log number of cells
+    console.log('buildBoard: cells', gs.map.getAllCells().length);
+  svgEl.innerHTML = "";
+  hexElements.clear();
+
+  // Calculate bounds
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  gs.map.getAllCells().forEach(cell => {
+    const { x, y } = hexToPixel(cell.coord.q, cell.coord.r);
+    const corners = hexCorners(x, y, HEX_SIZE);
+    corners.forEach(c => {
+      if (c.x < minX) minX = c.x;
+      if (c.x > maxX) maxX = c.x;
+      if (c.y < minY) minY = c.y;
+      if (c.y > maxY) maxY = c.y;
+    });
+  });
+
+  const pad = 40;
+  const vbX = minX - pad;
+  const vbY = minY - pad;
+  const vbW = maxX - minX + pad * 2;
+  const vbH = maxY - minY + pad * 2;
+  svgEl.setAttribute("viewBox", vbX + " " + vbY + " " + vbW + " " + vbH);
+
+  // ── SVG Definitions (gradients, filters) ──
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+
+  // Dice gradients
+  const redGrad = createLinearGrad("dieRedGrad", "#e83850", "#b82030");
+  const blueGrad = createLinearGrad("dieBlueGrad", "#4090f8", "#2060d0");
+  defs.appendChild(redGrad);
+  defs.appendChild(blueGrad);
+
+  // Glow filter for focal points
+  const focalGlow = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+  focalGlow.setAttribute("id", "focalGlowFilter");
+  focalGlow.setAttribute("x", "-50%"); focalGlow.setAttribute("y", "-50%");
+  focalGlow.setAttribute("width", "200%"); focalGlow.setAttribute("height", "200%");
+  focalGlow.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>'
+    + '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>';
+  defs.appendChild(focalGlow);
+
+  // Subtle inner shadow filter for hex cells
+  const hexShadow = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+  hexShadow.setAttribute("id", "hexInnerShadow");
+  hexShadow.innerHTML = '<feOffset dx="0" dy="1"/>'
+    + '<feGaussianBlur stdDeviation="1.5"/>'
+    + '<feComposite operator="out" in="SourceGraphic" result="shadow"/>'
+    + '<feFlood flood-color="#000" flood-opacity="0.15"/>'
+    + '<feComposite operator="in" in2="shadow"/>'
+    + '<feComposite operator="over" in2="SourceGraphic"/>';
+  defs.appendChild(hexShadow);
+
+  svgEl.appendChild(defs);
+
+  // Background subtle radial gradient circle (board feel)
+  const bgCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  bgCircle.setAttribute("cx", "0");
+  bgCircle.setAttribute("cy", "0");
+  bgCircle.setAttribute("r", String(HEX_SIZE * 5.5));
+  bgCircle.setAttribute("fill", "none");
+  bgCircle.setAttribute("stroke", "#2a2850");
+  bgCircle.setAttribute("stroke-width", "0.5");
+  bgCircle.setAttribute("stroke-dasharray", "4 6");
+  bgCircle.setAttribute("opacity", "0.3");
+  svgEl.appendChild(bgCircle);
+
+  // Hex layer
+  const hexGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  hexGroup.id = "hexLayer";
+  svgEl.appendChild(hexGroup);
+
+  // Focal decoration layer
+  const focalGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  focalGroup.id = "focalLayer";
+  svgEl.appendChild(focalGroup);
+
+  // Coord label layer
+  const coordGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  coordGroup.id = "coordLayer";
+  svgEl.appendChild(coordGroup);
+
+  // Dice layer (re-drawn each render)
+  const diceGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  diceGroup.id = "diceLayer";
+  svgEl.appendChild(diceGroup);
+
+  // Render hexes
+  gs.map.getAllCells().forEach(cell => {
+    const { x, y } = hexToPixel(cell.coord.q, cell.coord.r);
+    const corners = hexCorners(x, y, HEX_SIZE * 0.94);
+
+    const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    poly.setAttribute("points", cornersToString(corners));
+    poly.classList.add("hex-cell", cell.type);
+    poly.dataset.q = cell.coord.q;
+    poly.dataset.r = cell.coord.r;
+    poly.addEventListener("click", () => onHexClick(cell.coord));
+    hexGroup.appendChild(poly);
+    hexElements.set(cell.key, poly);
+
+    // Focal point decorations
+    if (cell.type === HexType.FocalPoint) {
+      // Glow ring
+      const glowRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      glowRing.setAttribute("cx", x);
+      glowRing.setAttribute("cy", y);
+      glowRing.setAttribute("r", HEX_SIZE * 0.6);
+      glowRing.classList.add("focal-glow");
+      focalGroup.appendChild(glowRing);
+
+      // Star
+      const star = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      star.setAttribute("d", starPath(x, y, 12, 5, 6));
+      star.classList.add("focal-star");
+      star.setAttribute("filter", "url(#focalGlowFilter)");
+      focalGroup.appendChild(star);
+    }
+
+    // Coord label
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", x);
+    label.setAttribute("y", y + HEX_SIZE * 0.72);
+    label.classList.add("hex-coord");
+    label.textContent = cell.coord.q + "," + cell.coord.r;
+    coordGroup.appendChild(label);
+  });
+}
+
+/** Helper: create a simple linear gradient for SVG defs. */
+function createLinearGrad(id, color1, color2) {
+  const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+  grad.setAttribute("id", id);
+  grad.setAttribute("x1", "0"); grad.setAttribute("y1", "0");
+  grad.setAttribute("x2", "0"); grad.setAttribute("y2", "1");
+  const s1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+  s1.setAttribute("offset", "0%"); s1.setAttribute("stop-color", color1);
+  const s2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+  s2.setAttribute("offset", "100%"); s2.setAttribute("stop-color", color2);
+  grad.appendChild(s1);
+  grad.appendChild(s2);
+  return grad;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — Full re-draw of dice + highlights + HUD
+// ═══════════════════════════════════════════════════════════════
+
+function renderAll() {
+  renderDice();
+  renderHighlights();
+  renderHUD();
+  renderActionButtons();
+
+  // Always update info panel to match board state
+  if (typeof showHexInfo === 'function' && selectedCoord) {
+    showHexInfo(selectedCoord);
+  } else if (typeof showInfo === 'function') {
+    showInfo("Vyberte akci nebo kostku", [
+      "Kliknete na kostku na desce pro vyber,",
+      "pak zvolte akci v panelu."
+    ]);
+  }
+}
+
+function renderDice() {
+
+  let diceGroup = document.getElementById("diceLayer");
+  if (!diceGroup) {
+    buildBoard();
+    diceGroup = document.getElementById("diceLayer");
+    if (!diceGroup) return; // stále neexistuje, bezpečně ukonči
+  }
+  diceGroup.innerHTML = "";
+
+  // Group dice by hex
+  gs.map.getAllCells().forEach(cell => {
+    const formation = gs.getFormation(cell.coord);
+    if (formation.length === 0) return;
+
+    const { x, y } = hexToPixel(cell.coord.q, cell.coord.r);
+
+    if (formation.length === 1) {
+      // Single die
+      drawDie(diceGroup, x, y, formation[0]);
+    } else {
+      // Tower — stack visually
+      const stackOffset = 7;
+      const startY = y + (formation.length - 1) * stackOffset / 2;
+      for (let i = 0; i < formation.length; i++) {
+        drawDie(diceGroup, x, startY - i * stackOffset, formation[i], i > 0);
+      }
+      // Tower count badge
+      const badge = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      badge.setAttribute("x", x + 16);
+      badge.setAttribute("y", y - formation.length * 3 - 6);
+      badge.classList.add("tower-count");
+      badge.textContent = "×" + formation.length;
+      diceGroup.appendChild(badge);
+    }
+  });
+}
+
+function drawDie(parent, cx, cy, die, isStacked) {
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.classList.add("die-group");
+
+  const w = 20;
+  const h = 20;
+  const rx = 3;
+
+  // Drop shadow
+  const shadow = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  shadow.setAttribute("x", cx - w / 2 + 1.5);
+  shadow.setAttribute("y", cy - h / 2 + 2);
+  shadow.setAttribute("width", w);
+  shadow.setAttribute("height", h);
+  shadow.setAttribute("rx", rx);
+  shadow.setAttribute("fill", "rgba(0,0,0,0.5)");
+  shadow.setAttribute("filter", "url(#hexInnerShadow)");
+  g.appendChild(shadow);
+
+  // Body with gradient
+  const body = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  body.setAttribute("x", cx - w / 2);
+  body.setAttribute("y", cy - h / 2);
+  body.setAttribute("width", w);
+  body.setAttribute("height", h);
+  body.setAttribute("rx", rx);
+  body.classList.add("die-body", die.owner);
+  g.appendChild(body);
+
+  // Inner highlight (top edge shine)
+  const shine = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  shine.setAttribute("x", cx - w / 2 + 2);
+  shine.setAttribute("y", cy - h / 2 + 1);
+  shine.setAttribute("width", w - 4);
+  shine.setAttribute("height", 3);
+  shine.setAttribute("rx", 1.5);
+  shine.setAttribute("fill", "rgba(255,255,255,0.15)");
+  g.appendChild(shine);
+
+  // Selected ring — animated glow
+  if (selectedDie && selectedDie.id === die.id) {
+    const ring = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    ring.setAttribute("x", cx - w / 2 - 3);
+    ring.setAttribute("y", cy - h / 2 - 3);
+    ring.setAttribute("width", w + 6);
+    ring.setAttribute("height", h + 6);
+    ring.setAttribute("rx", rx + 2);
+    ring.classList.add("die-select-ring");
+    g.appendChild(ring);
+  }
+
+  // Value text
+  const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  txt.setAttribute("x", cx);
+  txt.setAttribute("y", cy);
+  txt.classList.add("die-text");
+  txt.textContent = die.value;
+  g.appendChild(txt);
+
+  // ...D8 badge removed...
+
+  parent.appendChild(g);
+}
+
+function renderHighlights() {
+  // Clear all highlights
+  hexElements.forEach(poly => {
+    poly.classList.remove("highlight", "selected", "attack-target");
+  });
+
+  // Selected hex
+  if (selectedCoord) {
+    const k = hexKey(selectedCoord);
+    if (hexElements.has(k)) hexElements.get(k).classList.add("selected");
+  }
+
+  // Valid targets
+  for (const t of validTargets) {
+    const k = hexKey(t.target);
+    if (hexElements.has(k)) {
+      if (t.isAttack) {
+        hexElements.get(k).classList.add("attack-target");
+      } else {
+        hexElements.get(k).classList.add("highlight");
+      }
+    }
+  }
+}
+
+function renderHUD() {
+  const summary = gs.scoreSummary();
+  document.getElementById("scoreRed").textContent = summary.red.total;
+  document.getElementById("scoreBlue").textContent = summary.blue.total;
+
+  // VP dots
+  const redDots = document.querySelectorAll("#vpDotsRed .vp-dot");
+  const blueDots = document.querySelectorAll("#vpDotsBlue .vp-dot");
+  for (let i = 0; i < 5; i++) {
+    redDots[i].classList.toggle("filled", i < summary.red.total);
+    blueDots[i].classList.toggle("filled", i < summary.blue.total);
+  }
+
+  const ti = document.getElementById("turnIndicator");
+  if (gs.turn === Player.Red) {
+    ti.className = "red";
+    ti.textContent = "Tah: Cerveny";
+  } else {
+    ti.className = "blue";
+    ti.textContent = "Tah: Modry";
+  }
+}
+
+function renderActionButtons() {
+  const player = gs.turn;
+  const dice = gs.getPlayerDice(player);
+
+  // Can player do anything?
+  const hasTower = dice.some(d => {
+    const f = gs.getFormation(d.position);
+    return f.length >= 2;
+  });
+
+  // Check for collapsible towers
+  let hasCollapsible = false;
+  if (typeof findCollapsibleTowers === 'function') {
+    const result = findCollapsibleTowers(gs, player);
+    hasCollapsible = result && result.towers && result.towers.length > 0;
+  }
+
+  // Check for possible escape from tower
+  let hasEscape = false;
+  for (const d of dice) {
+    const f = gs.getFormation(d.position);
+    if (f.length >= 2 && f[f.length - 1].id === d.id) {
+      const { targets: escTgts } = findEscapeTargets(gs, d.position, player);
+      if (escTgts && escTgts.length > 0) {
+        hasEscape = true;
+        break;
+      }
+    }
+  }
+
+  document.getElementById("btnMove").disabled = actionUsed;
+  document.getElementById("btnTowerMove").disabled = actionUsed || !hasTower;
+  document.getElementById("btnTowerJump").disabled = actionUsed || !hasTower;
+  document.getElementById("btnReform").disabled = actionUsed || gs.getPlayerDice(player).length < 2;
+  document.getElementById("btnCollapse").disabled = actionUsed || !hasCollapsible;
+  document.getElementById("btnEscapeTower").disabled = actionUsed || !hasEscape;
+  document.getElementById("btnEndTurn").disabled = !actionUsed;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INFO PANEL
+// ═══════════════════════════════════════════════════════════════
+
+function showInfo(title, lines) {
+  const panel = document.getElementById("infoPanel");
+  panel.innerHTML = '<div class="info-title">' + title + '</div>'
+    + lines.map(l => '<div class="info-line">' + l + '</div>').join("");
+}
+
+function showHexInfo(coord) {
+  const cell = gs.map.getCell(coord);
+  if (!cell) return;
+
+  const formation = gs.getFormation(coord);
+  const typeNames = {
+    neutral: "Neutrální",
+    red_base: "Červená základna",
+    blue_base: "Modrá základna",
+    focal_point: "⭐ Ohnisko",
+  };
+
+  const lines = ['Typ: ' + (typeNames[cell.type] || cell.type)];
+
+  if (formation.length === 0) {
+    lines.push("Prázdné pole");
+  } else {
+    const dom = towerDominance(formation);
+    if (formation.length > 1) {
+      lines.push('<span class="tag-gold">Věž (' + formation.length + ' kostky)</span>');
+      lines.push('Nadvláda: ' + colorTag(dom));
+      lines.push('Útočná síla: ' + formationAttackStrength(formation, dom));
+      lines.push('Dosah: ' + towerReach(formation, dom));
+    }
+    formation.forEach((d, i) => {
+      const pos = formation.length > 1 ? (i === formation.length - 1 ? " ⬆" : i === 0 ? " ⬇" : "") : "";
+      lines.push(colorTag(d.owner) + " " + d.type.toUpperCase() + ":" + d.value + pos);
+    });
+  }
+
+  showInfo("Pole [" + coord.q + "," + coord.r + "]", lines);
+}
+
+function colorTag(player) {
+  return '<span class="tag-' + player + '">' + (player === Player.Red ? "Červený" : "Modrý") + '</span>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════════════════════════
+
+function logMsg(msg, type) {
+  const panel = document.getElementById("logPanel");
+  const entry = document.createElement("div");
+  entry.className = "log-entry" + (type ? " " + type : "");
+  entry.textContent = msg;
+  panel.prepend(entry);
+  // Limit
+  while (panel.children.length > 50) panel.removeChild(panel.lastChild);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INTERACTION — Hex clicks
+// ═══════════════════════════════════════════════════════════════
+
+function onHexClick(coord) {
+  // If we have an action and targets, check if this is a valid target
+  if (currentAction && validTargets.length > 0) {
+    const target = validTargets.find(t => hexEquals(t.target, coord));
+    if (target) {
+      executeAction(currentAction, target);
+      return;
+    }
+  }
+
+  // Otherwise, select this hex / die
+  const formation = gs.getFormation(coord);
+  if (formation.length > 0) {
+    // Select the top die if it belongs to current player
+    const top = topDie(formation);
+    if (top.owner === gs.turn) {
+      selectedDie = top;
+      selectedCoord = coord;
+      showHexInfo(coord);
+
+      // If we have a current action, compute targets
+      if (currentAction) {
+        computeTargets();
+      } else {
+        validTargets = [];
+      }
+      renderAll();
+      return;
+    // ...existing code...
+    }
+  }
+
+  // Clicked empty or enemy hex without action → deselect
+  selectedDie = null;
+  selectedCoord = coord;
+  validTargets = [];
+  showHexInfo(coord);
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ACTION BUTTONS
+// ═══════════════════════════════════════════════════════════════
+
+document.querySelectorAll(".action-btn[data-action]").forEach(btn => {
+  const action = btn.dataset.action;
+
+  btn.addEventListener("click", () => {
+    const action = btn.dataset.action;
+
+    if (action === "endTurn") {
+      endTurn();
+      return;
+    }
+
+    if (currentAction === action) {
+      // Toggle off
+      currentAction = null;
+      validTargets = [];
+      document.querySelectorAll(".action-btn").forEach(b => b.classList.remove("active"));
+      showInfo("Akce zrušena", ["Vyberte jinou akci."]);
+      renderAll();
+      return;
+    }
+
+    currentAction = action;
+    document.querySelectorAll(".action-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    // Special actions that don't need die selection first
+
+    if (action === "collapse") {
+      handleCollapseAction();
+      return;
+    }
+
+    if (action === "reform") {
+      handleReformAction();
+      return;
+    }
+
+    if (action === "escapeTower") {
+      handleEscapeTowerAction();
+      return;
+    }
+
+    // Compute targets if we already have a selection
+    if (selectedDie) {
+      computeTargets();
+    } else {
+      validTargets = [];
+      const actionNames = {
+        move: "Pohyb kostkou",
+        towerMove: "Pohyb věže",
+        towerJump: "Skok z věže"
+      };
+      showInfo(actionNames[action] || action, ["Vyberte svou kostku na desce."]);
+    }
+    renderAll();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// COMPUTE TARGETS for current action + selected die
+// ═══════════════════════════════════════════════════════════════
+
+function computeTargets() {
+  validTargets = [];
+  if (!selectedDie || !currentAction) return;
+
+  const player = gs.turn;
+
+  switch (currentAction) {
+    case "move": {
+      const targets = findValidTargets(gs, selectedDie);
+      validTargets = targets;
+      if (targets.length === 0) {
+        showInfo("Pohyb kostkou", ["Žádný platný cíl pro tuto kostku."]);
+      } else {
+        const multiDir = targets.filter(t => t.approachDirections && t.approachDirections.length > 1);
+        const lines = [
+          colorTag(player) + " " + selectedDie.type.toUpperCase() + ":" + selectedDie.value,
+          targets.length + " platných cílů",
+          "Klikněte na zvýrazněné pole."
+        ];
+          showInfo("Pohyb kostkou", lines);
+        }
+        break;
+      }
+
+      case "towerMove": {
+        const coord = selectedDie.position;
+        const { targets, reason } = findTowerMoveTargets(gs, coord, player);
+        if (reason) {
+          showInfo("Pohyb věže", [reason]);
+          validTargets = [];
+        } else {
+          validTargets = targets;
+          showInfo("Pohyb věže", [
+            "Věž na [" + coord.q + "," + coord.r + "]",
+            targets.length + " platných cílů",
+            "Klikněte na zvýrazněné pole."
+          ]);
+        }
+        break;
+      }
+
+      case "towerJump": {
+        const coord = selectedDie.position;
+        const { targets, jumpDie, attackStrength, reason } = findTowerJumpTargets(gs, coord, player);
+        if (reason) {
+          showInfo("Skok z věže", [reason]);
+          validTargets = [];
+        } else {
+          validTargets = targets;
+          showInfo("Skok z věže", [
+            "Skáče: " + colorTag(player) + " " + jumpDie.type.toUpperCase() + ":" + jumpDie.value,
+            "Útočná síla: " + attackStrength,
+            targets.length + " platných cílů"
+          ]);
+        }
+        break;
+      }
+
+      case "escapeTower": {
+        // Útěk z věže: použij findEscapeTargets z game.js
+        const coord = selectedDie.position;
+        const { targets: escTargets, escapeDie, cost, reason: escReason } = findEscapeTargets(gs, coord, player);
+        if (escReason) {
+          showInfo("Útěk z věže", [escReason]);
+          validTargets = [];
+          break;
+        }
+        validTargets = escTargets.map(t => ({ target: t }));
+        if (validTargets.length === 0) {
+          showInfo("Útěk z věže", ["Žádné platné pole pro útěk."]);
+        } else {
+          showInfo("Útěk z věže", [
+            "Vyberte sousední pole pro útěk.",
+            "Po útěku se hodnota kostky sníží o " + cost + " (min. 1)."
+          ]);
+        }
+        break;
+      }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXECUTE ACTION
+// ═══════════════════════════════════════════════════════════════
+
+function executeAction(action, target) {
+  switch (action) {
+
+    case "move": executeMoveAction(target); break;
+    case "towerMove": executeTowerMoveAction(target); break;
+    case "towerJump": executeTowerJumpAction(target); break;
+    case "escapeTower": executeEscapeTowerAction(target); break;
+    case "reform_select": executeReformSelect(target); break;
+    case "collapse_select": executeCollapseSelect(target); break;
+  }
+}
+
+
+
+
+
+function handleEscapeTowerAction() {
+  if (!selectedDie) {
+    showInfo("Útěk z věže", ["Vyberte vlastní kostku na vrcholu věže."]);
+    validTargets = [];
+    renderAll();
+    return;
+  }
+  computeTargets();
+  renderAll();
+}
+
+function executeEscapeTowerAction(target) {
+  // Útěk z věže: použij executeEscape z game.js
+  const die = selectedDie;
+  const coord = die.position;
+  const result = executeEscape(gs, coord, target.target, gs.turn);
+  if (!result.success) {
+    showInfo("Útěk z věže", [result.reason]);
+    return;
+  }
+  logMsg(playerName(gs.turn) + " útěk z věže: " + die.type.toUpperCase() + ":" + result.oldValue + " → " + result.newValue + " [" + target.target.q + "," + target.target.r + "] (−" + result.cost + ")", "move");
+  finishAction();
+}
+
+function executeReformSelect(target) {
+  // No longer used (reform is handled via modal), but keep as no-op
+  return;
+}
+
+function showReformPickerModal(diceList) {
+  const overlay = document.getElementById("modalOverlay");
+  const player = gs.turn;
+  const pCol = player === Player.Red ? '#e8384f' : '#3b82f6';
+
+  let html = '<div class="modal" style="max-width:480px;">';
+  html += '<h2>🔄 Přeformování</h2>';
+  html += '<p>Vyberte <strong>2 kostky</strong> k přehození:</p>';
+  html += '<div id="reformStatus" style="margin-bottom:10px;font-size:13px;color:#8a8478;">Vybráno: 0 / 2</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:16px;">';
+
+  for (const die of diceList) {
+    const pos = die.position;
+    html += '<button class="modal-btn reform-die-btn" id="reformDie' + die.id + '" '
+      + 'style="border-color:' + pCol + ';color:' + pCol + ';background:linear-gradient(135deg,#1a1830,#161528);'
+      + 'min-width:70px;padding:8px 12px;font-size:13px;" '
+      + 'onclick="toggleReformDie(' + die.id + ')">' 
+      + die.type.toUpperCase() + ':' + die.value
+      + ' <span style="font-size:10px;color:#8a8478;">[' + pos.q + ',' + pos.r + ']</span>'
+      + '</button>';
+  }
+
+  html += '</div>';
+  html += '<div style="display:flex;gap:12px;justify-content:center;">';
+  html += '<button class="modal-btn" id="reformConfirmBtn" style="border-color:#34d399;color:#34d399;'
+    + 'background:linear-gradient(135deg,#142818,#0e2010);opacity:0.4;pointer-events:none;" '
+    + 'onclick="confirmReform()">Přehodit</button>';
+  html += '<button class="modal-btn cancel" onclick="cancelReform()">Zrušit</button>';
+  html += '</div>';
+  html += '</div>';
+
+  overlay.innerHTML = html;
+  overlay.style.display = "flex";
+}
+
+function toggleReformDie(dieId) {
+  const idx = reformPickedDice.indexOf(dieId);
+  if (idx >= 0) {
+    reformPickedDice.splice(idx, 1);
+  } else {
+    if (reformPickedDice.length >= 2) return; // already have 2
+    reformPickedDice.push(dieId);
+  }
+
+  // Update button visuals
+  document.querySelectorAll('.reform-die-btn').forEach(btn => {
+    const id = parseInt(btn.id.replace('reformDie', ''));
+    if (reformPickedDice.includes(id)) {
+      btn.style.borderColor = '#34d399';
+      btn.style.color = '#34d399';
+      btn.style.background = 'linear-gradient(135deg,#142818,#0e2010)';
+      btn.style.boxShadow = '0 0 10px rgba(52,211,153,0.3)';
+    } else {
+      const pCol = gs.turn === Player.Red ? '#e8384f' : '#3b82f6';
+      btn.style.borderColor = pCol;
+      btn.style.color = pCol;
+      btn.style.background = 'linear-gradient(135deg,#1a1830,#161528)';
+      btn.style.boxShadow = 'none';
+    }
+  });
+
+  // Update status
+  document.getElementById('reformStatus').textContent = 'Vybráno: ' + reformPickedDice.length + ' / 2';
+
+  // Enable/disable confirm button
+  const btn = document.getElementById('reformConfirmBtn');
+  if (reformPickedDice.length === 2) {
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  } else {
+    btn.style.opacity = '0.4';
+    btn.style.pointerEvents = 'none';
+  }
+}
+
+function confirmReform() {
+  document.getElementById('modalOverlay').style.display = 'none';
+  const results = [];
+  for (const dieId of reformPickedDice) {
+    const die = gs.getDieById(dieId);
+    if (die) {
+      const r = executeReform(die);
+      results.push(die.type.toUpperCase() + ':' + r.oldValue + '→' + die.value);
+    }
+  }
+  reformPickedDice = [];
+  logMsg(playerName(gs.turn) + ' přeformování: ' + results.join(', '), 'move');
+  finishAction();
+}
+
+function cancelReform() {
+  document.getElementById('modalOverlay').style.display = 'none';
+  reformPickedDice = [];
+  currentAction = null;
+  document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active'));
+  showInfo('Akce zrušena', ['Vyberte jinou akci.']);
+  renderAll();
+}
+
+function executeCollapseSelect(target) {
+  const coord = target.target;
+  const tData = target.towerData;
+  if (!tData) return;
+
+  // Kolaps je automatický — vždy se odstraňuje spodní kostka
+  const result = executeCollapse(gs, coord, gs.turn);
+  if (!result.success) {
+    showInfo("Chyba", [result.reason]);
+    return;
+  }
+
+  const die = result.removedDie;
+  logMsg(playerName(gs.turn) + " kolaps věže [" + coord.q + "," + coord.r + "]: " +
+    die.type.toUpperCase() + ":" + die.value +
+    (result.wasEnemy ? " — +" + result.points + " bodů" : " — vlastní kostka"), "combat");
+
+  gs.checkWin();
+  if (gs.winner) showWin(gs.winner);
+
+  finishAction();
+}
+
+function executeMoveAction(target) {
+  const die = selectedDie;
+
+  // If attack with multiple approach directions → show direction picker first
+  if (target.isAttack && target.approachDirections && target.approachDirections.length > 1) {
+    showDirectionPickerModal(die, target);
+    return;
+  }
+
+  const result = executeMove(gs, die, target.target);
+
+  if (!result.success) {
+    showInfo("Chyba", [result.reason]);
+    return;
+  }
+
+  if (result.attack) {
+    // Combat! Show choice modal
+    showCombatModal(result, "move");
+    return;
+  }
+
+  // Simple move
+  logMsg(playerName(die.owner) + " " + die.type.toUpperCase() + ":" + die.value +
+    " → [" + target.target.q + "," + target.target.r + "]", "move");
+  finishAction();
+}
+
+
+function executeTowerMoveAction(target) {
+  const coord = selectedDie.position;
+  const player = gs.turn;
+  const result = executeTowerMove(gs, coord, target.target, player);
+
+  if (!result.success) {
+    showInfo("Chyba", [result.reason]);
+    return;
+  }
+
+  if (result.attack) {
+    showCombatModal(result, "towerMove");
+    return;
+  }
+
+  logMsg(playerName(player) + " pohyb věže → [" + target.target.q + "," + target.target.r + "]", "move");
+  finishAction();
+}
+
+
+function executeTowerJumpAction(target) {
+  const coord = selectedDie.position;
+  const result = executeTowerJump(gs, coord, target.target, gs.turn);
+
+  if (!result.success) {
+    showInfo("Chyba", [result.reason]);
+    return;
+  }
+
+  if (result.attack) {
+    showCombatModal(result, "towerJump");
+    return;
+  }
+
+  logMsg(playerName(gs.turn) + " skok z věže → [" + target.target.q + "," + target.target.r + "]", "move");
+  finishAction();
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// SPECIAL ACTIONS (Reform, Collapse)
+// ═══════════════════════════════════════════════════════════════
+
+function handleReformAction() {
+  const player = gs.turn;
+  const playerDiceList = gs.getPlayerDice(player);
+  if (playerDiceList.length < 1) {
+    showInfo("Přeformování", ["Nemáte žádnou živou kostku."]);
+    renderAll();
+    return;
+  }
+  // Vyber první kostku (nebo později dle UI)
+  const die = playerDiceList[0];
+  const result = executeReform(die);
+  logMsg(playerName(gs.turn) + ' přeformování: ' + die.type.toUpperCase() + ':' + result.oldValue + '→' + result.newValue, 'move');
+  renderAll();
+  finishAction();
+}
+
+function handleCollapseAction() {
+  const result = findCollapsibleTowers(gs, gs.turn);
+  if (!result.towers || result.towers.length === 0) {
+    showInfo("Kolaps věže", ["Žádná věž ke zkolabování (potřeba ≥ 3 kostky + nadváda)."]);
+    renderAll();
+    return;
+  }
+
+  validTargets = result.towers.map(t => ({ target: t.coord, isAttack: false, towerData: t }));
+  showInfo("Kolaps věže", [
+    result.towers.length + " věží ke zkolabování.",
+    "Klikněte na věž."
+  ]);
+
+  currentAction = "collapse_select";
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMBAT MODAL
+// ═══════════════════════════════════════════════════════════════
+
+function showCombatModal(combatResult, originAction) {
+  const overlay = document.getElementById("modalOverlay");
+  const isTowerAttack = originAction === "towerMove";
+  const canOccupy = !isTowerAttack;
+
+  let atkLabel = combatResult.attackStrength || "?";
+  let defLabel = combatResult.defenseStrength || "?";
+
+  let html = '<div class="modal">';
+  html += '<h2>⚔ Střet!</h2>';
+  html += '<p>Útok: <strong>' + atkLabel + '</strong> vs Obrana: <strong>' + defLabel + '</strong></p>';
+
+  if (isTowerAttack) {
+    html += '<p style="color:#7cb3ff;font-size:12px;opacity:0.8;">Věž může pouze vytlačit.</p>';
+  }
+
+  html += '<div class="modal-buttons">';
+  html += '<button class="modal-btn displace" onclick="resolveCombatChoice(\'displace\')">🏃 Vytlačit</button>';
+  if (canOccupy) {
+    html += '<button class="modal-btn occupy" onclick="resolveCombatChoice(\'occupy\')">🏰 Obsadit</button>';
+  }
+  html += '<button class="modal-btn cancel" onclick="cancelCombat()">✖ Zrušit</button>';
+  html += '</div></div>';
+
+  overlay.innerHTML = html;
+  overlay.style.display = "flex";
+
+  // Store combat context
+  overlay._combatResult = combatResult;
+  overlay._originAction = originAction;
+}
+
+function resolveCombatChoice(choice) {
+  const overlay = document.getElementById("modalOverlay");
+  const combatResult = overlay._combatResult;
+  const originAction = overlay._originAction;
+  overlay.style.display = "none";
+
+  let attackerDie, attackerFrom, targetCoord, options;
+
+  if (originAction === "move") {
+    attackerDie = combatResult.attacker;
+    attackerFrom = combatResult.attackerFrom;
+    targetCoord = combatResult.target;
+    options = { attackStrength: combatResult.attackStrength };
+  } else if (originAction === "towerMove") {
+    // Tower move: use top die of tower as reference (for wear), full tower strength
+    const towerFormation = combatResult.towerFormation;
+    attackerDie = towerFormation[towerFormation.length - 1]; // top die
+    attackerFrom = combatResult.attackerFrom;
+    targetCoord = combatResult.target;
+    options = {
+      attackStrength: combatResult.attackStrength || combatResult.towerStrength,
+      isTowerAttack: true,
+      wearDie: attackerDie,
+    };
+    // Remember remaining tower dice to move after combat
+    options._towerDice = towerFormation.filter(d => d !== attackerDie);
+  } else if (originAction === "towerJump") {
+    attackerDie = combatResult.jumpDie;
+    attackerFrom = combatResult.attackerFrom;
+    targetCoord = combatResult.target;
+    options = {
+      attackStrength: combatResult.attackStrength,
+      isTowerAttack: false,
+    };
+  }
+
+  const result = resolveCombat(gs, attackerDie, attackerFrom, targetCoord, choice, options);
+
+  if (!result.success) {
+    showInfo("Střet selhal", [result.reason]);
+    renderAll();
+    return;
+  }
+
+  // For tower move: move remaining tower dice to target after combat
+  if (originAction === "towerMove" && options._towerDice) {
+    for (const die of options._towerDice) {
+      if (die.alive) gs.moveDie(die, targetCoord);
+    }
+  }
+
+  // Log
+  const choiceLabel = choice === "displace" ? "vytlačení" : "obsazení";
+  logMsg("⚔ Střet: " + playerName(attackerDie.owner) + " " + choiceLabel +
+    " na [" + targetCoord.q + "," + targetCoord.r + "]", "combat");
+
+  if (result.phase2 && result.phase2.points > 0) {
+    logMsg("  +" + result.phase2.points + " bodů za destrukci", "score");
+  }
+  if (result.phase2 && result.phase2.destroyed && result.phase2.destroyed.length > 0) {
+    logMsg("  Zničeno " + result.phase2.destroyed.length + " kostek", "combat");
+  }
+
+  // Check win
+  gs.checkWin();
+  if (gs.winner) {
+    showWin(gs.winner);
+  }
+
+  finishAction();
+}
+
+function cancelCombat() {
+  document.getElementById("modalOverlay").style.display = "none";
+  // The move wasn't executed, so revert — for simple die moves,
+  // executeMove doesn't actually move on attack, so nothing to revert
+  showInfo("Střet zrušen", ["Váš tah pokračuje — zvolte akci."]);
+  renderAll();
+}
+
+// ── Direction picker modal (approach direction for displacement) ──
+
+const DIR_NAMES = ["→ V", "↗ SV", "↖ SZ", "← Z", "↙ JZ", "↘ JV"];
+const DIR_LABELS_FULL = ["Východ", "Severovýchod", "Severozápad", "Západ", "Jihozápad", "Jihovýchod"];
+
+function showDirectionPickerModal(die, target) {
+  const overlay = document.getElementById("modalOverlay");
+  const approaches = target.approachDirections;
+
+  // Build a set of available direction indices
+  const availableDirs = new Map(); // dir index → approach obj
+  for (const a of approaches) {
+    const dir = getDirection(a.attackerFrom, target.target);
+    if (dir >= 0) availableDirs.set(dir, a);
+  }
+
+  // Mini hex compass config
+  const R = 34; // hex size for compass
+  const S3 = Math.sqrt(3);
+
+  // Compute pixel positions for pointy-top hex neighbors
+  function miniHexPos(q, r) {
+    return {
+      x: R * (S3 * q + S3 / 2 * r),
+      y: R * (3 / 2 * r)
+    };
+  }
+
+  function miniHexCorners(cx, cy, size) {
+    const pts = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = Math.PI / 180 * (60 * i - 30);
+      pts.push((cx + size * Math.cos(angle)).toFixed(1) + "," + (cy + size * Math.sin(angle)).toFixed(1));
+    }
+    return pts.join(" ");
+  }
+
+  // Arrow path from approach hex toward target, then continuing to push destination
+  function arrowPath(fromX, fromY, toX, toY, pushX, pushY) {
+    // Shorten: start 35% from source, end 35% from push dest
+    const ax = fromX + (toX - fromX) * 0.35;
+    const ay = fromY + (toY - fromY) * 0.35;
+    const bx = toX + (pushX - toX) * 0.65;
+    const by = toY + (pushY - toY) * 0.65;
+    return 'M' + ax.toFixed(1) + ',' + ay.toFixed(1) + 'L' + bx.toFixed(1) + ',' + by.toFixed(1);
+  }
+
+  // SVG viewBox
+  const svgW = 300, svgH = 260;
+  const cx = svgW / 2, cy = svgH / 2 - 5;
+
+  let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:300px;height:260px;display:block;margin:0 auto;">';
+
+  // Defs: arrowhead
+  svg += '<defs><marker id="dirArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">';
+  svg += '<path d="M0,1 L10,5 L0,9 z" fill="#34d399"/></marker></defs>';
+
+  // Center hex (target = enemy)
+  svg += '<polygon points="' + miniHexCorners(cx, cy, R * 0.9) + '" fill="#2a1218" stroke="#e8384f" stroke-width="2.5" opacity="0.9"/>';
+
+  // Enemy die icon in center
+  const enemyFormation = gs.getFormation(target.target);
+  const enemyTop = enemyFormation.length > 0 ? topDie(enemyFormation) : null;
+  if (enemyTop) {
+    const eCol = enemyTop.owner === Player.Red ? '#e8384f' : '#3b82f6';
+    svg += '<rect x="' + (cx - 11) + '" y="' + (cy - 11) + '" width="22" height="22" rx="4" fill="' + eCol + '" opacity="0.8"/>';
+    svg += '<text x="' + cx + '" y="' + cy + '" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="12" font-weight="800" font-family="Inter,sans-serif">' + enemyTop.value + '</text>';
+  }
+  svg += '<text x="' + cx + '" y="' + (cy + R * 0.52) + '" text-anchor="middle" fill="#e8384f" font-size="9" font-weight="600" font-family="Inter,sans-serif" opacity="0.8">CÍL</text>';
+
+  // 6 neighbor positions
+  for (let d = 0; d < 6; d++) {
+    const dq = HEX_DIRECTIONS[d].q;
+    const dr = HEX_DIRECTIONS[d].r;
+    const pos = miniHexPos(dq, dr);
+    const nx = cx + pos.x;
+    const ny = cy + pos.y;
+
+    const isAvailable = availableDirs.has(d);
+
+    // Push destination (opposite side of target from approach)
+    const pushDq = HEX_DIRECTIONS[d].q; // same direction continues
+    const pushDr = HEX_DIRECTIONS[d].r;
+    const pushPos = miniHexPos(-dq + pushDq, -dr + pushDr); // target + dir
+    const pushX = cx + miniHexPos(pushDq * 2, pushDr * 2).x / 2;  // push is "through" target
+    // Actually: pushDest = target + direction. From center (which IS target), that's just miniHexPos(dq, dr) but on the opposite side
+    const oppD = (d + 3) % 6;
+    const oppPos = miniHexPos(HEX_DIRECTIONS[oppD].q, HEX_DIRECTIONS[oppD].r);
+    const pushNx = cx + oppPos.x;
+    const pushNy = cy + oppPos.y;
+
+    if (isAvailable) {
+      const a = availableDirs.get(d);
+
+      // Hex (clickable)
+      svg += '<polygon points="' + miniHexCorners(nx, ny, R * 0.85) + '" '
+        + 'fill="#142818" stroke="#34d399" stroke-width="2" '
+        + 'style="cursor:pointer;transition:all 0.15s;" '
+        + 'onmouseover="this.setAttribute(\'fill\',\'#1a4028\');this.setAttribute(\'stroke-width\',\'3\')" '
+        + 'onmouseout="this.setAttribute(\'fill\',\'#142818\');this.setAttribute(\'stroke-width\',\'2\')" '
+        + 'onclick="pickDirection(' + a.attackerFrom.q + ',' + a.attackerFrom.r + ')"/>';
+
+      // Our die icon in the approach hex
+      const ownCol = die.owner === Player.Red ? '#e8384f' : '#3b82f6';
+      svg += '<rect x="' + (nx - 9) + '" y="' + (ny - 9) + '" width="18" height="18" rx="3" fill="' + ownCol + '" opacity="0.7" pointer-events="none"/>';
+      svg += '<text x="' + nx + '" y="' + ny + '" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="10" font-weight="800" font-family="Inter,sans-serif" pointer-events="none">' + die.value + '</text>';
+
+      // Arrow: from approach → through target → push dest
+      svg += '<line x1="' + (nx + (cx - nx) * 0.4).toFixed(1) + '" y1="' + (ny + (cy - ny) * 0.4).toFixed(1) + '" '
+        + 'x2="' + (cx + (pushNx - cx) * 0.55).toFixed(1) + '" y2="' + (cy + (pushNy - cy) * 0.55).toFixed(1) + '" '
+        + 'stroke="#34d399" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#dirArrow)" pointer-events="none" opacity="0.7"/>';
+
+      // Direction label
+      svg += '<text x="' + nx + '" y="' + (ny + R * 0.58) + '" text-anchor="middle" fill="#34d399" font-size="8" font-weight="700" font-family="Inter,sans-serif" pointer-events="none">'
+        + DIR_NAMES[d] + '</text>';
+    } else {
+      // Non-available neighbor — dim ghost hex
+      svg += '<polygon points="' + miniHexCorners(nx, ny, R * 0.8) + '" fill="#141322" stroke="#2e2c48" stroke-width="1" opacity="0.4"/>';
+    }
+  }
+
+  svg += '</svg>';
+
+  // Modal HTML
+  let html = '<div class="modal" style="max-width:460px;">';
+  html += '<h2>Směr útoku</h2>';
+  html += '<p style="margin-bottom:10px;">Klikněte na hex, odkud chcete zaútočit.<br>'
+    + '<span style="font-size:11px;color:#8a8478;">Šipka ukazuje směr vytlačení nepřítele.</span></p>';
+  html += svg;
+  html += '<div style="display:flex;gap:12px;align-items:center;justify-content:center;margin-top:14px;font-size:11px;color:#8a8478;">';
+  html += '<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#34d399;"></span> Váš příchod</span>';
+  html += '<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8384f;"></span> Cíl (nepřítel)</span>';
+  html += '<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:6px;height:0;border-top:2px dashed #34d399;"></span> Vytlačení</span>';
+  html += '</div>';
+  html += '<div style="margin-top:16px;"><button class="modal-btn cancel" onclick="cancelCombat()">Zrušit</button></div>';
+  html += '</div>';
+
+  overlay.innerHTML = html;
+  overlay.style.display = "flex";
+
+  // Store context
+  overlay._dirPickerDie = die;
+  overlay._dirPickerTarget = target.target;
+}
+
+function pickDirection(fromQ, fromR) {
+  const overlay = document.getElementById("modalOverlay");
+  overlay.style.display = "none";
+  const die = overlay._dirPickerDie;
+  const targetCoord = overlay._dirPickerTarget;
+
+  const result = executeMove(gs, die, targetCoord, { q: fromQ, r: fromR });
+  if (!result.success) {
+    showInfo("Chyba", [result.reason]);
+    renderAll();
+    return;
+  }
+
+  if (result.attack) {
+    showCombatModal(result, "move");
+  }
+}
+
+// ── Collapse (automatický — spodní kostka) ───────────────────
+// Kolaps se nyní provádí automaticky v executeCollapseSelect.
+
+
+// ═══════════════════════════════════════════════════════════════
+// TURN MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+function finishAction() {
+  actionUsed = true;
+  selectedDie = null;
+  selectedCoord = null;
+  currentAction = null;
+  validTargets = [];
+  document.querySelectorAll(".action-btn").forEach(b => b.classList.remove("active"));
+  showInfo("Akce provedena", ["Klikněte «Ukončit tah» pro předání tahu."]);
+  renderAll();
+}
+
+function endTurn() {
+  gs.endTurn();
+
+  if (gs.winner) {
+    showWin(gs.winner);
+    return;
+  }
+
+  actionUsed = false;
+  selectedDie = null;
+  selectedCoord = null;
+  currentAction = null;
+  validTargets = [];
+  document.querySelectorAll(".action-btn").forEach(b => b.classList.remove("active"));
+
+  logMsg("═══ Tah " + gs.turnNumber + ": " + playerName(gs.turn) + " ═══", "");
+  showInfo("Nový tah", [colorTag(gs.turn) + " je na tahu.", "Vyberte akci a kostku."]);
+  renderAll();
+}
+
+function showWin(winner) {
+  const screen = document.getElementById("winScreen");
+  const title = document.getElementById("winTitle");
+  const sub = document.getElementById("winSub");
+  screen.classList.add("show");
+  title.className = "win-title " + winner;
+  title.textContent = (winner === Player.Red ? "ČERVENÝ" : "MODRÝ") + " VYHRÁVÁ!";
+  const s = gs.scoreSummary();
+  const ws = winner === Player.Red ? s.red : s.blue;
+  sub.textContent = "Skóre: " + ws.total + " (destrukce: " + ws.destruction + ", ohniska: " + ws.focalPoints + ")";
+}
+
+function restartGame() {
+  initGame();
+}
+
+function playerName(p) {
+  return p === Player.Red ? "Červený" : "Modrý";
+}
+
+// reform_select and collapse_select are handled directly in executeAction above.
+
+// ═══════════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════════
+
+
+// Helper: getDirection between two hexes (returns 0-5 or -1 if not direct neighbor)
+function getDirection(from, to) {
+  const dq = to.q - from.q;
+  const dr = to.r - from.r;
+  for (let dir = 0; dir < HEX_DIRECTIONS.length; dir++) {
+    if (HEX_DIRECTIONS[dir].q === dq && HEX_DIRECTIONS[dir].r === dr) {
+      return dir;
+    }
+  }
+  return -1;
+}
+
+initGame();
+
+</script>
+</body>
+</html>

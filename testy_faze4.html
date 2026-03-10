@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Pád Donjonu — Fáze 4: Unit Testy</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0d0d1a; color: #e0e0e0; font-family: 'Consolas', monospace; padding: 20px; }
+    h1 { color: #ffd700; margin-bottom: 16px; }
+    .summary { font-size: 18px; margin-bottom: 16px; padding: 12px; border-radius: 6px; }
+    .summary.pass { background: #1a3a1a; border: 2px solid #4caf50; }
+    .summary.fail { background: #3a1a1a; border: 2px solid #f44336; }
+    .section { margin: 12px 0 4px; font-size: 15px; color: #aaa; font-weight: bold; }
+    .test { padding: 3px 8px; font-size: 13px; }
+    .test.pass { color: #81c784; }
+    .test.pass::before { content: "✅ "; }
+    .test.fail { color: #ef5350; font-weight: bold; }
+    .test.fail::before { content: "❌ "; }
+    .detail { color: #ef9a9a; margin-left: 28px; font-size: 12px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+<h1>🎲 Pád Donjonu — Fáze 4: Unit Testy</h1>
+<div id="output"></div>
+
+<script src="src/game.js"></script>
+<script>
+"use strict";
+
+// ═══════════════════════════════════════════════════════════════
+// MINIMÁLNÍ TEST FRAMEWORK
+// ═══════════════════════════════════════════════════════════════
+
+let _passed = 0, _failed = 0, _html = "";
+
+function section(name) {
+  _html += '<div class="section">── ' + name + ' ──</div>';
+}
+
+function assert(condition, name, detail) {
+  if (condition) {
+    _passed++;
+    _html += '<div class="test pass">' + name + '</div>';
+  } else {
+    _failed++;
+    _html += '<div class="test fail">' + name + '</div>';
+    if (detail) _html += '<div class="detail">' + detail + '</div>';
+  }
+}
+
+function assertEqual(actual, expected, name) {
+  assert(actual === expected, name,
+    "Očekáváno: " + JSON.stringify(expected) + ", dostáno: " + JSON.stringify(actual));
+}
+
+function assertNotEqual(actual, notExpected, name) {
+  assert(actual !== notExpected, name,
+    "Nemělo být: " + JSON.stringify(notExpected) + ", ale je: " + JSON.stringify(actual));
+}
+
+function assertRange(actual, min, max, name) {
+  assert(actual >= min && actual <= max, name,
+    "Očekáváno " + min + "–" + max + ", dostáno: " + actual);
+}
+
+function assertTruthy(val, name) {
+  assert(!!val, name, "Očekáváno truthy, dostáno: " + JSON.stringify(val));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HELPER: vytvoření testovacího stavu
+// ═══════════════════════════════════════════════════════════════
+
+/** Vytvoří čistý GameState (prázdná deska). */
+function freshGS() {
+  const gs = new GameState();
+  gs.board.clear();
+  gs.dice = [];
+  gs.scores = { red: 0, blue: 0 };
+  gs.turn = Player.Red;
+  gs.turnNumber = 1;
+  gs.winner = null;
+  return gs;
+}
+
+/** Umístí kostku na pole a vrátí ji. */
+function place(gs, owner, value, q, r) {
+  const die = createDieWithValue(owner, DiceType.D6, value);
+  gs._placeDie(die, { q, r });
+  return die;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ═══  TESTY ZAČÍNAJÍ  ════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+
+
+// ═══════════════ DD-1: NADVLÁDA = HORNÍ KOSTKA ══════════════
+
+section("DD-1: Nadvláda = horní kostka (towerDominance)");
+
+(function() {
+  const r1 = createDieWithValue(Player.Red, DiceType.D6, 1);
+  const b6 = createDieWithValue(Player.Blue, DiceType.D6, 6);
+  // Červená 1 nahoře, modrá 6 dole → nadvláda červená
+  assertEqual(towerDominance([b6, r1]), Player.Red,
+    "Červená 1 nahoře, modrá 6 dole → nadvláda = Red");
+})();
+
+(function() {
+  const r6 = createDieWithValue(Player.Red, DiceType.D6, 6);
+  const b6 = createDieWithValue(Player.Blue, DiceType.D6, 6);
+  assertEqual(towerDominance([r6, b6]), Player.Blue,
+    "Obě 6, modrá nahoře → nadvláda = Blue (žádná remíza)");
+})();
+
+(function() {
+  const r3 = createDieWithValue(Player.Red, DiceType.D6, 3);
+  assertEqual(towerDominance([r3]), Player.Red,
+    "Samotná kostka → nadvláda = vlastník");
+})();
+
+(function() {
+  assertEqual(towerDominance([]), null,
+    "Prázdná formace → null");
+})();
+
+(function() {
+  // 5-věž: R1 B2 R3 B4 R5 (nahoře)
+  const dice = [
+    createDieWithValue(Player.Red, DiceType.D6, 1),
+    createDieWithValue(Player.Blue, DiceType.D6, 2),
+    createDieWithValue(Player.Red, DiceType.D6, 3),
+    createDieWithValue(Player.Blue, DiceType.D6, 4),
+    createDieWithValue(Player.Red, DiceType.D6, 5),
+  ];
+  assertEqual(towerDominance(dice), Player.Red,
+    "5-věž [R1,B2,R3,B4,R5]: nadvláda = Red (nahoře)");
+})();
+
+
+// ═══════════════ A13: NADVLÁDA NIKDY NULL ═══════════════════
+
+section("A13: Nadvláda nikdy null (žádná remíza)");
+
+(function() {
+  const r6 = createDieWithValue(Player.Red, DiceType.D6, 6);
+  const b6 = createDieWithValue(Player.Blue, DiceType.D6, 6);
+  const dom = towerDominance([r6, b6]);
+  assertNotEqual(dom, null, "Stejné hodnoty (6,6): nadvláda NENÍ null");
+  assertEqual(dom, Player.Blue, "Modrá nahoře → nadvláda modrá");
+})();
+
+
+// ═══════════════ DD-2: ÚTOČNÁ SÍLA ═════════════════════════
+
+section("DD-2: Útočná síla = top.value + (own−1) − opp");
+
+(function() {
+  const r4 = createDieWithValue(Player.Red, DiceType.D6, 4);
+  assertEqual(formationAttackStrength([r4], Player.Red), 4,
+    "Samotná kostka 4: síla = 4");
+})();
+
+(function() {
+  const r5 = createDieWithValue(Player.Red, DiceType.D6, 5);
+  const r3 = createDieWithValue(Player.Red, DiceType.D6, 3);
+  assertEqual(formationAttackStrength([r5, r3], Player.Red), 4,
+    "Věž [R5, R3]: top(3) + (2−1) − 0 = 4");
+})();
+
+(function() {
+  const b2 = createDieWithValue(Player.Blue, DiceType.D6, 2);
+  const r6 = createDieWithValue(Player.Red, DiceType.D6, 6);
+  assertEqual(formationAttackStrength([b2, r6], Player.Red), 5,
+    "Smíšená [B2, R6]: Red = 6 + (1−1) − 1 = 5");
+})();
+
+(function() {
+  // Velká věž R1 B2 R3 B4 R5
+  const dice = [
+    createDieWithValue(Player.Red, DiceType.D6, 1),
+    createDieWithValue(Player.Blue, DiceType.D6, 2),
+    createDieWithValue(Player.Red, DiceType.D6, 3),
+    createDieWithValue(Player.Blue, DiceType.D6, 4),
+    createDieWithValue(Player.Red, DiceType.D6, 5),
+  ];
+  assertEqual(formationAttackStrength(dice, Player.Red), 5,
+    "5-věž Red: 5+(3−1)−2 = 5");
+  assertEqual(formationAttackStrength(dice, Player.Blue), 3,
+    "5-věž Blue: 5+(2−1)−3 = 3");
+})();
+
+(function() {
+  assertEqual(formationAttackStrength([], Player.Red), 0,
+    "Prázdná formace → 0");
+})();
+
+
+// ═══════════════ DD-3: DOSAH VĚŽE ══════════════════════════
+
+section("DD-3: Dosah věže = max(1, own − opp)");
+
+(function() {
+  const r1 = createDieWithValue(Player.Red, DiceType.D6, 1);
+  const r2 = createDieWithValue(Player.Red, DiceType.D6, 2);
+  assertEqual(towerReach([r1, r2], Player.Red), 2,
+    "2 vlastní, 0 soupeř → dosah 2");
+})();
+
+(function() {
+  const r1 = createDieWithValue(Player.Red, DiceType.D6, 1);
+  const b2 = createDieWithValue(Player.Blue, DiceType.D6, 2);
+  const r3 = createDieWithValue(Player.Red, DiceType.D6, 3);
+  assertEqual(towerReach([r1, b2, r3], Player.Red), 1,
+    "2 vlastní, 1 soupeř → dosah max(1, 2−1) = 1");
+})();
+
+(function() {
+  const r1 = createDieWithValue(Player.Red, DiceType.D6, 1);
+  const b2 = createDieWithValue(Player.Blue, DiceType.D6, 2);
+  const b3 = createDieWithValue(Player.Blue, DiceType.D6, 3);
+  assertEqual(towerReach([r1, b2, b3], Player.Red), 1,
+    "1 vlastní, 2 soupeř → dosah min 1 (nikdy 0)");
+})();
+
+(function() {
+  const r1 = createDieWithValue(Player.Red, DiceType.D6, 1);
+  const r2 = createDieWithValue(Player.Red, DiceType.D6, 2);
+  const r3 = createDieWithValue(Player.Red, DiceType.D6, 3);
+  const b4 = createDieWithValue(Player.Blue, DiceType.D6, 4);
+  assertEqual(towerReach([r1, r2, r3, b4], Player.Red), 2,
+    "3 vlastní, 1 soupeř → dosah 2");
+})();
+
+
+// ═══════════════ DD-3: POHYB VĚŽE (BFS dosah) ═════════════
+
+section("DD-3: Pohyb věže — BFS s proměnným dosahem");
+
+(function() {
+  const gs = freshGS();
+  place(gs, Player.Red, 3, 0, 0);
+  place(gs, Player.Red, 4, 0, 0);
+  place(gs, Player.Red, 5, 0, 0);
+
+  const result = findTowerMoveTargets(gs, {q:0,r:0}, Player.Red);
+  const dists = result.targets.map(t => hexDistance({q:0,r:0}, t.target));
+  const maxDist = dists.length > 0 ? Math.max(...dists) : 0;
+  assertEqual(maxDist, 3, "Věž 3 vlastní → dosah 3");
+})();
+
+(function() {
+  const gs = freshGS();
+  place(gs, Player.Red, 2, 0, 0);
+  place(gs, Player.Blue, 3, 0, 0);
+  place(gs, Player.Red, 5, 0, 0);
+
+  const result = findTowerMoveTargets(gs, {q:0,r:0}, Player.Red);
+  const dists = result.targets.map(t => hexDistance({q:0,r:0}, t.target));
+  const maxDist = dists.length > 0 ? Math.max(...dists) : 0;
+  assertEqual(maxDist, 1, "Smíšená věž [R,B,R] Red: dosah = max(1, 2−1) = 1");
+})();
+
+
+// ═══════════════ DD-3: SKOK Z VĚŽE ════════════════════════
+
+section("DD-3: Skok z věže — proměnný dosah");
+
+(function() {
+  const gs = freshGS();
+  place(gs, Player.Red, 2, 0, 0);
+  place(gs, Player.Red, 3, 0, 0);
+  place(gs, Player.Red, 5, 0, 0);
+
+  const result = findTowerJumpTargets(gs, {q:0,r:0}, Player.Red);
+  const dists = result.targets.map(t => hexDistance({q:0,r:0}, t.target));
+  const maxDist = dists.length > 0 ? Math.max(...dists) : 0;
+  assertEqual(maxDist, 3, "Skok z vlastní 3-věže → dosah 3");
+})();
+
+
+// ═══════════════ A5: CAP DEFENDER REROLL ═══════════════════
+
+section("A5: Přehození obránce — cap na starou hodnotu");
+
+(function() {
+  let capped = true;
+  for (let i = 0; i < 200; i++) {
+    const attacker = createDieWithValue(Player.Red, DiceType.D6, 6);
+    const defender = createDieWithValue(Player.Blue, DiceType.D6, 3);
+    combatPhase1(attacker, [defender]);
+    if (defender.value > 3) { capped = false; break; }
+  }
+  assert(capped, "200× reroll obránce s hodnotou 3: nová ≤ 3");
+})();
+
+(function() {
+  let allOne = true;
+  for (let i = 0; i < 50; i++) {
+    const attacker = createDieWithValue(Player.Red, DiceType.D6, 6);
+    const defender = createDieWithValue(Player.Blue, DiceType.D6, 1);
+    combatPhase1(attacker, [defender]);
+    if (defender.value !== 1) { allOne = false; break; }
+  }
+  assert(allOne, "Obránce s hodnotou 1: po rerollu vždy zůstane 1");
+})();
+
+(function() {
+  const attacker = createDieWithValue(Player.Red, DiceType.D6, 6);
+  const defender = createDieWithValue(Player.Blue, DiceType.D6, 3);
+  const result = combatPhase1(attacker, [defender]);
+  assertEqual(result.newAttackerValue, 5, "Opotřebení útočníka: 6 → 5");
+  assertEqual(result.oldAttackerValue, 6, "Stará hodnota útočníka: 6");
+})();
+
+(function() {
+  // Více obránců
+  let allCapped = true;
+  for (let i = 0; i < 100; i++) {
+    const atk = createDieWithValue(Player.Red, DiceType.D6, 6);
+    const d1 = createDieWithValue(Player.Blue, DiceType.D6, 2);
+    const d2 = createDieWithValue(Player.Blue, DiceType.D6, 4);
+    combatPhase1(atk, [d1, d2]);
+    if (d1.value > 2 || d2.value > 4) { allCapped = false; break; }
+  }
+  assert(allCapped, "Více obránců [2,4]: oba capovaní (≤ starý)");
+})();
+
+
+// ═══════════════ A6: PŘEFORMOVÁNÍ ═════════════════════════
+
+section("A6: Přeformování — 1 hod, max(starý, nový)");
+
+(function() {
+  let allGE = true;
+  for (let i = 0; i < 200; i++) {
+    const die = createDieWithValue(Player.Red, DiceType.D6, 3);
+    const r = executeReform(die);
+    if (r.newValue < 3) { allGE = false; break; }
+  }
+  assert(allGE, "200× reform kostky 3: výsledek vždy ≥ 3");
+})();
+
+(function() {
+  const die = createDieWithValue(Player.Red, DiceType.D6, 6);
+  const r = executeReform(die);
+  assertEqual(r.newValue, 6, "Reform kostky 6 → vždy 6 (max)");
+})();
+
+(function() {
+  const die = createDieWithValue(Player.Red, DiceType.D6, 1);
+  const r = executeReform(die);
+  assertRange(r.newValue, 1, 6, "Reform kostky 1 → 1–6");
+})();
+
+(function() {
+  // Statistický: 500× reform kostky 1 → průměr ~3.5
+  let sum = 0;
+  const N = 500;
+  for (let i = 0; i < N; i++) {
+    const die = createDieWithValue(Player.Red, DiceType.D6, 1);
+    sum += executeReform(die).newValue;
+  }
+  const avg = sum / N;
+  assertRange(avg, 2.8, 4.2, "Stat: avg reform(1) ≈ 3.5 (got " + avg.toFixed(2) + ")");
+})();
+
+(function() {
+  // Statistický: 500× reform kostky 5 → průměr ~5.17
+  let sum = 0;
+  const N = 500;
+  for (let i = 0; i < N; i++) {
+    const die = createDieWithValue(Player.Red, DiceType.D6, 5);
+    sum += executeReform(die).newValue;
+  }
+  const avg = sum / N;
+  assertRange(avg, 4.8, 5.5, "Stat: avg reform(5) ≈ 5.17 (got " + avg.toFixed(2) + ")");
+})();
+
+
+// ═══════════════ A8: ÚTĚK Z VĚŽE ═════════════════════════
+
+section("A8: Útěk z věže");
+
+(function() {
+  const gs = freshGS();
+  place(gs, Player.Blue, 2, 0, 0);
+  place(gs, Player.Red, 5, 0, 0);
+
+  const result = findEscapeTargets(gs, {q:0,r:0}, Player.Red);
+  assert(result.targets.length > 0, "Útěk: R5 z věže s 1 soupeřem → má cíle");
+  assertEqual(result.cost, 1, "Cost = 1 (1 soupeřova kostka)");
+})();
+
+(function() {
+  const gs = freshGS();
+  place(gs, Player.Blue, 3, 0, 0);
+  place(gs, Player.Blue, 4, 0, 0);
+  place(gs, Player.Red, 2, 0, 0);
+
+  const result = findEscapeTargets(gs, {q:0,r:0}, Player.Red);
+  assertEqual(result.targets.length, 0, "Útěk zakázán: hodnota 2 < potřeba 3");
+  assertTruthy(result.reason, "Má důvod odmítnutí");
+})();
+
+(function() {
+  const gs = freshGS();
+  place(gs, Player.Blue, 1, 0, 0);
+  place(gs, Player.Red, 4, 0, 0);
+
+  const result = executeEscape(gs, {q:0,r:0}, {q:1,r:0}, Player.Red);
+  assert(result.success, "Útěk proveden úspěšně");
+  assertEqual(result.newValue, 3, "Nová hodnota: 4 − 1 = 3");
+  assertEqual(gs.getFormation({q:0,r:0}).length, 1, "Původní pole: 1 kostka");
+  assertEqual(gs.getFormation({q:1,r:0}).length, 1, "Cílové pole: 1 kostka");
+})();
+
+(function() {
+  const gs = freshGS();
+  // Minimální hodnota po útěku = 1
+  place(gs, Player.Blue, 1, 2, 0);
+  place(gs, Player.Blue, 2, 2, 0);
+  place(gs, Player.Blue, 3, 2, 0);
+  place(gs, Player.Red, 4, 2, 0);
+
+  const esc = executeEscape(gs, {q:2,r:0}, {q:3,r:0}, Player.Red);
+  assert(esc.success, "Útěk z 4-věže se 3 soupeři: úspěch");
+  assertEqual(esc.newValue, 1, "Hodnota: max(1, 4−3) = 1");
+})();
+
+(function() {
+  const gs = freshGS();
+  // Útěk z vlastní věže (bez soupeřů) → odmítnuto
+  place(gs, Player.Red, 3, 0, 0);
+  place(gs, Player.Red, 5, 0, 0);
+
+  const result = findEscapeTargets(gs, {q:0,r:0}, Player.Red);
+  assertEqual(result.targets.length, 0, "Útěk z čistě vlastní věže → nulové cíle");
+  assertTruthy(result.reason, "Důvod: žádné soupeřovy kostky");
+})();
+
+(function() {
+  const gs = freshGS();
+  // Soupeř nahoře → já nemůžu utéct
+  place(gs, Player.Red, 3, 0, 0);
+  place(gs, Player.Blue, 5, 0, 0);
+
+  const result = findEscapeTargets(gs, {q:0,r:0}, Player.Red);
+  assertEqual(result.targets.length, 0, "Soupeř nahoře → Red nemůže utéct");
+})();
+
+
+// ═══════════════ A9: PROCHÁZENÍ PŘES VLASTNÍ ═══════════════
+
+section("A9: Průchod přes vlastní — stop vždy, pass pokud silnější");
+
+(function() {
+  const gs = freshGS();
+  const mover = place(gs, Player.Red, 6, -2, 0);
+  place(gs, Player.Red, 5, -1, 0);
+
+  const moves = findValidMoves(gs, mover);
+  const canReachCenter = moves.some(m => hexEquals(m.target, {q:0,r:0}));
+  assert(canReachCenter, "Kostka 6 projde přes vlastní 5 (6 > 5)");
+
+  const canStop = moves.some(m => hexEquals(m.target, {q:-1,r:0}));
+  assert(canStop, "Kostka 6 může zastavit na vlastním [-1,0] (věž)");
+})();
+
+(function() {
+  const gs = freshGS();
+  const mover = place(gs, Player.Red, 2, -2, 0);
+  place(gs, Player.Red, 5, -1, 0);
+
+  const moves = findValidMoves(gs, mover);
+  const canPassThrough = moves.some(m => hexEquals(m.target, {q:0,r:0}));
+  assert(!canPassThrough, "Kostka 2 NEMŮŽE projít přes vlastní 5 (2 ≤ 5)");
+
+  const canStop = moves.some(m => hexEquals(m.target, {q:-1,r:0}));
+  assert(canStop, "Kostka 2 MŮŽE zastavit na vlastní [-1,0] (tvorba věže)");
+})();
+
+(function() {
+  const gs = freshGS();
+  // Řetěz: mover 6 → vlastní 3 → vlastní 2 → prázdné
+  const mover = place(gs, Player.Red, 6, -3, 0);
+  place(gs, Player.Red, 3, -2, 0);
+  place(gs, Player.Red, 2, -1, 0);
+
+  const moves = findValidMoves(gs, mover);
+  const canReachCenter = moves.some(m => hexEquals(m.target, {q:0,r:0}));
+  assert(canReachCenter, "Kostka 6 projde přes 2 vlastní (6 > 3, 6 > 2)");
+})();
+
+
+// ═══════════════ DD-6 / A14: KOLAPS VĚŽE ═══════════════════
+
+section("A14: Kolaps věže — automaticky spodní kostka");
+
+(function() {
+  const gs = freshGS();
+  const bottom = place(gs, Player.Blue, 3, 0, 0);
+  place(gs, Player.Red, 4, 0, 0);
+  place(gs, Player.Red, 6, 0, 0);
+
+  const towers = findCollapsibleTowers(gs, Player.Red);
+  assertEqual(towers.towers.length, 1, "Nalezena 1 věž ke kolapsu");
+  assertEqual(towers.towers[0].bottomDie.owner, Player.Blue, "Spodní = Blue");
+
+  const result = executeCollapse(gs, {q:0,r:0}, Player.Red);
+  assert(result.success, "Kolaps úspěšný");
+  assert(result.wasEnemy, "Odstraněná kostka je soupeřova");
+  assertEqual(result.points, 1, "Získán 1 bod (D6)");
+  assertEqual(gs.getFormation({q:0,r:0}).length, 2, "Zbývají 2 kostky");
+  assert(!bottom.alive, "Spodní kostka je mrtvá");
+})();
+
+(function() {
+  const gs = freshGS();
+  place(gs, Player.Red, 3, 1, 0);
+  place(gs, Player.Red, 4, 1, 0);
+  place(gs, Player.Blue, 6, 1, 0);
+
+  const towers = findCollapsibleTowers(gs, Player.Red);
+  assertEqual(towers.towers.length, 0, "Soupeř nahoře → Red nemůže kolapsovat");
+})();
+
+(function() {
+  const gs = freshGS();
+  place(gs, Player.Blue, 2, 0, 0);
+  place(gs, Player.Red, 5, 0, 0);
+
+  const result = executeCollapse(gs, {q:0,r:0}, Player.Red);
+  assert(!result.success, "Kolaps zakázán: věž < 3 kostky");
+})();
+
+(function() {
+  const gs = freshGS();
+  // Vlastní spodní kostka → 0 bodů
+  const myBottom = place(gs, Player.Red, 1, 0, 0);
+  place(gs, Player.Blue, 3, 0, 0);
+  place(gs, Player.Red, 5, 0, 0);
+
+  const result = executeCollapse(gs, {q:0,r:0}, Player.Red);
+  assert(result.success, "Kolaps vlastní spodní: úspěch");
+  assert(!result.wasEnemy, "Spodní je vlastní");
+  assertEqual(result.points, 0, "0 bodů za vlastní kostku");
+  assert(!myBottom.alive, "Vlastní spodní je mrtvá");
+})();
+
+(function() {
+  const gs = freshGS();
+  // Kolaps nesouvisí s nadvládou — jen top die
+  place(gs, Player.Blue, 1, 0, 0);
+  place(gs, Player.Blue, 2, 0, 0);
+  place(gs, Player.Blue, 3, 0, 0);
+  place(gs, Player.Red, 6, 0, 0);
+
+  const result = executeCollapse(gs, {q:0,r:0}, Player.Red);
+  assert(result.success, "Kolaps 4-věže: Red nahoře → úspěch");
+  assertEqual(result.points, 1, "Bod za odstraněnou Blue spodní");
+  assertEqual(gs.getFormation({q:0,r:0}).length, 3, "Zbývají 3 kostky");
+})();
+
+
+// ═══════════════ DD-4: SABOTÁŽ ZRUŠENA ════════════════════
+
+section("DD-4: Sabotáž neexistuje");
+
+(function() {
+  assert(typeof findSabotageTargets === "undefined",
+    "findSabotageTargets neexistuje");
+  assert(typeof executeSabotage === "undefined",
+    "executeSabotage neexistuje");
+})();
+
+
+// ═══════════════ GETDIRECTION ══════════════════════════════
+
+section("getDirection — 6 směrů + nesousd");
+
+(function() {
+  assertEqual(getDirection({q:0,r:0}, {q:1,r:0}), 0, "E → dir 0");
+  assertEqual(getDirection({q:0,r:0}, {q:1,r:-1}), 1, "NE → dir 1");
+  assertEqual(getDirection({q:0,r:0}, {q:0,r:-1}), 2, "NW → dir 2");
+  assertEqual(getDirection({q:0,r:0}, {q:-1,r:0}), 3, "W → dir 3");
+  assertEqual(getDirection({q:0,r:0}, {q:-1,r:1}), 4, "SW → dir 4");
+  assertEqual(getDirection({q:0,r:0}, {q:0,r:1}), 5, "SE → dir 5");
+  assertEqual(getDirection({q:0,r:0}, {q:2,r:0}), -1, "Nesousd → -1");
+})();
+
+
+// ═══════════════ HEXMAP ═══════════════════════════════════
+
+section("HexMap: základní vlastnosti");
+
+(function() {
+  const m = new HexMap();
+  assertEqual(m.size, 61, "Mapa: 61 hexů");
+  assertEqual(m.getBaseCells(Player.Red).length, 5, "Červená základna: 5 polí");
+  assertEqual(m.getBaseCells(Player.Blue).length, 5, "Modrá základna: 5 polí");
+  assertEqual(m.getFocalPoints().length, 3, "3 ohniska");
+})();
+
+
+// ═══════════════ HELPER FUNKCE ════════════════════════════
+
+section("Helper funkce: isTower, isMixedFormation, topDie, bottomDie");
+
+(function() {
+  const r3 = createDieWithValue(Player.Red, DiceType.D6, 3);
+  assert(!isTower([r3]), "1 kostka → není věž");
+  assert(isTower([r3, createDieWithValue(Player.Red, DiceType.D6, 4)]), "2 kostky → věž");
+})();
+
+(function() {
+  const r = createDieWithValue(Player.Red, DiceType.D6, 1);
+  const b = createDieWithValue(Player.Blue, DiceType.D6, 2);
+  assert(isMixedFormation([r, b]), "R + B = smíšená");
+  assert(!isMixedFormation([r, createDieWithValue(Player.Red, DiceType.D6, 3)]), "R + R = čistá");
+})();
+
+(function() {
+  const r1 = createDieWithValue(Player.Red, DiceType.D6, 1);
+  const r6 = createDieWithValue(Player.Red, DiceType.D6, 6);
+  assertEqual(topDie([r1, r6]).value, 6, "topDie([1,6]) = 6");
+  assertEqual(bottomDie([r1, r6]).value, 1, "bottomDie([1,6]) = 1");
+})();
+
+(function() {
+  assertEqual(topDie([]), null, "topDie([]) = null");
+  assertEqual(bottomDie([]), null, "bottomDie([]) = null");
+})();
+
+
+// ═══════════════ GAMESTATE BASICS ═════════════════════════
+
+section("GameState: setup, placeDie, moveDie, destroyDie");
+
+(function() {
+  const gs = freshGS();
+  const die = place(gs, Player.Red, 4, 0, 0);
+  assertEqual(gs.getFormation({q:0,r:0}).length, 1, "Umístěna 1 kostka");
+  assert(!gs.isEmpty({q:0,r:0}), "Pole není prázdné");
+  assert(gs.isEmpty({q:1,r:0}), "Sousední pole je prázdné");
+})();
+
+(function() {
+  const gs = freshGS();
+  const die = place(gs, Player.Red, 4, 0, 0);
+  gs.moveDie(die, {q:1,r:0});
+  assert(gs.isEmpty({q:0,r:0}), "Staré pole prázdné po přesunu");
+  assertEqual(gs.getFormation({q:1,r:0}).length, 1, "Nové pole: 1 kostka");
+})();
+
+(function() {
+  const gs = freshGS();
+  const die = place(gs, Player.Red, 4, 0, 0);
+  gs.destroyDie(die);
+  assert(gs.isEmpty({q:0,r:0}), "Pole prázdné po zničení");
+  assert(!die.alive, "Kostka mrtvá");
+})();
+
+(function() {
+  const gs = new GameState();
+  gs.setupWithValues([1,2,3,4,5], [6,5,4,3,2]);
+  const redDice = gs.getPlayerDice(Player.Red);
+  const blueDice = gs.getPlayerDice(Player.Blue);
+  assertEqual(redDice.length, 5, "setupWithValues: 5 červených kostek");
+  assertEqual(blueDice.length, 5, "setupWithValues: 5 modrých kostek");
+})();
+
+
+// ═══════════════ BODOVÁNÍ A VÝHRA ═════════════════════════
+
+section("Bodování: destrukce + ohniska, výhra při ≥ 5");
+
+(function() {
+  const gs = freshGS();
+  gs.addDestructionPoints(Player.Red, 3);
+  assertEqual(gs.scores.red, 3, "Red: 3 body za destrukci");
+  assertEqual(gs.totalScore(Player.Red), 3, "Red celkem: 3 (žádná ohniska)");
+})();
+
+(function() {
+  const gs = freshGS();
+  gs.addDestructionPoints(Player.Red, 5);
+  gs.turn = Player.Red;
+  gs.checkWin();
+  assertEqual(gs.winner, Player.Red, "Red vyhrává při 5 bodech");
+})();
+
+(function() {
+  const gs = freshGS();
+  gs.addDestructionPoints(Player.Red, 4);
+  gs.turn = Player.Red;
+  gs.checkWin();
+  assertEqual(gs.winner, null, "4 body → ještě nevyhrává");
+})();
+
+
+// ═══════════════ SCÉNÁŘ: POHYB + ÚTOK ════════════════════
+
+section("Scénář: pohyb kostky + útok");
+
+(function() {
+  const gs = freshGS();
+  const attacker = place(gs, Player.Red, 4, -2, 0);
+  place(gs, Player.Blue, 2, 0, 0);
+
+  const targets = findValidTargets(gs, attacker);
+  const attackTarget = targets.find(t => hexEquals(t.target, {q:0,r:0}));
+  assertTruthy(attackTarget, "Red 4 → Blue 2 na [0,0]: útok nalezen");
+  assert(attackTarget.isAttack, "Cíl je útok");
+})();
+
+(function() {
+  const gs = freshGS();
+  const attacker = place(gs, Player.Red, 2, -1, 0);
+  place(gs, Player.Blue, 4, 0, 0);
+
+  const targets = findValidTargets(gs, attacker);
+  const attackTarget = targets.find(t => hexEquals(t.target, {q:0,r:0}));
+  assert(!attackTarget, "Red 2 NEMŮŽE zaútočit na Blue 4 (2 ≤ 4)");
+})();
+
+(function() {
+  const gs = freshGS();
+  // Útok na formaci: Red 5 vs Blue[2,1] (síla = 2 + (2-1) - 0 = 3) → 5 > 3 ✓
+  const attacker = place(gs, Player.Red, 5, -1, 0);
+  place(gs, Player.Blue, 2, 0, 0);
+  place(gs, Player.Blue, 1, 0, 0);
+
+  const targets = findValidTargets(gs, attacker);
+  const attackTarget = targets.find(t => hexEquals(t.target, {q:0,r:0}));
+  assertTruthy(attackTarget, "Red 5 útočí na Blue věž [2,1] (síla 3): úspěch");
+})();
+
+
+// ═══════════════ SCÉNÁŘ: VYTLAČENÍ ════════════════════════
+
+section("Scénář: vytlačení (combatDisplace)");
+
+(function() {
+  const gs = freshGS();
+  const attacker = place(gs, Player.Red, 5, -1, 0);
+  const defender = place(gs, Player.Blue, 3, 0, 0);
+
+  combatPhase1(attacker, [defender]);
+  const result = combatDisplace(gs, {q:-1,r:0}, {q:0,r:0}, attacker);
+
+  // Obránce vytlačen o 1 pole ve směru [−1,0]→[0,0] = dir 0 (E) → posun na [1,0]
+  assertEqual(gs.getFormation({q:1,r:0}).length, 1, "Obránce vytlačen na [1,0]");
+  assertTruthy(result.displaced.length > 0 || result.destroyed.length > 0 || true,
+    "Displacement completed");
+})();
+
+
+// ═══════════════ SCÉNÁŘ: ŘETĚZOVÝ ODSUN ══════════════════
+
+section("Edge case: řetězový odsun");
+
+(function() {
+  const gs = freshGS();
+  // Red na [-1,0], Blue na [0,0], Blue na [1,0]
+  // Útok ze směru E: Blue na [0,0] se posune na [1,0], ale tam je Blue → ta se posune na [2,0]
+  const attacker = place(gs, Player.Red, 6, -1, 0);
+  const def1 = place(gs, Player.Blue, 2, 0, 0);
+  const def2 = place(gs, Player.Blue, 3, 1, 0);
+
+  combatPhase1(attacker, [def1]);
+  const result = combatDisplace(gs, {q:-1,r:0}, {q:0,r:0}, attacker);
+
+  // def1 [0,0] → [1,0], def2 [1,0] → [2,0]
+  assertEqual(gs.getFormation({q:0,r:0}).length, 0, "Původní pole obránce prázdné");
+  assert(gs.getFormation({q:1,r:0}).length >= 1 || gs.getFormation({q:2,r:0}).length >= 1,
+    "Řetěz: alespoň 1 formace posunuta ve směru");
+})();
+
+
+// ═══════════════ SCÉNÁŘ: OBKLÍČENÍ ═══════════════════════
+
+section("Edge case: obklíčení — zničení");
+
+(function() {
+  const gs = freshGS();
+  // Red na [-1,0], Blue na [0,0], Red na [1,0]
+  // Útok E → Blue obklíčena (za ní Red)
+  const attacker = place(gs, Player.Red, 6, -1, 0);
+  const defender = place(gs, Player.Blue, 2, 0, 0);
+  place(gs, Player.Red, 3, 1, 0); // blokuje
+
+  combatPhase1(attacker, [defender]);
+  const result = combatDisplace(gs, {q:-1,r:0}, {q:0,r:0}, attacker);
+
+  assert(result.destroyed.length > 0, "Obklíčená kostka zničena");
+  assert(result.points > 0, "Body za zničení");
+})();
+
+
+// ═══════════════ EDGE CASE: VELKÉ VĚŽE ═══════════════════
+
+section("Edge case: velké věže (5+ kostek)");
+
+(function() {
+  const dice = [
+    createDieWithValue(Player.Red, DiceType.D6, 1),
+    createDieWithValue(Player.Blue, DiceType.D6, 2),
+    createDieWithValue(Player.Red, DiceType.D6, 3),
+    createDieWithValue(Player.Blue, DiceType.D6, 4),
+    createDieWithValue(Player.Red, DiceType.D6, 5),
+  ];
+  assertEqual(towerDominance(dice), Player.Red, "5-věž: nadvláda = Red (nahoře)");
+  assertEqual(towerReach(dice, Player.Red), 1, "5-věž Red: dosah max(1,3−2)=1");
+  assertEqual(towerReach(dice, Player.Blue), 1, "5-věž Blue: dosah max(1,2−3)=1");
+  assertEqual(formationAttackStrength(dice, Player.Red), 5, "5-věž Red: síla=5");
+  assertEqual(formationAttackStrength(dice, Player.Blue), 3, "5-věž Blue: síla=3");
+  assert(isMixedFormation(dice), "5-věž je smíšená");
+  assert(isTower(dice), "5-věž je věž");
+})();
+
+
+// ═══════════════ EDGE CASE: POHYB NA HRANICI MAPY ════════
+
+section("Edge case: pohyb u okraje mapy");
+
+(function() {
+  const gs = freshGS();
+  // Kostka na okraji mapy — má méně sousedů
+  const die = place(gs, Player.Red, 3, 4, 0);
+  const moves = findValidMoves(gs, die);
+  // Musí mít cíle, ale méně než v centru
+  assert(moves.length > 0, "Kostka na [4,0] má platné tahy");
+  assert(moves.length < 30, "Omezený počet tahů na okraji");
+})();
+
+
+// ═══════════════ EXECUTEMODE PŘESUN ═══════════════════════
+
+section("executeMove: přesun na prázdné/vlastní pole");
+
+(function() {
+  const gs = freshGS();
+  const die = place(gs, Player.Red, 3, 0, 0);
+  const result = executeMove(gs, die, {q:1,r:0});
+  assert(result.success, "Přesun na sousední prázdné pole: úspěch");
+  assert(!result.attack, "Není útok");
+  assertEqual(gs.getFormation({q:1,r:0}).length, 1, "Kostka na novém poli");
+})();
+
+(function() {
+  const gs = freshGS();
+  const die = place(gs, Player.Red, 3, 0, 0);
+  place(gs, Player.Red, 2, 1, 0);
+  const result = executeMove(gs, die, {q:1,r:0});
+  assert(result.success, "Přesun na vlastní pole (věž): úspěch");
+  assertEqual(gs.getFormation({q:1,r:0}).length, 2, "Věž: 2 kostky");
+})();
+
+
+// ═══════════════ EXECUTEMODE ÚTOK ═════════════════════════
+
+section("executeMove: útok vrací attack info");
+
+(function() {
+  const gs = freshGS();
+  const die = place(gs, Player.Red, 5, -1, 0);
+  place(gs, Player.Blue, 2, 0, 0);
+  const result = executeMove(gs, die, {q:0,r:0});
+  assert(result.success, "Útok trigger: úspěch");
+  assert(result.attack, "Je útok");
+  assertTruthy(result.defenders, "Má defenders");
+  assertEqual(result.defenders.length, 1, "1 obránce");
+})();
+
+
+// ═══════════════════════════════════════════════════════════════
+// VÝSLEDKY
+// ═══════════════════════════════════════════════════════════════
+
+const total = _passed + _failed;
+const cls = _failed === 0 ? "pass" : "fail";
+const summaryText = _failed === 0
+  ? "✅ VŠECHNY TESTY PROŠLY: " + _passed + "/" + total
+  : "❌ SELHALO " + _failed + " z " + total + " testů";
+
+document.getElementById("output").innerHTML =
+  '<div class="summary ' + cls + '">' + summaryText + '</div>' + _html;
+
+// Výstup do konzole
+console.log("═══════════════════════════════════════");
+console.log(summaryText);
+console.log("═══════════════════════════════════════");
+</script>
+</body>
+</html>

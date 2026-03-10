@@ -1,0 +1,1036 @@
+﻿<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PÁD DONJONU – Pravidla</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Special+Elite&family=Alegreya:ital,wght@0,400;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        @page { size: A4; margin: 10mm 14mm; }
+        body {
+            font-family: 'Alegreya', Georgia, 'Times New Roman', serif;
+            font-size: 10.5pt; line-height: 1.6; color: #1a1008;
+            background: #e8ddd0;
+            font-variant-emoji: text;
+            background-image:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cdefs%3E%3Cfilter id='w' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012' numOctaves='5' seed='3' result='t'/%3E%3CfeColorMatrix type='saturate' values='0.3' in='t' result='desat'/%3E%3CfeComponentTransfer in='desat' result='soft'%3E%3CfeFuncR type='table' tableValues='0.88 0.92 0.85 0.90 0.82'/%3E%3CfeFuncG type='table' tableValues='0.84 0.88 0.80 0.86 0.83'/%3E%3CfeFuncB type='table' tableValues='0.78 0.82 0.76 0.80 0.75'/%3E%3CfeFuncA type='table' tableValues='0 0.15 0.25 0.18 0.1'/%3E%3C/feComponentTransfer%3E%3CfeMerge%3E%3CfeMergeNode in='soft'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Crect width='600' height='600' filter='url(%23w)'/%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)' opacity='0.03'/%3E%3C/svg%3E"),
+                radial-gradient(ellipse 55% 45% at 8% 15%, rgba(195,160,180,0.35) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 50% at 75% 10%, rgba(160,190,200,0.30) 0%, transparent 65%),
+                radial-gradient(ellipse 60% 40% at 45% 80%, rgba(190,200,160,0.28) 0%, transparent 60%),
+                radial-gradient(ellipse 45% 55% at 90% 60%, rgba(200,180,160,0.25) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 45% at 25% 50%, rgba(180,195,210,0.22) 0%, transparent 50%),
+                radial-gradient(ellipse 55% 50% at 60% 40%, rgba(210,190,170,0.20) 0%, transparent 55%),
+                radial-gradient(ellipse 40% 60% at 15% 75%, rgba(195,185,165,0.18) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 40% at 80% 85%, rgba(175,185,195,0.22) 0%, transparent 55%);
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 10mm 14mm;
+        }
+
+        /* hand-drawn rough border image */
+        :root {
+            --rough-border: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect x='1' y='1' width='38' height='38' fill='none' stroke='%231a1008' stroke-width='2.5' rx='0.5' style='filter:url(%23r)'/%3E%3Cfilter id='r'%3E%3CfeTurbulence baseFrequency='0.15' numOctaves='3' seed='5'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='2'/%3E%3C/filter%3E%3C/svg%3E");
+        }
+
+        /* ── HEADER ── */
+        .header {
+            text-align: center;
+            background: #1a2838;
+            color: #dcc9a3;
+            padding: 9pt 0 7pt;
+            border-width: 2.5pt 3pt 4pt 3.5pt;
+            border-style: solid;
+            border-color: #1a1008 #1a1008 #b87a20 #1a1008;
+            margin-bottom: 10pt;
+            position: relative;
+            transform: rotate(-0.3deg);
+            box-shadow: 4pt 4pt 0 rgba(26,16,8,0.5), -1pt -1pt 0 rgba(184,122,32,0.2);
+            filter: url(#sketchy);
+        }
+        .header::before, .header::after {
+            content: '✕'; font-size: 12pt; color: #b87a20;
+            position: absolute; top: 50%; transform: translateY(-50%);
+            font-family: 'Permanent Marker', cursive;
+        }
+        .header::before { left: 14pt; }
+        .header::after { right: 14pt; }
+        .header h1 {
+            font-family: 'IM Fell English SC', Georgia, serif;
+            font-size: 18pt; font-weight: 700; letter-spacing: 5pt;
+            text-transform: uppercase; margin-bottom: 2pt;
+            color: #f0c850;
+            text-shadow: 2pt 2pt 0 #1a1008;
+        }
+        .header .subtitle {
+            font-family: 'IM Fell English SC', Georgia, serif;
+            font-size: 7.5pt; letter-spacing: 3pt; text-transform: uppercase;
+            color: #8a7a55; font-weight: 400;
+        }
+        .header .hex-row {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 9pt; letter-spacing: 5pt; margin-bottom: 2pt;
+            opacity: 0.35; color: #b87a20;
+        }
+
+        /* ── LAYOUT ── */
+        .top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; margin-bottom: 8pt; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; }
+
+        /* ── SECTIONS ── */
+        .section {
+            margin-bottom: 7pt;
+            background:
+                repeating-linear-gradient(52deg, transparent, transparent 4px, rgba(26,16,8,0.018) 4px, rgba(26,16,8,0.018) 5px),
+                repeating-linear-gradient(-52deg, transparent, transparent 4px, rgba(26,16,8,0.015) 4px, rgba(26,16,8,0.015) 5px),
+                rgba(240,230,205,0.7);
+            padding: 8pt 10pt;
+            border-width: 1.5pt 2.5pt 2pt 4pt;
+            border-style: solid;
+            border-color: #3a2010;
+            box-shadow: 3pt 3pt 0 rgba(26,16,8,0.15);
+        }
+        .section-head {
+            display: flex; align-items: center; gap: 8pt;
+            margin-bottom: 7pt; padding-bottom: 5pt;
+            border-bottom: 2.5pt solid #3a2010;
+            filter: url(#sketchy);
+        }
+        .section-icon {
+            --hex-fill: #d5c9a8;
+            --hex-border: #3a2010;
+            position: relative;
+            font-size: 15pt; width: 34pt; height: 38pt;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            background: var(--hex-border);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            filter: drop-shadow(2pt 2pt 0 rgba(26,16,8,0.25));
+            font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Noto Sans Symbols', sans-serif;
+            font-variant-emoji: text;
+            transform: rotate(-2deg);
+            z-index: 0;
+        }
+        .section-icon::before {
+            content: '';
+            position: absolute;
+            top: 2.5pt; left: 2.5pt; right: 2.5pt; bottom: 2.5pt;
+            background: var(--hex-fill);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(26,16,8,0.05) 3px, rgba(26,16,8,0.05) 4px);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            z-index: -1;
+        }
+        .section-title {
+            font-family: 'IM Fell English SC', Georgia, serif;
+            font-size: 11pt; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5pt; color: #1a1008;
+        }
+        .section p, .section li { margin-bottom: 4pt; }
+
+        /* Section color themes — earthy ink palette */
+        .theme-blue .section-icon { --hex-border: #3a2010; --hex-fill: #d5c9a8; color: #3a2010; }
+        .theme-blue .section-head { border-color: #3a2010; }
+        .theme-blue { border-color: #4a5a2a; border-left: 4pt solid #4a5a2a; border-top-width: 1.5pt; }
+        .theme-amber .section-icon { --hex-border: #8b3a1a; --hex-fill: #e8d5a3; color: #8b3a1a; }
+        .theme-amber .section-head { border-color: #8b3a1a; }
+        .theme-amber { border-color: #b87a20; border-left: 4.5pt solid #b87a20; border-right-width: 2pt; }
+        .theme-red .section-icon { --hex-border: #8b1a1a; --hex-fill: #e0c8b8; color: #8b1a1a; }
+        .theme-red .section-head { border-color: #8b1a1a; }
+        .theme-red { border-color: #8b3a1a; border-left: 4pt solid #8b3a1a; border-bottom-width: 2.5pt; }
+        .theme-green .section-icon { --hex-border: #3a5a20; --hex-fill: #c8d5b0; color: #3a5a20; }
+        .theme-green .section-head { border-color: #3a5a20; }
+        .theme-green { border-color: #4a5a2a; border-left: 3.5pt solid #4a5a2a; border-top-width: 2.5pt; }
+        .theme-purple .section-icon { --hex-border: #4a2050; --hex-fill: #d5c5d5; color: #4a2050; }
+        .theme-purple .section-head { border-color: #4a2050; }
+        .theme-purple { border-color: #5a3060; border-left: 4pt solid #5a3060; border-right-width: 1.5pt; }
+
+        /* ── ACTION CARDS ── */
+        .actions-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 4pt; margin-top: 3pt;
+        }
+        .action-card {
+            padding: 4pt 7pt;
+            border-width: 1.5pt 2pt 2.5pt 2pt;
+            border-style: solid;
+            border-color: #3a2010;
+            position: relative;
+            background:
+                repeating-linear-gradient(48deg, transparent, transparent 5px, rgba(26,16,8,0.015) 5px, rgba(26,16,8,0.015) 6px),
+                #eadcba;
+            box-shadow: 3pt 3pt 0 rgba(26,16,8,0.12);
+        }
+        .action-card.span2 { grid-column: span 2; }
+        .ac-header { display: flex; align-items: center; gap: 4pt; margin-bottom: 2pt; filter: url(#sketchy); }
+        .ac-icon {
+            --hex-fill: #1a2838;
+            --hex-border: #1a1008;
+            position: relative;
+            font-size: 13pt; width: 30pt; height: 34pt;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            color: #dcc9a3; font-style: normal;
+            background: var(--hex-border);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            filter: drop-shadow(2pt 2pt 0 rgba(26,16,8,0.4));
+            font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Noto Sans Symbols', sans-serif;
+            font-variant-emoji: text;
+            transform: rotate(-1.5deg);
+            z-index: 0;
+        }
+        .ac-icon::before {
+            content: '';
+            position: absolute;
+            top: 2pt; left: 2pt; right: 2pt; bottom: 2pt;
+            background: var(--hex-fill);
+            background-image: repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.06) 3px, rgba(255,255,255,0.06) 4px);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            z-index: -1;
+        }
+        .ac-title {
+            font-family: 'IM Fell English SC', Georgia, serif;
+            font-weight: 700; font-size: 10.5pt; color: #1a1008;
+        }
+        .action-card p { font-size: 7.5pt; line-height: 1.25; color: #2a1808; margin-top: 0; margin-bottom: 0; }
+        .ac-warn {
+            font-size: 8.5pt; font-weight: 700;
+            margin-top: 4pt; padding: 3pt 8pt;
+            display: inline-block;
+            border-width: 2.5pt 1.5pt 2pt 2pt;
+            border-style: solid;
+            border-color: #ff2d55;
+            color: #ff2d55;
+            background: rgba(255,45,85,0.08);
+            font-family: 'Permanent Marker', cursive;
+            transform: rotate(-0.5deg);
+        }
+
+        /* Card accent colors — raw ink hues */
+        .ac-blue .ac-icon { --hex-fill: #1a2838; }
+        .ac-blue { border-left: 5pt solid #1a2838; border-right-width: 1.5pt; }
+        .ac-teal .ac-icon { --hex-fill: #1a4a3a; }
+        .ac-teal { border-left: 5pt solid #1a4a3a; border-top-width: 2.5pt; }
+        .ac-orange .ac-icon { --hex-fill: #8b3a1a; }
+        .ac-orange { border-left: 5pt solid #8b3a1a; border-bottom-width: 3pt; }
+        .ac-purple .ac-icon { --hex-fill: #4a2050; }
+        .ac-purple { border-left: 5pt solid #4a2050; border-right-width: 2.5pt; }
+        .ac-red .ac-icon { --hex-fill: #6a0a0a; }
+        .ac-red { border-left: 5pt solid #6a0a0a; border-top-width: 2pt; }
+
+        /* ── LISTS ── */
+        ul.rules-list { list-style: none; padding-left: 0; }
+        ul.rules-list li { position: relative; padding-left: 16pt; margin-bottom: 4pt; }
+
+        /* ── COMBAT ── */
+        .combat-result { margin-top: 8pt; }
+        .combat-result h4 {
+            font-family: 'IM Fell English SC', Georgia, serif;
+            font-size: 9.5pt; font-weight: 400; margin-bottom: 4pt;
+            text-transform: uppercase; letter-spacing: 0.5pt; color: #3a2010;
+        }
+        .step-badge {
+            display: inline-block; font-size: 7.5pt; font-weight: 400;
+            background: #6a0a0a; color: #f0c850;
+            padding: 2pt 8pt; margin-right: 3pt;
+            vertical-align: middle; letter-spacing: 1pt;
+            font-family: 'Permanent Marker', cursive;
+            border-width: 2.5pt 1.5pt 2pt 2pt;
+            border-style: solid;
+            border-color: #ff2d55;
+            transform: rotate(-1deg);
+            box-shadow: 2pt 2pt 0 rgba(26,16,8,0.3);
+        }
+
+        /* ── TAG PILLS ── */
+        .tag {
+            display: inline-block; font-size: 8pt;
+            padding: 1.5pt 7pt; vertical-align: middle;
+            border-width: 1.5pt 2pt 2.5pt 1.5pt;
+            border-style: solid;
+            font-family: 'Permanent Marker', cursive;
+            font-weight: 400;
+        }
+        .tag-d6 { background: #d5c9a8; color: #1a2838; border-color: #1a2838; }
+
+        .tag-pt { background: #e8d5a3; color: #8b3a1a; border-color: #b87a20; }
+
+        /* ── DICE ILLUSTRATIONS ── */
+        .dice-showcase {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 4pt; margin-top: 6pt; padding: 5pt 6pt;
+            background:
+                repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(26,16,8,0.02) 3px, rgba(26,16,8,0.02) 4px),
+                #e0d2aa;
+            border: 2pt solid #3a2010;
+            box-shadow: 2pt 2pt 0 rgba(26,16,8,0.15);
+        }
+        .dice-group {
+            display: flex; align-items: center; gap: 5pt;
+        }
+        .dice-group-label {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 7pt; font-weight: 400; text-transform: uppercase;
+            letter-spacing: 0.5pt; width: 42pt; text-align: right;
+        }
+        .dice-group-label.red { color: #8b1a1a; }
+        .dice-group-label.blue { color: #1a2838; }
+        .dice-pair {
+            display: flex; align-items: center; gap: 3pt;
+        }
+        .dice-img {
+            width: 22pt; height: 22pt; object-fit: contain;
+            filter: drop-shadow(1pt 1pt 0 rgba(26,16,8,0.3));
+        }
+        .dice-separator {
+            width: 80%; height: 2pt;
+            background: #3a2010;
+        }
+
+        /* ── PAGE BREAK ── */
+        .page-break { page-break-before: always; }
+
+        /* ── GLOSSARY ── */
+        .glossary-header {
+            text-align: center; margin-bottom: 12pt; padding-bottom: 8pt;
+            border-bottom: 3pt solid #1a1008;
+        }
+        .glossary-header h2 {
+            font-family: 'IM Fell English SC', Georgia, serif;
+            font-size: 18pt; font-weight: 700; color: #1a1008;
+            letter-spacing: 4pt; text-transform: uppercase; margin-bottom: 2pt;
+            filter: url(#sketchy);
+        }
+        .glossary-header p { font-size: 9pt; color: #5a4a30; font-style: italic; }
+
+        .glossary-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8pt; margin-top: 8pt;
+        }
+        .gl-card {
+            display: flex; gap: 8pt; padding: 8pt 10pt;
+            border-width: 1.5pt 2.5pt 2pt 2pt;
+            border-style: solid;
+            border-color: #3a2010;
+            background:
+                repeating-linear-gradient(50deg, transparent, transparent 5px, rgba(26,16,8,0.015) 5px, rgba(26,16,8,0.015) 6px),
+                #eadcba;
+            align-items: flex-start;
+            box-shadow: 2pt 2pt 0 rgba(26,16,8,0.1);
+        }
+        .gl-card .gl-icon {
+            --hex-fill: #d5c9a8;
+            --hex-border: #3a2010;
+            position: relative;
+            font-size: 15pt; width: 32pt; height: 36pt;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            background: var(--hex-border);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            filter: drop-shadow(2pt 2pt 0 rgba(26,16,8,0.15));
+            font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Noto Sans Symbols', sans-serif;
+            font-variant-emoji: text;
+            color: #3a2010;
+            transform: rotate(-1deg);
+            z-index: 0;
+        }
+        .gl-card .gl-icon::before {
+            content: '';
+            position: absolute;
+            top: 2pt; left: 2pt; right: 2pt; bottom: 2pt;
+            background: var(--hex-fill);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(26,16,8,0.05) 3px, rgba(26,16,8,0.05) 4px);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            z-index: -1;
+        }
+        .gl-card .gl-body { flex: 1; }
+        .gl-card .gl-term {
+            font-family: 'IM Fell English SC', Georgia, serif;
+            font-size: 9.5pt; font-weight: 700; color: #1a1008;
+            margin-bottom: 2pt;
+            filter: url(#sketchy);
+        }
+        .gl-card .gl-desc { font-size: 9pt; line-height: 1.4; color: #2a1808; }
+
+        /* Category headers in glossary */
+        .gl-cat {
+            grid-column: 1 / -1;
+            font-family: 'IM Fell English SC', Georgia, serif;
+            font-size: 9.5pt; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 2pt; color: #1a1008;
+            padding: 4pt 0 2pt; border-bottom: 3pt solid #3a2010;
+            margin-top: 4pt;
+            filter: url(#sketchy);
+        }
+        .gl-cat-icon { margin-right: 4pt; color: #b87a20; }
+
+        /* ── FOOTER ── */
+        .footer {
+            text-align: center; font-size: 8pt; color: #5a4a30;
+            border-top: 3pt solid #3a2010; padding-top: 8pt; margin-top: 12pt;
+            font-family: 'IM Fell English SC', Georgia, serif;
+            letter-spacing: 1.5pt;
+        }
+
+        /* ── DECORATIVE DIVIDER ── */
+        .divider {
+            text-align: center; color: #b87a20; font-size: 10pt;
+            margin: 6pt 0; letter-spacing: 6pt; opacity: 0.7;
+            font-family: 'Permanent Marker', cursive;
+        }
+
+        /* ── PRINT ── */
+        /* ── PLAYABLE BOARD ── */
+        .board-page {
+            page-break-before: always;
+            page: gameboard;
+            text-align: center;
+        }
+        .board-heading {
+            font-family: 'IM Fell English SC', serif;
+            font-weight: 400;
+            font-size: 14pt;
+            color: #1a1008;
+            letter-spacing: 3pt;
+            margin: 0 0 3pt;
+            padding: 2pt 0;
+            border-bottom: 3pt solid #b87a20;
+        }
+        .board-heading small {
+            display: block;
+            font-size: 8pt;
+            font-weight: 400;
+            color: #8b3a1a;
+            letter-spacing: 1pt;
+            margin-top: 1pt;
+            font-family: 'Permanent Marker', cursive;
+        }
+
+        @media print {
+            body { background: #e8d5b0; max-width: none; padding: 0; margin: 0; }
+            .header { background: #1a2838 !important; border-color: #1a1008 !important; }
+            .ac-icon, .section-icon, .tag, .ac-warn, .header, .step-badge, .board-page svg {
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+            .action-card, .gl-card, .combat-result,
+            .section-head, .top-row, .glossary-header {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            .gl-cat {
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+            @page gameboard {
+                margin: 6mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SVG filter for hand-drawn sketchy edges -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden">
+    <filter id="sketchy">
+        <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="3" result="noise" seed="2"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-bleed">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="1" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+</svg>
+
+<!-- ═══════ HEADER ═══════ -->
+<div class="header">
+    <div class="hex-row">† ⚔ † ⚔ †</div>
+    <svg viewBox="0 0 2574.23 481.64" style="width:45%; max-width:420pt; height:auto; margin:4pt auto 2pt; display:block" fill="#f0c850" aria-label="Pád Donjonu">
+      <g>
+        <path d="M1063.44,155.33c-1.32-6.13-36.05-39.06-42.81-39.8-24.26,5.94-48.78,16.91-73.11,21.99-22.83,4.76-31.76,9.19-48.69-9.41-27.69-30.4-37.96-70.39,1.09-95.94,2.38,18.78,2.31,25.89,17.44,38.17,30.88,25.07,71.75,24.93,108.62,17.01,15-3.22,36.06-12.47,49.75-13.61,3.83-.32,7.54-.98,10.76,1.87,11.27,18.28,42.13,45.56,44.53,66.63.63,5.52,1.11,27.93.04,32.26-.48,1.96-5.43,2.98-7.61,5.91-4.25,5.69-5.12,15.2-8.85,19.53-4.22,4.91-15.62,6.18-19.43,11.09-8.71,11.22-10.85,38.25-31.73,43.48v-99.19Z"/>
+        <path d="M568.55,130.8v188.57c0,4.12-11.58,11.29-16.03,11.46-8.94-.07-4.91-9.63-10.1-12.54,3.57,15.94-1.49,29.21-4.41,44.66,2.24,3.44,2.75-1.73,3.24-3.27,2.44-7.76,2.91-15.99,5.95-23.54l21.36-6.96v38.15c11.27,5.74,49.28,29.77,59.45,26.87,8.62-4,9.58-14.04,10.38-22.43l-.18-178.49c19.52-3.74,14.87-17.78,22.16-28.41,3.2-4.67,10.74-6.22,12.82-12.23-22.97,2.52-13.39,32.12-34.87,34.85,0-24.56,2.64-27.65-15.24-44.71-3.32-3.17-28.08-24.14-29.94-24.68-15.2-4.43-67.47,28.26-92.79,20.96-4.89-1.41-17.64-15.56-21.13-20.28-20.88-28.18-21.78-57.65,7.55-79.51,5.16,5.07,2.69,12.05,4.97,19.03,6.73,20.59,49.79,33.96,69.21,35.41,30.53,2.28,59.49-11.87,88.3-16.53l48.04,50.24,2.19,8.71-.54,235.16-109.62,75.8c-26.59-7.93-57.73-32.53-85.36-34.89-4.89-.42-17.24,3.48-18.23-1.29-1.23-5.93,23.04-16.32,21.67-26.25l.47-226.24,60.69-27.6Z"/>
+        <path d="M102.04,393.48c1.34,9.49,11.78,26.67,22.72,25.1,5.91-.85,15.24-13.76,18.7-1.15-16.61,14.58-36.19,26.38-52.34,41.42-4.86,4.52-21.27,29.99-27.29,20.8-1.97-3.01-.84-16.2-4.27-24.06-8.36-19.17-25.54-30.74-46.27-26.55-5.45,1.1-3.04-6.77-.64-9.42,5.33-5.9,26.31-12.35,29.57-24.93l1.95-76.53c4.04-9.15,13.6-11.65,19.54-19.7,4.48-6.07,4.68-11.39,7.77-16.21,2.78-4.32,12.13-9.29,12.66-10.2,3.61-6.19-4.26-30.89,11.34-37.75l-.06-3.09c-21.55-6.96-3.56-36.8-23.88-41.53,11.13,9.22,6.89,17.82,9.21,28.92,1.24,5.94,9.12,12.56,7.93,17.4-.69,2.84-4.83,5.54-5.8,9.69-1.95,8.35,1.23,15.38-3.88,24.46-2.19,3.89-7.13,6.42-9.64,9.98-7.21,10.24-12.46,23.48-26.14,27.25l-2.27-157.65,61.12-23.27v123.17c13.93,9.39,42.34,31.98,55.73,12.13,8.5-12.6-.91-46.57,3.57-61.83,2.99-10.19,22.69-.53,21.39-17.85-3.56-1.7-2.8,4.41-8.21,7.04-3.87,1.88-11.17,4.04-13.62-.53v-41.42c0-4.56-33.3-32.56-38.59-33.4-23.67,1.27-67.49,26.51-89.47,17.58C18.75,125.61-.16,87.83,0,73c.14-12.98,12.62-34.31,24.62-40.3,5.48,3.99.57,9.13,1.52,15.75,3.25,22.55,48.74,38.75,68.54,40.65,29.05,2.79,56.44-9.05,83.9-16.13,6.63,1.44,38.48,43.67,42.83,52.89l-.53,127.02c-32.76,17.7-64.79,37.31-92.72,62.09-4.68,5.86-26.11-9.85-26.11-2.16,2.53,25.03-3.41,56.48,0,80.66Z"/>
+        <path d="M298.25,335.7c-1.41,17.03-8.01,28.3-.39,45.08,2.7,5.94,13.16,18.77,19.45,20.02,5.2,1.03,15.57-11.66,17.39-.79.82,4.89-45.25,40.01-53.32,44.43-8.88,1.29-31.31-25.79-40.93-29.48l-26.15,16.63-3.34-5.42c13.12-19.37,35.11-31.46,44.72-53.44l55.1-234.67c-4.3-19.29-19.55-12.1-33.1-7.34-2.86-1.91-4.33-3.73-3.22-7.34s58.36-36.59,65.1-39.54c6.63-2.9,9.52-5.24,16.58-1.11,11.5,6.73,20.74,23.79,24.98,36.05,27.92,80.6,39.16,174.45,66.48,256.15,1.93,5.6,11.51,18.57,16.4,20.79,7,3.19,15.61-6.06,17.35,4.26l-56.78,43.68c-11.34,4.96-25.46-18.61-29.26-27.32-11.29-25.85-13.08-55.4-22.88-81.77-5.05-3.96-25.19,19.25-31.66,20.85-12.99-8.96-26.12-18.19-42.5-19.71ZM309.14,298.65h54.5c.88-15.14-14.84-32.53,2.38-42.32,13.83-7.86,22.65,4.8,32.49,12.9,1.73,1.42,4.33,5.75,6.54,2.18l-25.01-22.95-1.15-30.46c-3.7-.09-4.74-1.24-4.2,3.07,1.03,8.2,4.32,16.63.98,25.31l-20.73,13.03-20.73-76.32-25.07,115.56Z"/>
+        <path d="M387.02.5c14.18-3.01,26.84,7.99,24.55,22.23-3.06,19.04-60.84,44.39-79.49,47.04l-2.37-4.44c7.53-11.06,18.34-19.63,26.11-30.64,9.73-13.79,11.93-30.1,31.2-34.19Z"/>
+        <path d="M2229.71,174.95c-1.21-11.5-12.83-40.24-25.46-42.04-4.32-.62-16.12,10.88-18.14,2.76-1.45-5.83,13.75-16.61,18.59-20.61,6.61-5.47,30.26-24.3,37.05-24.22,10.77.13,27.02,28.12,35.31,30.38,9.69,2.63,19.35-11.44,26.76-2.91,1.95,7.07-23.76,23.44-26.04,37.14l2.01,235.37c.19,9.08,9.92,21.67,18.95,22.36,5.05.39,17.46-10.77,20.33,1.54l-65.52,45.86c-9.67,3.36-24.83-18-27.59-26.84-7.5-24.07,4.03-59.95-1.16-86.04l-44.94-68.64c-2.05-6.12,7.07-8.59,8.07-12.97,1.52-6.67-4.42-16.51,6.88-24.62l-9.81,4.33c-2.57,10.42,2.18,19.42-8.72,26.13l-33.79-45.74v66.49c0,2.27-14.81,17.46-15.33,28.31-.21,4.34.5,3.49,4.41,3.3,1-6.6,2.45-19.32,10.92-19.62v79.57c0,7.09,19.88,26.26,26.26,28.34,3.73,1.22,18.42-4.73,14.95,6.31-1.03,3.27-49,33.88-54.39,41.63-12.63,5.71-31.83-24.13-43-26.8s-40.85,11-12.55-15.75c15.27-14.43,20.74-11.19,22.91-35.94,1.47-16.71-2.05-32.41-2.24-47.84-.7-58.1.82-116.26-.03-174.36-1.97-8.23-11.42-19.79-20.38-18.69-5.84.72-9.36,7.58-14.49,1.22-1.83-2.27-2.62-2.53-1.1-5.54,4.69-9.28,47.2-31.69,56.3-41.98,12.04-5.61,19.46,6.07,25.63,14.66,10.57,14.71,55.75,85.79,60,99.19.68,2.15,1.49,4.22.93,6.51-5.07,4.22-21.06-1.64-19.56,6.61l24.01-3.43,23.94,36.14c-1.94-25.46,2.63-54.57,0-79.57Z"/>
+        <path d="M1569.19,166.23c-2.2-15.45-20.7-41.59-38.1-27.24-7.22-5.64-1.44-9.63,3.2-14.2,5.31-5.25,42.49-33.59,47.09-33.81,16.76,4.35,24.18,22.29,37.17,32.4,6.15,1.16,20.72-14.12,26.93-5.07,2.27,8.2-29.32,27.07-28.2,39.34,4,71.43-5.81,149.46-.22,220.11,1.75,22.15,10.74,42.4,35.87,31.6l3.43,5.34c-.7,3.36-48.54,36.85-55.08,40.85-5.62,3.43-7.04,7.09-13.65,4.13-36.23-16.21-18.3-81.01-23.33-112l-44.98-68.6.73-4.89c11.25-6.99,5.26-11.88,6.44-19.82,1.01-6.78,7.38-8.9,7.79-15.12-19.09,5.17-3.64,23.75-18.51,32.66l-33.79-45.74v66.49c0,1.82-17.69,19.11-15.3,26.13.1,6.49,2.62,2.34,3.89-.49,2.41-5.37,3.49-13.81,11.41-13.66v86.11c0,2.86,18.16,20.16,21.92,21.81,5.18,2.27,20.69-5.14,17.11,6.3-1.25,3.99-49.74,34.78-55.87,42.41-9.89,2.76-29.21-23.93-39.77-27.14-6-1.83-24.69,5.3-26.22-1.99-1.39-6.66,35.59-25.54,34.75-37.15l-1.06-238.48c-4.11-6.55-10.54-16.01-19.38-15.35-5.88.44-13.9,10.2-16.57-1.11.05-8.52,49.31-36.52,56.85-45.71,14.56-5.91,22.64,11.09,29.15,20.83,20.21,30.23,35.95,63.72,57.03,93.48,3.35,7.09-3.31,9.66-9.2,10.26-4.22.43-10.99-5.12-9.49,2.89l24.01-3.43,23.94,36.14c-2.79-27.31,3.76-61.9,0-88.29Z"/>
+        <path d="M1181.64,167.78l105.19-74.55,90.08,64.73.57,115.21c-9.06,14.09-3.33,10.89-2.17,21.56,2.12,19.48-.55,45.16-.22,65.61.15,9.36,3.94,19.04.98,29.42l-102.28,71.15-92.21-61.83.07-231.29ZM1314.13,237.08v-49.05c-17.37-10.44-40.56-32.38-58.43-39.82-7.01-2.92-13.51-1.24-13.51,7.12v184.21c-30.92-2.24-23.38-17.78-26.12-40.15l-6.58-1.25c4.83,9.46,6.2,25.19,3.9,35.49s-12.9,10.18-14.79,18.98c9.02,1.78,13.12-13.74,18.82-14.81,1.09-.2,19.58,5.5,21.14,6.46,6.85,4.18,2.05,12.89,4.07,19.91,1.85,6.4,57.83,43.51,63.74,43.06,2.33-.18,4.27-1.46,5.78-3.19l2.02-154.92c1.47-8.57,12.3-7.73,17.44-13.69s7.52-18.69,13.05-25.58c-1.72-3.3-5.24.29-6.61,2.11-6.95,9.34-4.71,26.59-23.94,25.11Z"/>
+        <path d="M2035.24,391.42l-103.44,69.83-89.66-62.21-.49-230.18,104.13-75.34,4.81.72,86.85,63.72.57,113.03c-10.01,14.62-3.4,13.86-2.23,25.97,2.87,29.66-1.89,64.29-.52,94.46ZM1974.66,237.08v-46.87c-6.91-7.71-60.84-45.37-66.18-44.32-1.56.57-5.76,4.45-5.76,5.08v188.57l-23.41-7.11c-6.99-8.55,3.9-32.11-9.28-34.29,4.79,18.23,7.46,41.43-10.91,52.28,8.12,2.59,13.7-11.56,18.45-12.23,1.8-.25,21.52,5.54,23,6.77l2.62,22.47c11.52,6.47,53.43,40.68,63.74,39.75l5.75-3.13,1.87-158.99c20.29-4.87,19.57-18.75,30.61-33.05-11.43-4.89-10.59,14.77-15.85,20.12-1.8,1.83-13.35,6.35-14.66,4.96Z"/>
+        <path d="M2471.69,191.3c2.18-2.27,12.13,4.65,14.14,6.57,1.53,1.45,16.87,20.52,17.44,21.8,3.23,7.26-1.72,21.01,7.63,26.13-3.52-7.73-.61-17.79-2.6-24.63-1.35-4.66-17.66-16.72-18.33-24.43-.42-4.85,7.27-14.8,1.3-22.87-4.62.48.07,7.87-.38,11.5-1.73,13.67-17.7,3.61-19.16-3.93-1.72-8.9,1.86-20.17-1.02-29.5-2.51-8.13-20.31-17.27-18.42-24.51,1.36-5.21,41.55-36.14,46.62-36.32,10.16-.35,25.56,25.85,33.2,27.94,8.62,2.35,17.41-9.41,26.76-8.4,4.31,10.75-8.4,14.9-14.19,21.78-7.11,8.44-10.81,16.12-11.94,27.29,4.42,69.05-5.97,145.52-.1,213.69.99,11.46,9.83,35.37,23.18,35.94,3.99.17,18.54-10.63,18.41,1.04-.09,7.43-48.91,39.82-56.16,48.75-13.84,3.81-34.17-30.2-38.96-41.29-9.25-1.52-56.21,40.63-69.56,43.68-3.21-.09-27.29-18.86-28.48-21.72-.97-2.34,3-4.06,2.98-7.21-.13-20.1-20.28-41.45-18.47-67.71.16-2.29,8.3-30.4,9.26-31.75,2.5-3.51,11.87-8.99,16.2-14.32,4.67-5.76,7.01-17.56,15.26-18.53v64.31c0,11.49,28.37,39.26,39.2,41.55,6.83,1.44,26.2-11.68,26.2-15.39v-199.47Z"/>
+        <path d="M1131.02,182.58v204.92c-43.36,20.49-83.34,48.97-121.88,77.5-31.06-11.99-68.96-36.18-103.56-31.54-7.86,1.05-14.86,6.5-23.06,6.34-6.76-7.13,19.54-23.1,24-27.21,3.11-2.86,13.93-12.85,14.78-15.74l.9-100.48c9.78-3.02,17.73-17.07,27.87-11.34-7.65-22.06,11.22-36.72,22.77-52.46,4.68-6.37,5.93-16.01,14.31-19.48v168.95l60.38,29.01c2.92.03,13.66-10.24,14.79-12.7s3.14-28.19,3.4-33.66c1.51-31.93-3.83-63.62-1.81-95.55,3.4-15.18,22.92-23.99,25.22-28.17,2.94-5.33.55-16.54,9.18-26.81,6.8-8.09,14.72-6,18.6-9.74,4.62-4.46,2.38-21.83,14.13-21.84Z"/>
+        <path d="M2345.25,363.52v-201.65c0-1.9-8.15-17.38-10.23-18.64-11.43-6.9-17.09,6.07-24.64-1.01-1.45-5.72,10.93-13.64,15.44-17.22,6.33-5.03,42.4-31.49,46.84-31.78,17.55-1.14,32.42,31.73,33.71,46.77,4.12,47.93-2.31,103.13-1.2,151.55-8.54,6.51-11.4,18.14-17.55,26.05-3.93,5.05-16.38,13.41-17.32,15.38-6.29,13.16,3.94,32.32-25.04,30.55Z"/>
+        <path d="M1730.5,154.24l-33.66-8.68-27.36,17.39c-3.64-4.17,16.15-32.61,19.98-37.77,4.37-5.89,22.96-28.56,28.03-30.92,6.11-2.83,30.43,8.62,39.1,11.01,5.61,1.55,11.92,1.16,17.52,3.22l-6.52,7.61c6.46,4.73,7.31-7.31,9.27-9.24,1.2-1.18,8.35-2.33,11.84-4.53,8.86-5.56,17.21-11.79,25.76-17.79l3.28,5.35c-3.73,8.88-11.07,15.26-15.65,23.66-20.95,38.4-5.4,104.83-11,148.13-3.76,13.08-26.06,25.16-32.3,33.68-8.26,11.26-10.73,34.22-28.27,42v-183.12Z"/>
+        <path d="M1793.72,403.85c-32.65,21.96-65.17,44.16-92.63,72.66l-46.61-30.4c-1.11-2.9-.34-5.67.9-8.38,1.54-3.33,32.15-38.93,34.76-38.94l34.95,23.65,5.4-3.33v-71.94c0-1.87,19.19-23.73,22.76-29.56,3.97-6.5,4.81-14.7,9.91-20.61,3.69-4.27,11.7-7.68,16.16-12.18.92-.92,14.38-23.31,14.38-11.78v130.8Z"/>
+        <path d="M987.14,132.44v73.03c-15.12,23.58-40.13,43.7-42.49,73.05l-22.91,13.06v-125.35c0-.68-2.33-2.34-1.91-4.08.9-5.12,58.09-27.04,67.31-29.71Z"/>
+        <path d="M2345.25,365.7c28.83-2.5,15.42,9.96,17.76,22.37.83,4.41,7.3,11.07,9.45,16.91,3.28,8.91,4.76,20.07,7.7,29.36-1.75,3.36-3.79.24-5.5-1.04-3.97-2.96-29.4-29-29.4-31.64v-35.97Z"/>
+      </g>
+    </svg>
+    <div class="subtitle">Verze 4.0</div>
+</div>
+
+<!-- ═══════ 01 & 02 ═══════ -->
+<div class="top-row">
+
+    <div class="section theme-blue">
+        <div class="section-head">
+            <span class="section-icon">⚔&#xFE0E;</span>
+            <span class="section-title">Plán hry a komponenty</span>
+        </div>
+        <p><strong>Herní plán</strong> se skládá z <strong>61 hexagonálních polí</strong> uspořádaných do tvaru většího šestiúhelníku.</p>
+        <p style="margin-top:5pt"><strong>Jednotky</strong> — každý hráč disponuje <strong>5 kostkami</strong>, které představují jeho jednotky:</p>
+        <p style="margin-top:4pt">
+            <span class="tag tag-d6">⚅&#xFE0E; D6 × 5</span> šestistěnná kostka (hodnoty 1–6) &nbsp;&nbsp;
+
+        </p>
+        <div style="background:#d5c9a8; border:2pt solid #3a2010; padding:5pt 8pt; margin-top:6pt; font-size:9pt">
+            <strong>❧ Příprava hry:</strong>
+            <span style="display:block; margin-top:2pt">① Každý hráč obdrží <strong>5 kostek</strong> — <span class="tag tag-d6">D6 × 5</span>.</span>
+            <span style="display:block">② Jeden hráč nastaví (nebo hodí) hodnoty všech svých kostek podle svého výběru.</span>
+            <span style="display:block">③ Druhý hráč si na svých kostkách nastaví <strong>stejné hodnoty</strong></span>
+            <span style="display:block">④ Oba rozmístí své kostky na <strong>základnu</strong>: <span style="color:#8b1a1a">●</span> červený horní, <span style="color:#1a2838">●</span> modrý spodní. Rozmístění <strong>volíš sám</strong>.</span>
+            <span style="display:block">⑤ <strong>Ten kdo vybíral hodnoty kostek hraje jako druhý. </strong></span>
+        </div>
+        <div class="dice-showcase">
+            <div class="dice-group">
+                <span class="dice-group-label red">Červený</span>
+                <div class="dice-pair">
+                    <img src="kostky/kostka%20d6%20cervenaPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                    <img src="kostky/kostka%20d6%20cervenaPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                    <img src="kostky/kostka%20d6%20cervenaPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                   <img src="kostky/kostka%20d6%20cervenaPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                    <img src="kostky/kostka%20d6%20cervenaPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                </div>
+            </div>
+            <div class="dice-separator"></div>
+            <div class="dice-group">
+                <span class="dice-group-label blue">Modrý</span>
+                <div class="dice-pair">
+                    <img src="kostky/kostka%20d6%20modraPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                    <img src="kostky/kostka%20d6%20modraPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                    <img src="kostky/kostka%20d6%20modraPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                  <img src="kostky/kostka%20d6%20modraPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                    <img src="kostky/kostka%20d6%20modraPad%20donjonu.png" alt="D6" class="dice-img" title="D6">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section theme-amber">
+        <div class="section-head">
+            <span class="section-icon">♛</span>
+            <span class="section-title">Cíl hry a body</span>
+        </div>
+        <p>Vítězí hráč, který jako první nashromáždí <strong>5 vítězných bodů</strong>. Body se získávají dvěma způsoby:</p>
+        <ul class="rules-list" style="margin-top:4pt">
+            <li><span style="color:#8b1a1a">✕</span> <strong>Destrukce nepřátelské jednotky</strong> <em>(trvalé body)</em><strong>:</strong> Kostka soupeře je zničena, pokud je vytlačena mimo mapu, obklíčena (nemá kam ustoupit), nebo rozdrcena ve věži (kolaps věže). Za každou zničenou kostku získáváš <span class="tag tag-d6">1 bod</span>. Body za destrukci jsou <strong>trvalé</strong> — nelze o ně přijít.</li>
+            <li><span style="color:#b87a20">✦</span> <strong>Ohniska na mapě</strong> <em>(stavové body)</em><strong>:</strong> Na herním plánu se nachází <strong>3 ohniska</strong> — speciálně označená pole na středové řadě. Na začátku svého tahu získáváš <span class="tag tag-pt">1 bod</span> za každé ohnisko, které ovládáš (stojí na něm tvá kostka nebo věž pod tvou nadvládou). Body za ohniska jsou <strong>stavové</strong> — pokud ohnisko ztratíš (soupeř ho obsadí), o bod <strong>přicházíš</strong>.</li>
+        </ul>
+        <p style="margin-top:5pt"><span style="color:#ff2d55; font-family:'Permanent Marker',cursive">⚠</span> <strong>Body získává pouze hráč, který je na tahu.</strong> Celkové skóre = trvalé body (destrukce) + stavové body (ohniska). Remíza nenastane.</p>
+    </div>
+
+</div>
+
+<!-- ═══════ PLÁNEK + PRŮBĚH TAHU ═══════ -->
+<div class="top-row" style="margin-bottom:12pt">
+
+    <div class="section theme-purple" style="margin-bottom:0">
+        <div class="section-head">
+            <span class="section-icon">⬡</span>
+            <span class="section-title">Herní plán — 61 polí</span>
+        </div>
+        <div style="text-align:center; padding:4pt 0">
+            <img src="kostky/uk%C3%A1zka%20hern%C3%AD%20pl%C3%A1nPad%20donjonu.png" alt="Herní plán — 61 polí" style="width:100%; max-width:100%; height:auto;">
+        </div>
+    </div>
+
+    <div class="section theme-green" style="margin-bottom:0">
+        <div class="section-head">
+            <span class="section-icon">⚔&#xFE0E;</span>
+            <span class="section-title">Průběh tahu</span>
+        </div>
+        <p style="font-size:9.5pt; margin-bottom:5pt">Hráči se pravidelně střídají. Tah je <strong>povinný</strong> — nelze ho vynechat.</p>
+        <div style="background:#d5c9a8; border:2pt solid #3a2010; padding:6pt 10pt; font-size:9.5pt">
+            <span style="display:block">① <strong>Ohniska</strong> — zkontroluj, zda ovládáš ohnisko → získej/ztráť body.</span>
+            <span style="display:block">② <strong>Akce</strong> — zvol a proveď <strong>právě jednu</strong> ze šesti akcí.</span>
+            <span style="display:block">③ <strong>Střet</strong> — pokud vstoupíš na pole nepřítele → vyřeš střet (Fáze 1 + 2).</span>
+            <span style="display:block">④ <strong>Vítězství</strong> — máš 5+ bodů? Vyhráváš! <em>Body získává pouze hráč na tahu.</em></span>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ═══════ 03 TAH HRÁČE ═══════ -->
+<div class="section theme-green" style="page-break-before:always; padding:4pt 6pt">
+    <div class="section-head" style="margin-bottom:2pt; padding-bottom:2pt">
+        <span class="section-icon">⚔&#xFE0E;</span>
+        <span class="section-title">Tah hráče — právě jedna z šesti akcí</span>
+    </div>
+
+    <div class="actions-grid">
+            <div class="action-card ac-teal">
+                <div class="ac-header">
+                    <i class="ac-icon">🏃‍♂️</i>
+                    <span class="ac-title">Útěk z věže</span>
+                </div>
+                <p>Pokud je tvá kostka na vrcholu věže, můžeš místo běžného tahu provést <strong>útěk z věže</strong>. Kostka seskočí na sousední pole (jako běžný pohyb o 1 pole). Útěk můžeš provést pouze pokud máš na kostce hodnotu alespoň rovnou počtu soupeřových kostek ve věži + 1. Po útěku si snížíš hodnotu o počet soupeřových kostek ve věži (ale nikdy nemůžeš klesnout pod 1).</p>
+            </div>
+            <div class="action-card ac-red">
+                <div class="ac-header">
+                    <i class="ac-icon">✕</i>
+                    <span class="ac-title">Kolaps věže</span>
+                </div>
+                <p>Pokud je na poli věž o <strong>3 a více kostkách</strong>, může <strong>pouze hráč, jehož kostka je na vrcholu věže</strong>, místo běžného tahu vyvolat <strong>kolaps věže</strong>. Spodní (nejníže umístěná) kostka ve věži je odstraněna ze hry. Pokud patřila soupeři, získáváš bod.</p>
+            </div>
+
+        <div class="action-card ac-blue">
+            <div class="ac-header">
+                <i class="ac-icon">♞</i>
+                <span class="ac-title">Pohyb kostkou</span>
+            </div>
+            <p>Zvol vlastní kostku — může stát sama nebo být na vrcholu věže. Kostka se pohne až hodnotu na uvedenou na kostce. Hráč si volí trajektorii — krok <strong>nemusí</strong> vést po přímce, jednotka může během pohybu měnit směr. Pokud je součástí věže, oddělí se od ní. <strong>Přes soupeřovy jednotky nelze chodit.</strong> Přes vlastní jednotky lze přejít pouze pokud má kostka <strong>vyšší útočnou sílu na daném poli</strong>. Při pohybu před vlastní jednotky lze uplatnit pravidla <strong>Skoku z věže</strong></p>
+            <p style="margin-top:3pt">Pokud je cílové pole <strong>prázdné</strong> nebo <strong>vlastní</strong>, kostka se tam přesune (a případně vytvoří věž). Pokud stojí na cílovém poli <strong>nepřítel</strong>, dochází ke střetu. <strong>Útočná síla = hodnota horní kostky + počet vlastních kostek - počet kostek protihráče.</strong></p>
+            <img src="kostky/B%C4%9B%C5%BEn%C3%BD%20tahPad%20donjonu.png" alt="Pohyb kostkou" style="display:block; margin:3pt auto 0; width:200px; ">
+        </div>
+
+        <div class="action-card ac-teal">
+            <div class="ac-header">
+                <i class="ac-icon">♜</i>
+                <span class="ac-title">Pohyb celé věže</span>
+            </div>
+                <p>Věž ovládá ten co má vrchní kostku.Pro přesun věže platí to že nesmí na nebo přes pole svých kostek. Dosah je určen množstvím svých kostek - kostek protihráče. </p>
+            <p style="margin-top:3pt">Pokud na cílovém poli stojí nepřítel je vyvolán střet. ve fázi 2 může věž využít pouze Vytlačení. <strong>Útočná síla = hodnota horní kostky + počet vlastních kostek - počet kostek protihráče.</strong></p>
+            <img src="kostky/Pohyb%20cel%C3%A9%20v%C4%9B%C5%BEePad%20donjonu.png" alt="Pohyb celé věže" style="display:block; margin:3pt auto 0; width:150px; height:auto">
+        </div>
+
+        <div class="action-card ac-teal">
+            <div class="ac-header">
+                <i class="ac-icon">⚔&#xFE0E;</i>
+                <span class="ac-title">Skok z věže</span>
+            </div>
+                <p>Zvol věž, na jejímž vrcholu stojí <strong>tvá kostka</strong>. Horní kostka se oddělí od věže a skočí o <strong>tolik polí, kolik je dosah věže</strong>. <strong>Dosah věže</strong> = počet tvých kostek ve věži − počet soupeřových kostek ve věži (minimálně 1).<br><strong>Útočná síla = hodnota horní kostky + počet vlastních kostek - počet kostek protihráče.</strong> Pokud není tvá kostka na vrcholu, skáčeš pouze s vlastní silou kostky (jako pohyb kostkou).</p>
+            
+            <img src="kostky/Skok%20z%20v%C4%9B%C5%BEePad%20donjonu.png" alt="Skok z věže" style="display:block; margin:3pt auto 0; width:130px; height:auto">
+        </div>
+
+        <div class="action-card ac-purple">
+            <div class="ac-header">
+                <i class="ac-icon">↑</i>
+                <span class="ac-title">Přeformování</span>
+            </div>
+            <p>Zvol <strong>jednu vlastní kostku</strong>, která je buď samostatná, nebo na vrcholu věže, a <strong>přehoď ji</strong> (hoď znovu). Pokud padne nižší hodnota než původní, ponecháš původní hodnotu. Hodnota kostky se tedy může pouze zvýšit nebo zůstat stejná. Žádný pohyb se nekoná, tah tím končí.</p>
+            <p style="margin-top:3pt">Užitečné pro přípravu útoku, zvýšení dosahu nebo záchranu ohrožené kostky.</p>
+        </div>
+
+      
+
+    </div>
+</div>
+
+<!-- ═══════ 04 STŘET ═══════ -->
+<div class="section theme-red" style="page-break-before:always">
+    <div class="section-head">
+        <span class="section-icon">⚡&#xFE0E;</span>
+        <span class="section-title">Střet — vytlačení a obsazení</span>
+    </div>
+    <p><strong>Střet</strong> nastane, když tvůj pohyb skončí na poli nepřítele — tvá útočná síla (<strong>hodnota horní kostky + počet vlastních kostek − počet kostek protihráče</strong>) musí být vyšší než obrana cíle. Na pole se silnějším nepřítelem se nelze pohnout.</p>
+    <p style="margin-top:4pt">Při úspěšném útoku proběhnou <strong>obě následující fáze</strong> — nejprve Fáze 1, poté Fáze 2:</p>
+
+    <div class="two-col combat-result">
+        <div>
+            <h4><span class="step-badge">FÁZE 1</span> ⚔&#xFE0E; Následky výhry <em style="font-size:7.5pt;color:#5a4a30;font-weight:400">— proběhne vždy automaticky</em></h4>
+            <ul class="rules-list">
+                <li><span style="color:#8b1a1a">⚔&#xFE0E;</span> <strong>Opotřebení útočníka:</strong> Hodnota útočící kostky se automaticky sníží o <strong>1</strong>. Při útoku věží si hráč s nadvládou zvolí, která kostka z věže opotřebení obdrží. Jelikož útok vyžaduje převýšení obrany, minimální hodnota útočící kostky je vždy alespoň 2 — hodnota tak nemůže klesnout na 0.</li>
+                <li><span style="color:#1a2838">⚅&#xFE0E;</span> <strong>Přeholzení obránce:</strong> Jedna poražená kostka nepřítele se okamžitě přehodí — získá novou náhodnou hodnotu, která může být stejná nebo nižší než původní. Obránce tak nemůže být po boji silnější než předtím.</li>
+            </ul>
+        </div>
+        <div>
+            <h4><span class="step-badge">FÁZE 2</span> ⚔&#xFE0E; Volba útočníka <em style="font-size:7.5pt;color:#5a4a30;font-weight:400">— zvol jednu ze dvou možností</em></h4>
+            <ul class="rules-list">
+                <li><span style="color:#3a5a20">⛨</span> <strong>Vytlačení:</strong> Celá nepřátelská formace (kostka nebo věž) je posunuta o <strong>jedno pole dál</strong> ve směru útoku.
+                    <ul style="margin-top:3pt; margin-bottom:2pt; padding-left:14pt; list-style:none">
+                        <li><span style="color:#4a2050">⚐&#xFE0E;</span> <strong>Smíšená věž</strong> — považuje se za formaci hráče s nadvládou; pohybuje se <strong>celá věž</strong> včetně všech kostek.</li>
+                        <li><span style="color:#3a2010">⛓&#xFE0E;</span> <strong>Řetězový odsun</strong> — pokud za vytlačovanou formací stojí další soupeřova formace, řeší se postupně: nejprve A vytlačí B o jedno pole, poté B tlačí C o jedno pole atd. Každé vytlačení se vyhodnotí zvlášť — pokud jakákoli formace v řetězci narazí na tvou jednotku (obklíčení) nebo okraj mapy, je <strong>zničena</strong>.</li>
+                        <li><span style="color:#ff2d55">⊗</span> <strong>Obklíčení</strong> — pokud za ní stojí tvá jednotka, soupeř nemá kam ustoupit a je <strong>zničen</strong>.</li>
+                        <li><span style="color:#ff2d55">✕</span> <strong>Mimo mapu</strong> — pokud je vytlačen za okraj herního plánu, je <strong>zničen</strong> a získáváš body.</li>
+                    </ul>
+                </li>
+                <li><span style="color:#b87a20">♛&#xFE0E;</span> <strong>Obsazení (nasednutí na nepřítele):</strong> Tvá útočící kostka se umístí <strong>na vrchol</strong> nepřátelské kostky či věže. Vzniká smíšená věž — <strong>nadvládu má vždy hráč, jehož kostka je na vrcholu věže</strong> (nezávisle na součtu hodnot).</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════ STRANA 2 — REJSTŘÍK ═══════ -->
+<div class="page-break">
+
+    <div class="glossary-header">
+        <h2>† Rejstřík pojmů †</h2>
+        <p>Kompletní přehled herních termínů a mechanik</p>
+    </div>
+
+    <!-- JEDNOTKY -->
+    <div class="glossary-grid">
+
+        <div class="gl-cat"><span class="gl-cat-icon">⚔</span> Jednotky a komponenty</div>
+
+   <div class="gl-card">
+           <span class="gl-icon">♜</span>
+            <div class="gl-body">
+                <div class="gl-term">Věž</div>
+                <div class="gl-desc">Dvě a více kostek stojících na stejném poli. Novou kostku lze přiložit pouze na věž, jejíž horní kostka má nižší hodnotu než přikládaná. Nadvládu má hráč, jehož kostka je na vrcholu věže (nezávisle na součtu hodnot). Může obsahovat kostky obou hráčů (smíšená věž).</div>
+            </div>
+        </div>
+
+
+
+        <div class="gl-card">
+            <span class="gl-icon">⚐</span>
+            <div class="gl-body">
+                <div class="gl-term">Formace</div>
+                <div class="gl-desc">Jedna či více kostek stojících na stejném poli. Zahrnuje samotnou kostku i věž. Používá se jako obecný pojem pro jakoukoli skupinu jednotek na jednom poli.</div>
+            </div>
+        </div>
+
+        <div class="gl-card">
+            <span class="gl-icon">⬡</span>
+            <div class="gl-body">
+                <div class="gl-term">Hexagonální pole</div>
+                <div class="gl-desc">Herní mapa se skládá z 61 šestiúhelníkových polí. Každé pole může obsahovat samotnou kostku nebo věž (2+ kostek).</div>
+            </div>
+        </div>
+
+        <div class="gl-card">
+            <span class="gl-icon">✦</span>
+            <div class="gl-body">
+                <div class="gl-term">Ohnisko</div>
+                <div class="gl-desc">Označené pole na mapě. Pokud ho na začátku svého tahu ovládáš, máš 1 vítězný bod. Body se nekumulují — držíš jen 1 bod za ovládání. Když soupeř ohnisko obsadí, o bod přicházíš.</div>
+            </div>
+        </div>
+
+        <div class="gl-card">
+            <span class="gl-icon">⌂</span>
+            <div class="gl-body">
+                <div class="gl-term">Základna</div>
+                <div class="gl-desc">Startovní řada polí (<span style="color:#8b1a1a">●</span> r=0, <span style="color:#1a2838">●</span> r=8), kam hráč při přípravě umístí své jednotky. Během hry nemá speciální pravidla — funguje jako běžné pole.</div>
+            </div>
+        </div>
+
+  
+
+
+        <div class="gl-card">
+            <span class="gl-icon">⚐</span>
+            <div class="gl-body">
+                <div class="gl-term">Smíšená věž</div>
+                <div class="gl-desc">Věž obsahující kostky obou hráčů. Nadvládu má hráč, jehož kostka je na vrcholu věže — pouze ten může s věží pohybovat, útočit nebo z ní skákat.</div>
+            </div>
+        </div>
+
+        <!-- AKCE -->
+        
+
+
+ 
+
+    
+
+
+
+        <!-- STŘET -->
+        <div class="gl-cat"><span class="gl-cat-icon">⚡</span> Střet a výsledky</div>
+
+        <div class="gl-card">
+            <span class="gl-icon">⚡</span>
+            <div class="gl-body">
+                <div class="gl-term">Střet</div>
+                <div class="gl-desc">Nastává při zakončení pohybu na poli nepřítele. Útok je možný pouze na pole, kde je soupeřova kostka (nebo věž) s nižší obranou než útočná síla útočníka (<strong>hodnota horní kostky + počet vlastních kostek - počet kostek protihráče</strong>). Útočník vyhrává, jen pokud jeho útočná síla striktně převyšuje obranu cíle.</div>
+            </div>
+        </div>
+
+        <div class="gl-card">
+            <span class="gl-icon">⛨</span>
+            <div class="gl-body">
+                <div class="gl-term">Vytlačení</div>
+                <div class="gl-desc">Výsledek střetu — nepřátelská formace je posunuta o pole dál ve směru útoku. Smíšená věž se považuje za formaci hráče s nadvládou a pohybuje se jako celek. Může vyvolat řetězovou reakci nebo obklíčení.</div>
+            </div>
+        </div>
+
+        <div class="gl-card">
+            <span class="gl-icon">⚔</span>
+            <div class="gl-body">
+                <div class="gl-term">Obsazení (nasednutí na nepřítele)</div>
+                <div class="gl-desc">Výsledek střetu — útočící kostka je umístěna na vrchol nepřátelské kostky či věže. Vzniká smíšená věž; nadvládu získá ten, jehož kostka je na vrcholu věže.</div>
+            </div>
+        </div>
+
+        <div class="gl-card">
+            <span class="gl-icon">⊗</span>
+            <div class="gl-body">
+                <div class="gl-term">Obklíčení</div>
+                <div class="gl-desc">Zničení nepřátelské kostky nebo věže vytlačením proti vlastní jednotce. Obklíčený nepřítel nemá kam ustoupit a je zničen.</div>
+            </div>
+        </div>
+
+      
+
+        <div class="gl-card">
+            <span class="gl-icon">✕</span>
+            <div class="gl-body">
+                <div class="gl-term">Mimo mapu (Destrukce)</div>
+                <div class="gl-desc">Vytlačení nepřátelské kostky nebo věže za okraj herního plánu. Všechny kostky jsou zničeny a útočník získává příslušné body.</div>
+            </div>
+        </div>
+
+        <div class="gl-card">
+            <span class="gl-icon">⚔</span>
+            <div class="gl-body">
+                <div class="gl-term">Opotřebení</div>
+                <div class="gl-desc">Po vítězném střetu se hodnota útočící kostky automaticky sníží o 1. Při útoku věží si hráč s nadvládou zvolí, která kostka opotřebení obdrží. Hodnota kostky nemůže klesnout pod 1.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ═══════ PŘÍKLADY STŘETŮ ═══════ -->
+    <div style="margin-top:12pt">
+        <div class="glossary-header" style="margin-bottom:8pt">
+            <h2>† Příklady střetů †</h2>
+            <p>Ukázky řešení běžných herních situací</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10pt">
+            <!-- Příklad 1: Obsazení -->
+            <div style="background:#d5c9a8; border:2pt solid #3a2010; padding:8pt 11pt; font-size:9pt; line-height:1.5">
+                <strong>❧ Příklad 1 — Střet s obsazením:</strong>
+                <span style="display:block; margin-top:3pt">Červená <span class="tag tag-d6">D6</span> s hodnotou <strong>4</strong> stojí sama. Červený hráč zvolí pohyb kostkou — skočí o 3 pole na pole, kde stojí modrá <span class="tag tag-d6">D6</span> s hodnotou <strong>2</strong>.</span>
+                <span style="display:block; margin-top:2pt"><strong>Střet:</strong> Útočná síla (hodnota horní kostky + počet vlastních kostek - počet kostek protihráče) 4 &gt; obrana 2 → útok úspěšný.</span>
+                <span style="display:block"><strong>Fáze 1:</strong> Červená D6 klesne z 4 na <strong>3</strong> (opotřebení). Modrá D6 se přehodí → nová hodnota např. <strong>1</strong> (při přehazování obrany nemůže být vyšší než původní hodnota).</span>
+                <span style="display:block"><strong>Fáze 2:</strong> Červený hráč volí <em>Obsazení</em> — jeho D6 (3) sedne na modrou D6 (1). Vzniká smíšená věž. Nadvládu má červený (3 &gt; 1). <span style="color:#ff2d55; font-family:'Permanent Marker',cursive">⚠ Riskantní, ale taktické!</span></span>
+            </div>
+
+            <!-- Příklad 2: Mimo mapu -->
+            <div style="background:#d5c9a8; border:2pt solid #8b1a1a; padding:8pt 11pt; font-size:9pt; line-height:1.5">
+                <strong style="color:#8b1a1a">❧ Příklad 2 — Mimo mapu (zničení vytlačením za okraj):</strong>
+                <span style="display:block; margin-top:3pt">Červená <span class="tag tag-d6">D6</span> s hodnotou <strong>5</strong> útočí na modrou <span class="tag tag-d6">D6</span> s hodnotou <strong>3</strong>, která stojí u okraje mapy.</span>
+                <span style="display:block; margin-top:2pt"><strong>Střet:</strong> Útočná síla (hodnota horní kostky + počet vlastních kostek - počet kostek protihráče) 5 &gt; obrana 3 → útok úspěšný.</span>
+                <span style="display:block"><strong>Fáze 1:</strong> Červená D6 klesne z 5 na <strong>4</strong> (opotřebení −1). Modrá D6 se přehodí → nová hodnota např. <strong>2</strong> (při přehazování obrany nemůže být vyšší než původní hodnota).</span>
+                <span style="display:block"><strong>Fáze 2:</strong> Červený hráč volí <em>Vytlačení</em> — modrá D6 je posunuta o jedno pole ve směru útoku, ale za okrajem mapy už žádné pole není → modrá D6 je <strong style="color:#ff2d55">zničena</strong>! Červený získává bod.</span>
+                <div style="text-align:center; margin-top:6pt">
+                    <img src="kostky/p%C5%99%C3%ADklad%20%20Mimo%20mapu%20Pad%20donjonu.png" alt="Příklad: Mimo mapu" style="width:150px">
+                </div>
+            </div>
+        </div>
+
+        <!-- Příklad 3: Řetězení obklíčení -->
+        <div style="margin-top:10pt; background:#d5c9a8; border:2pt solid #1a2838; padding:8pt 11pt; font-size:9pt; line-height:1.5; display:grid; grid-template-columns:1fr auto; gap:10pt; align-items:center">
+            <div>
+                <strong style="color:#1a2838">❧ Příklad 3 — Řetězový odsun a obklíčení:</strong>
+                <span style="display:block; margin-top:3pt">Červená <span class="tag tag-d6">D6</span> s hodnotou <strong>5</strong> útočí na modrou <span class="tag tag-d6">D6</span> s hodnotou <strong>3</strong>.</span>
+                <span style="display:block; margin-top:2pt"><strong>Střet:</strong> Útočná síla (hodnota horní kostky + počet vlastních kostek - počet kostek protihráče) 5 &gt; obrana 3 → útok úspěšný.</span>
+                <span style="display:block"><strong>Fáze 1:</strong> Červená D6 klesne z 5 na <strong>4</strong> (opotřebení −1). Modrá D6 (3) se přehodí → nová hodnota např. <strong>2</strong> (při přehazování obrany nemůže být vyšší než původní hodnota).</span>
+                <span style="display:block"><strong>Fáze 2:</strong> Červený hráč volí <em>Vytlačení</em> — spustí se řetězový odsun:</span>
+                <span style="display:block; padding-left:12pt">① Modrá D6 (3) je posunuta o jedno pole → naráží na další modrou <span class="tag tag-d6">D6</span> </span>
+                <span style="display:block; padding-left:12pt">② Modrá D6 (3) je posunuta o jedno pole → naráží na další modrou <span class="tag tag-d6">D6</span> </span>
+                <span style="display:block; padding-left:12pt">③ Та je posunuta o jedno pole dál → naráží na modrou <span class="tag tag-d6">D6</span> (4).</span>
+                <span style="display:block; padding-left:12pt">④ Modrá D6 (4) je posunuta o jedno pole dál → ale tam stojí červená <span class="tag tag-d6">D6</span>! Nemá kam ustoupit → <strong style="color:#ff2d55">obklíčení — modrá D6 je zničena!</strong></span>
+                <span style="display:block; margin-top:3pt"><span style="color:#ff2d55; font-family:'Permanent Marker',cursive">⚠</span> Řetězový odsun se vyhodnocuje postupně. Jakmile formace narazí na soupeřovu jednotku (obklíčení) nebo okraj mapy, je zničena.</span>
+            </div>
+            <div style="text-align:center">
+                <img src="kostky/priklad%20%C5%99et%C4%9Bzen%C3%AD%20obkl%C3%ADcen%C3%ADPad%20donjonu.png" alt="Příklad: Řetězení obklícení" style="width:250px">
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════ HERNÍ PLÁN (hrací) ═══════ -->
+<div class="board-page">
+    <div class="board-heading">⚔ HERNÍ PLÁN ⚔<small>Pád Donjonu — 61 hexagonálních polí · Vytiskni, vystřihni kostky a hraj!</small></div>
+    <svg viewBox="0 0 500 500" style="width:100%">
+        <!-- Decorative border -->
+        <rect x="2" y="2" width="496" height="496" rx="6" fill="none" stroke="#b87a20" stroke-width="2.5"/>
+        <rect x="5" y="5" width="490" height="490" rx="4" fill="#eadcba" stroke="#3a2010" stroke-width="0.7"/>
+
+        <!-- Top ornament -->
+        <text x="250" y="18" text-anchor="middle" font-size="9" fill="#b87a20" font-family="'Permanent Marker',cursive" letter-spacing="6">† ⚔ †</text>
+
+        <!-- ══ Row 0 (5) — ČERVENÝ základ ══ -->
+        <polygon points="146,25 172,40 172,70 146,85 120,70 120,40" fill="#f0d0c8" stroke="#8b1a1a" stroke-width="1.5"/>
+        <polygon points="198,25 224,40 224,70 198,85 172,70 172,40" fill="#f0d0c8" stroke="#8b1a1a" stroke-width="1.5"/>
+        <polygon points="250,25 276,40 276,70 250,85 224,70 224,40" fill="#f0d0c8" stroke="#8b1a1a" stroke-width="1.5"/>
+        <polygon points="302,25 328,40 328,70 302,85 276,70 276,40" fill="#f0d0c8" stroke="#8b1a1a" stroke-width="1.5"/>
+        <polygon points="354,25 380,40 380,70 354,85 328,70 328,40" fill="#f0d0c8" stroke="#8b1a1a" stroke-width="1.5"/>
+
+        <!-- ══ Row 1 (6) ══ -->
+        <polygon points="120,70 146,85 146,115 120,130 94,115 94,85" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="172,70 198,85 198,115 172,130 146,115 146,85" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="224,70 250,85 250,115 224,130 198,115 198,85" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="276,70 302,85 302,115 276,130 250,115 250,85" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="328,70 354,85 354,115 328,130 302,115 302,85" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="380,70 406,85 406,115 380,130 354,115 354,85" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+
+        <!-- ══ Row 2 (7) ══ -->
+        <polygon points="94,115 120,130 120,160 94,175 68,160 68,130" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="146,115 172,130 172,160 146,175 120,160 120,130" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="198,115 224,130 224,160 198,175 172,160 172,130" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="250,115 276,130 276,160 250,175 224,160 224,130" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="302,115 328,130 328,160 302,175 276,160 276,130" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="354,115 380,130 380,160 354,175 328,160 328,130" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="406,115 432,130 432,160 406,175 380,160 380,130" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+
+        <!-- ══ Row 3 (8) ══ -->
+        <polygon points="68,160 94,175 94,205 68,220 42,205 42,175" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="120,160 146,175 146,205 120,220 94,205 94,175" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="172,160 198,175 198,205 172,220 146,205 146,175" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="224,160 250,175 250,205 224,220 198,205 198,175" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="276,160 302,175 302,205 276,220 250,205 250,175" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="328,160 354,175 354,205 328,220 302,205 302,175" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="380,160 406,175 406,205 380,220 354,205 354,175" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="432,160 458,175 458,205 432,220 406,205 406,175" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+
+        <!-- ══ Row 4 (9) — středová řada s OHNISKY ══ -->
+        <polygon points="42,205 68,220 68,250 42,265 16,250 16,220" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="94,205 120,220 120,250 94,265 68,250 68,220" fill="#f5e6c0" stroke="#c9a84c" stroke-width="1.8"/>
+        <polygon points="146,205 172,220 172,250 146,265 120,250 120,220" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="198,205 224,220 224,250 198,265 172,250 172,220" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="250,205 276,220 276,250 250,265 224,250 224,220" fill="#f5e6c0" stroke="#c9a84c" stroke-width="1.8"/>
+        <polygon points="302,205 328,220 328,250 302,265 276,250 276,220" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="354,205 380,220 380,250 354,265 328,250 328,220" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="406,205 432,220 432,250 406,265 380,250 380,220" fill="#f5e6c0" stroke="#c9a84c" stroke-width="1.8"/>
+        <polygon points="458,205 484,220 484,250 458,265 432,250 432,220" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <!-- Ohnisko markers -->
+        <text x="94" y="240" text-anchor="middle" font-size="14" fill="#c9a84c" opacity="0.5" font-weight="700">✦</text>
+        <text x="250" y="240" text-anchor="middle" font-size="14" fill="#c9a84c" opacity="0.5" font-weight="700">✦</text>
+        <text x="406" y="240" text-anchor="middle" font-size="14" fill="#c9a84c" opacity="0.5" font-weight="700">✦</text>
+
+        <!-- ══ Row 5 (8) ══ -->
+        <polygon points="68,250 94,265 94,295 68,310 42,295 42,265" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="120,250 146,265 146,295 120,310 94,295 94,265" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="172,250 198,265 198,295 172,310 146,295 146,265" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="224,250 250,265 250,295 224,310 198,295 198,265" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="276,250 302,265 302,295 276,310 250,295 250,265" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="328,250 354,265 354,295 328,310 302,295 302,265" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="380,250 406,265 406,295 380,310 354,295 354,265" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="432,250 458,265 458,295 432,310 406,295 406,265" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+
+        <!-- ══ Row 6 (7) ══ -->
+        <polygon points="94,295 120,310 120,340 94,355 68,340 68,310" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="146,295 172,310 172,340 146,355 120,340 120,310" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="198,295 224,310 224,340 198,355 172,340 172,310" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="250,295 276,310 276,340 250,355 224,340 224,310" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="302,295 328,310 328,340 302,355 276,340 276,310" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="354,295 380,310 380,340 354,355 328,340 328,310" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="406,295 432,310 432,340 406,355 380,340 380,310" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+
+        <!-- ══ Row 7 (6) ══ -->
+        <polygon points="120,340 146,355 146,385 120,400 94,385 94,355" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="172,340 198,355 198,385 172,400 146,385 146,355" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="224,340 250,355 250,385 224,400 198,385 198,355" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="276,340 302,355 302,385 276,400 250,385 250,355" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="328,340 354,355 354,385 328,400 302,385 302,355" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+        <polygon points="380,340 406,355 406,385 380,400 354,385 354,355" fill="#faf0d8" stroke="#a08850" stroke-width="1"/>
+
+        <!-- ══ Row 8 (5) — MODRÝ základ ══ -->
+        <polygon points="146,385 172,400 172,430 146,445 120,430 120,400" fill="#d0d8e8" stroke="#3a5a8a" stroke-width="1.5"/>
+        <polygon points="198,385 224,400 224,430 198,445 172,430 172,400" fill="#d0d8e8" stroke="#3a5a8a" stroke-width="1.5"/>
+        <polygon points="250,385 276,400 276,430 250,445 224,430 224,400" fill="#d0d8e8" stroke="#3a5a8a" stroke-width="1.5"/>
+        <polygon points="302,385 328,400 328,430 302,445 276,430 276,400" fill="#d0d8e8" stroke="#3a5a8a" stroke-width="1.5"/>
+        <polygon points="354,385 380,400 380,430 354,445 328,430 328,400" fill="#d0d8e8" stroke="#3a5a8a" stroke-width="1.5"/>
+
+        <!-- Base labels -->
+        <text x="250" y="60" text-anchor="middle" font-size="10" fill="#8b1a1a" font-weight="700" opacity="0.3" font-family="'IM Fell English SC',serif">ČERVENÝ ZÁKLAD</text>
+        <text x="250" y="420" text-anchor="middle" font-size="10" fill="#3a5a8a" font-weight="700" opacity="0.3" font-family="'IM Fell English SC',serif">MODRÝ ZÁKLAD</text>
+
+        <!-- Corner: top-left — title -->
+        <text x="56" y="50" text-anchor="middle" font-size="6" fill="#b87a20" font-weight="700" font-family="'IM Fell English SC',serif">PÁD</text>
+        <text x="56" y="60" text-anchor="middle" font-size="6" fill="#b87a20" font-weight="700" font-family="'IM Fell English SC',serif">DONJONU</text>
+        <text x="56" y="72" text-anchor="middle" font-size="10" fill="#b87a20">†</text>
+
+        <!-- Corner: top-right — legend -->
+        <rect x="420" y="35" width="10" height="10" rx="2" fill="#f0d0c8" stroke="#8b1a1a" stroke-width="0.6"/>
+        <text x="434" y="44" font-size="5.5" fill="#1a1008" font-family="serif">Základ</text><circle cx="458" cy="41" r="3" fill="#8b1a1a"/>
+        <rect x="420" y="50" width="10" height="10" rx="2" fill="#d0d8e8" stroke="#3a5a8a" stroke-width="0.6"/>
+        <text x="434" y="59" font-size="5.5" fill="#1a1008" font-family="serif">Základ</text><circle cx="458" cy="56" r="3" fill="#3a5a8a"/>
+        <rect x="420" y="65" width="10" height="10" rx="2" fill="#f5e6c0" stroke="#c9a84c" stroke-width="0.6"/>
+        <text x="434" y="74" font-size="5.5" fill="#1a1008" font-family="serif">Ohnisko</text><text x="462" y="74" font-size="5" fill="#c9a84c" font-weight="700">✦</text>
+        <rect x="420" y="80" width="10" height="10" rx="2" fill="#faf0d8" stroke="#a08850" stroke-width="0.6"/>
+        <text x="434" y="89" font-size="5.5" fill="#1a1008" font-family="serif">Neutrální</text>
+
+        <!-- Corner: bottom-left -->
+        <text x="56" y="426" text-anchor="middle" font-size="10" fill="#b87a20">†</text>
+
+        <!-- Corner: bottom-right -->
+        <text x="444" y="402" text-anchor="middle" font-size="5.5" fill="#b87a20" font-family="'IM Fell English SC',serif" font-weight="400">Cíl: 5 bodů</text>
+        <text x="444" y="416" text-anchor="middle" font-size="7" fill="#b87a20" letter-spacing="3">★ ★ ★ ★ ★</text>
+
+        <!-- ══ Separator ══ -->
+        <line x1="15" y1="453" x2="485" y2="453" stroke="#3a2010" stroke-width="0.6" stroke-dasharray="2,2"/>
+
+        <!-- Score Track Title -->
+        <text x="250" y="466" text-anchor="middle" font-size="7" fill="#b87a20" font-weight="700" font-family="'IM Fell English SC',serif" letter-spacing="2">✕ BODOVÁ DRÁHA ✕</text>
+
+        <!-- Red score track -->
+        <rect x="28" y="473" width="12" height="12" rx="2" fill="#f0d0c8" stroke="#8b1a1a" stroke-width="0.8"/>
+        <text x="34" y="483" text-anchor="middle" font-size="7" fill="#8b1a1a" font-weight="700">⚔</text>
+        <text x="55" y="482" font-size="6" fill="#8b1a1a" font-weight="700" font-family="'IM Fell English SC',serif">ČERVENÝ</text>
+        <circle cx="108" cy="479" r="8" fill="none" stroke="#8b1a1a" stroke-width="0.7"/>
+        <text x="108" y="482" text-anchor="middle" font-size="6.5" fill="#8b1a1a">0</text>
+        <circle cx="129" cy="479" r="8" fill="none" stroke="#8b1a1a" stroke-width="0.7"/>
+        <text x="129" y="482" text-anchor="middle" font-size="6.5" fill="#8b1a1a">1</text>
+        <circle cx="150" cy="479" r="8" fill="none" stroke="#8b1a1a" stroke-width="0.7"/>
+        <text x="150" y="482" text-anchor="middle" font-size="6.5" fill="#8b1a1a">2</text>
+        <circle cx="171" cy="479" r="8" fill="none" stroke="#8b1a1a" stroke-width="0.7"/>
+        <text x="171" y="482" text-anchor="middle" font-size="6.5" fill="#8b1a1a">3</text>
+        <circle cx="192" cy="479" r="8" fill="none" stroke="#8b1a1a" stroke-width="0.7"/>
+        <text x="192" y="482" text-anchor="middle" font-size="6.5" fill="#8b1a1a">4</text>
+        <circle cx="216" cy="479" r="9" fill="#f5e6c0" stroke="#c9a84c" stroke-width="1.2"/>
+        <text x="216" y="482" text-anchor="middle" font-size="6" fill="#b87a20" font-weight="700">★5</text>
+
+        <!-- Blue score track -->
+        <rect x="268" y="473" width="12" height="12" rx="2" fill="#d0d8e8" stroke="#3a5a8a" stroke-width="0.8"/>
+        <text x="274" y="483" text-anchor="middle" font-size="7" fill="#3a5a8a" font-weight="700">⚔</text>
+        <text x="296" y="482" font-size="6" fill="#3a5a8a" font-weight="700" font-family="'IM Fell English SC',serif">MODRÝ</text>
+        <circle cx="348" cy="479" r="8" fill="none" stroke="#3a5a8a" stroke-width="0.7"/>
+        <text x="348" y="482" text-anchor="middle" font-size="6.5" fill="#3a5a8a">0</text>
+        <circle cx="369" cy="479" r="8" fill="none" stroke="#3a5a8a" stroke-width="0.7"/>
+        <text x="369" y="482" text-anchor="middle" font-size="6.5" fill="#3a5a8a">1</text>
+        <circle cx="390" cy="479" r="8" fill="none" stroke="#3a5a8a" stroke-width="0.7"/>
+        <text x="390" y="482" text-anchor="middle" font-size="6.5" fill="#3a5a8a">2</text>
+        <circle cx="411" cy="479" r="8" fill="none" stroke="#3a5a8a" stroke-width="0.7"/>
+        <text x="411" y="482" text-anchor="middle" font-size="6.5" fill="#3a5a8a">3</text>
+        <circle cx="432" cy="479" r="8" fill="none" stroke="#3a5a8a" stroke-width="0.7"/>
+        <text x="432" y="482" text-anchor="middle" font-size="6.5" fill="#3a5a8a">4</text>
+        <circle cx="456" cy="479" r="9" fill="#f5e6c0" stroke="#c9a84c" stroke-width="1.2"/>
+        <text x="456" y="482" text-anchor="middle" font-size="6" fill="#b87a20" font-weight="700">★5</text>
+
+        <!-- Bottom ornament -->
+        <text x="250" y="498" text-anchor="middle" font-size="9" fill="#b87a20" font-family="'Permanent Marker',cursive" letter-spacing="6">† ⚔ †</text>
+    </svg>
+</div>
+
+<!-- ═══════ QUICK-REFERENCE KARTA ═══════ -->
+
+
+<!-- ═══════ FOOTER ═══════ -->
+<div class="footer">† PÁD DONJONU · Řád válečného umění · Verze 4.0 †</div>
+
+<!-- ═══════ ODLOŽENÁ PRAVIDLA ═══════ -->
+<!--
+PLOŠNÝ POSTUP (Liniový pochod) — nahrazeno Sabotáží
+
+<div class="action-card ac-orange">
+    <div class="ac-header">
+        <i class="ac-icon">⇶</i>
+        <span class="ac-title">Plošný postup</span>
+    </div>
+    <p>Synchronizovaný pohyb více jednotek najednou. Vyber hodnotu X — všechny tvoje kostky (D6 i D8) s touto hodnotou se pohnou o X polí po přímé linii v jednom zvoleném směru. Všechny postupují stejným směrem. Pokud některá kostka narazí na překážku, zastaví se před ní. Nelze zahájit střet.</p>
+</div>
+-->
+
+</body>
+</html>
+
+
