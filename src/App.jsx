@@ -1,7 +1,10 @@
-function App() {
+import Board from "./components/Board";
+
+export default function App() {
     return (
-        <h1 className="text-9xl text-red-800">Donjon Fall</h1>
+        <div className="min-h-screen bg-(--color-bg) flex flex-col items-center py-8 gap-6">
+            <h1 className="text-4xl font-bold text-(--color-title)">Donjon Fall</h1>
+            <Board/>
+        </div>
     );
 }
-
-export default App
