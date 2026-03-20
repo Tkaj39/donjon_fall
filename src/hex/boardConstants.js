@@ -45,3 +45,28 @@ export const FOCAL_POINT_KEYS = FOCAL_POINT_HEXES.map(hexKey);
 export const FOCAL_CENTER_KEY = hexKey({q: 0, r: 0, s: 0});
 export const FOCAL_LEFT_KEY = hexKey({q: -2, r: 0, s: 2});
 export const FOCAL_RIGHT_KEY = hexKey({q: 2, r: 0, s: -2});
+
+// Base rows: red occupies the top row (r = -BOARD_RADIUS),
+// blue occupies the bottom row (r = +BOARD_RADIUS).
+export const RED_BASE_HEXES = BOARD_HEXES.filter(h => h.r === -BOARD_RADIUS);
+export const BLUE_BASE_HEXES = BOARD_HEXES.filter(h => h.r === BOARD_RADIUS);
+
+// Focal point property descriptors keyed by hex key.
+const FOCAL_POINT_PROPS = {
+    [FOCAL_LEFT_KEY]:   { type: 'focalPoint', active: false, group: 'left' },
+    [FOCAL_CENTER_KEY]: { type: 'focalPoint', active: true,  group: 'center' },
+    [FOCAL_RIGHT_KEY]:  { type: 'focalPoint', active: false, group: 'right' },
+};
+
+// All 61 board fields as HexField objects: { coords, properties[] }.
+// Each field carries zero or more properties (startingField, focalPoint).
+export const BOARD_FIELDS = BOARD_HEXES.map(coords => {
+    const properties = [];
+    const key = hexKey(coords);
+
+    if (coords.r === -BOARD_RADIUS) properties.push({ type: 'startingField', owner: 'red' });
+    if (coords.r === BOARD_RADIUS)  properties.push({ type: 'startingField', owner: 'blue' });
+    if (FOCAL_POINT_PROPS[key])     properties.push(FOCAL_POINT_PROPS[key]);
+
+    return { coords, properties };
+});

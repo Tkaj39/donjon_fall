@@ -76,6 +76,20 @@ function cubeRound({q, r, s}) {
     return {q: rq, r: rr, s: rs};
 }
 
+// Converts cube coordinates to offset coordinates (odd-r layout, pointy-top).
+// @param {Object} hex - {q, r, s}
+export function cubeToOffset({q, r}) {
+    return {col: q + (r - (r & 1)) / 2, row: r};
+}
+
+// Converts offset coordinates (odd-r layout, pointy-top) to cube coordinates.
+// @param {Object} offset - {col, row}
+export function offsetToCube({col, row}) {
+    const q = col - (row - (row & 1)) / 2;
+    const r = row;
+    return {q, r, s: -q - r};
+}
+
 // Converts a hex to a stable string key (e.g. "1,-2,1") for use in Maps and Sets.
 // Two separate {q,r,s} objects with the same values would be treated as different
 // keys by JavaScript, since object identity is used — stringifying them gives a

@@ -1,4 +1,6 @@
 # Donjon Fall — Implementační plán
+<!-- TODO: Make focal points more general. Define passive focal points array, active focal points array and make sure that focal points can be grouped together. -->
+<!-- TODO: Make number of players general. In the future, more players than two should be able to play a game. This makes bases general as well - one base per player. -->
 
 ## Přehled
 
