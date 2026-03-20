@@ -8,7 +8,7 @@ import {
     hexFromKey,
     hexToPixel,
     hexCorners,
-} from './hexUtils';
+} from '../../src/hex/hexUtils';
 
 describe('cubeDistance', () => {
     it('same hex → 0', () => {

@@ -7,7 +7,7 @@ import {
     FOCAL_CENTER_KEY,
     FOCAL_LEFT_KEY,
     FOCAL_RIGHT_KEY,
-} from './boardConstants';
+} from '../../src/hex/boardConstants';
 
 describe('BOARD_HEXES', () => {
     it('has exactly 61 entries', () => {
