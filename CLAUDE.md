@@ -1,5 +1,5 @@
 # CLAUDE.md
-
+<!-- TODO: attacking power of a die/tower must be evaluated, not just die/tower top die value; single die value equals its attacking value -->
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
@@ -82,7 +82,7 @@ Triggered when a move ends on an enemy-occupied field.
     - Mixed tower moves as a whole. 
     - Chain reaction: if another enemy formation is behind, each is pushed in turn; any formation that hits your own unit (see **Encirclement**) or the map edge (see **Off the map**) is **destroyed** (attacker scores points).
     - **Encirclement**: if your own unit blocks the retreat path, the pushed formation (last in the formation in the attack direction) cannot escape and is destroyed (one point per destroyed enemy die).
-    - **Off the map**: pushed off the edge → destroyed, each player scores 1 point per die destroyed. <!-- TODO: verify scoring for mixed tower pushed off map — only attacker scores? -->
+    - **Off the map**: pushed off the edge → destroyed, attacking player scores 1 point per enemy die destroyed.
   - **Occupy**: attacker's die is placed on top of the enemy die, creating a **Mixed tower**. Control belongs to the player whose die is on top. Defender does **not** reroll.
 
 ### Towers & Key Terms
