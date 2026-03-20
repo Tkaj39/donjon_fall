@@ -1,5 +1,4 @@
 # CLAUDE.md
-<!-- TODO: attacking power of a die/tower must be evaluated, not just die/tower top die value; single die value equals its attacking value -->
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
@@ -51,7 +50,7 @@ npm run preview   # Preview production build
   - Cannot pass through enemy dice. 
   - Can pass through your own dice only if your die has higher attack strength on that field. 
   - Moving onto an empty field just moves there.
-  - Moving on friendly occupied field forms a tower. 
+  - Moving onto a friendly occupied field forms a tower, only if the moving die's attack strength exceeds the top die's attack strength on that field.
   - Moving onto an enemy field triggers either **Combat** or makes a **tower** (current player's choice). 
   - **Jump from tower**: a die on top of a tower may detach and jump up to (own dice in tower − enemy dice in tower, min 1) hexes; attack strength uses the jumping die's value alone.
 * **Tower collapse** — available when the tower has **3+ dice**.
@@ -87,7 +86,7 @@ Triggered when a move ends on an enemy-occupied field.
 
 ### Towers & Key Terms
 
-- **Tower**: 2+ dice on the same field. A new die can only be added if its attack value is **higher** than the current top die. Control = player with top die. <!-- TODO: verify tower entry condition — should be face value, not attack value/strength? -->
+- **Tower**: 2+ dice on the same field. A new die can only be added if its **attack strength** strictly exceeds the current top die's attack strength. Control = player with top die.
 - **Mixed tower**: tower containing both players' dice. Controlled by the player with the top die — only that player can move it, attack from it, or jump from it.
 - **Base**: starting row; no special rules during play.
 
