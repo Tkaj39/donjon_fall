@@ -1,10 +1,8 @@
 # Donjon Fall — Implementation Plan
-<!-- TODO: Make focal points more general. Define passive focal points array, active focal points array and make sure that focal points can be grouped together. -->
-<!-- TODO: Make number of players general. In the future, more players than two should be able to play a game. This makes bases general as well - one base per player. -->
 
 ## Overview
 
-Build a two-player hex-grid board game as a React web app. All game logic runs client-side; no backend needed for now. Players share one screen (hot-seat).
+Build a multi-player hex-grid board game as a React web app. The default configuration is two players, but all game logic is designed for N players (N ≥ 2). All logic runs client-side; no backend needed for now. Players share one screen (hot-seat).
 
 ---
 
@@ -28,12 +26,12 @@ HexField {
 }
 
 HexProperty =
-  | { type: 'startingField', owner: 'red' | 'blue' }
+  | { type: 'startingField', owner: string }
   | { type: 'focalPoint', active: boolean, group: string }
 ```
 
-- **`startingField`** — marks a field as belonging to a player's base; `owner` identifies which player.
-- **`focalPoint`** — marks a field as a focal point; `active` is its current state; `group` is a string identifier (e.g. `'left'`, `'center'`, `'right'`) that links a set of focal point fields — when a focal point activates, it may only move to fields sharing the same `group`.
+- **`startingField`** — marks a field as belonging to a player's base; `owner` is a player ID string (e.g. `'red'`, `'blue'`, or any future player ID). One base per player.
+- **`focalPoint`** — marks a field as a focal point; `active` is its initial state (true = active at game start, false = passive); `group` is a string identifier (e.g. `'left'`, `'center'`, `'right'`) — each group represents one logical focal point position that can migrate between fields sharing the same group. The board definition fully controls the number of focal points, their groups, and which start active.
 
 Helpers:
 - `getProperty(field, type)` — returns the property object or null
@@ -42,9 +40,9 @@ Helpers:
 ### 1.3 Board shape definition
 - Define the 61-field large hexagon as a set of valid cube coordinates
 - Map center at (0,0,0); radius 4 (standard hex grid: 1+6+12+18+24 = 61 fields)
-- Assign `startingField` property to red base (top row) and blue base (bottom row)
-- Assign `focalPoint` property to the 3 middle-row fields (groups: `'left'`, `'center'`, `'right'`); center starts `active: true`
-- Export constants: `BOARD_HEXES`, `RED_BASE_HEXES`, `BLUE_BASE_HEXES`, `FOCAL_POINT_HEXES`
+- Assign `startingField` property to each player's base row; `owner` = player ID (default map: `'red'` top row, `'blue'` bottom row)
+- Assign `focalPoint` property to the 3 middle-row fields (groups: `'left'`, `'center'`, `'right'`); center starts `active: true`, left and right start `active: false`
+- Export constants: `BOARD_HEXES`, `BASE_HEXES` (map `{ [playerId]: HexField[] }`), `FOCAL_POINT_HEXES`, `ACTIVE_FOCAL_HEXES`, `PASSIVE_FOCAL_HEXES`
 
 ### 1.5 Hex rendering component
 - `<HexTile hex coords, content, state, onClick>` — renders a single SVG hexagon
@@ -66,17 +64,18 @@ Define the canonical shape of game state as plain JS objects (no classes):
 
 ```
 GameState {
-  currentPlayer: 'red' | 'blue'
+  players: string[]            // ordered list of player IDs, e.g. ['red', 'blue']
+  currentPlayer: string        // player ID of the active player
   phase: 'focal' | 'action' | 'combat' | 'victory'
   dice: {
-    [hexKey]: Die[]          // hexKey = "q,r,s"
+    [hexKey]: Die[]            // hexKey = "q,r,s"
   }
   focalPoints: {
-    [hexKey]: FocalPointState  // { isActive, victoryPointsStored }
+    [hexKey]: FocalPointState
   }
-  scores: { red: number, blue: number }
-  activeFocalHolders: { red: hexKey|null, blue: hexKey|null }
-    // tracks which hex each player's die held a focal point on at end of previous turn
+  scores: { [playerId]: number }
+  activeFocalHolders: { [playerId]: hexKey|null }
+    // tracks which hex each player's die held an active focal point on at end of previous turn
   combat: CombatState | null
   selectedHex: hexKey | null
   highlightedHexes: hexKey[]
@@ -84,12 +83,13 @@ GameState {
 }
 
 Die {
-  owner: 'red' | 'blue'
+  owner: string        // player ID
   value: 1..6
 }
 
 FocalPointState {
   isActive: boolean
+  group: string        // copied from board definition; used to find sibling fields in the same group
 }
 
 CombatState {
@@ -103,7 +103,7 @@ CombatState {
 Pure functions that compute derived data from state:
 - `getDiceAt(state, hex)` — array of dice at a hex
 - `getTopDie(state, hex)` — topmost die
-- `getController(state, hex)` — 'red' | 'blue' | null (player whose die is on top)
+- `getController(state, hex)` — player ID | null (player whose die is on top)
 - `getTowerSize(state, hex)` — number of dice
 - `getAttackStrength(state, attackerHex)` — top die value + own count − enemy count
 - `canEnterTower(state, moverDie, targetHex)` — checks if mover's value > current top die value
@@ -111,7 +111,7 @@ Pure functions that compute derived data from state:
 - `getActiveFocalPoints(state)` — list of active focal point hexes
 
 ### 2.3 Initial state factory
-- `createInitialState()` — places 5 dice per player on their base rows (exact starting positions TBD), sets center focal point active, all scores 0
+- `createInitialState(players, boardFields)` — takes ordered player ID list and board field definitions; places 5 dice per player on their respective base rows (exact starting positions TBD), initialises focal point states from `boardFields` (`active`/`passive` as defined in the board), all scores 0
 
 ---
 
@@ -123,17 +123,20 @@ Pure functions that compute derived data from state:
   - Can pass through own dice only if mover has higher value than top die at that step
   - Returns set of reachable destination hexes (not intermediate paths)
 - `getPathsToHex(state, fromHex, toHex)` — returns valid paths (needed for push direction)
+- `getApproachDirections(state, fromHex, toHex)` — returns the set of distinct directions from which the attacker can arrive at `toHex` (i.e. unique last-step neighbors), derived from all valid paths; only relevant when destination is enemy-occupied
 
 ### 3.2 Move Die action
 - `applyMoveAction(state, fromHex, toHex)` — returns new state
   - Moves die from source to destination
   - If destination occupied by own die: stack (if canEnterTower)
   - If destination occupied by enemy: set phase to 'combat', record CombatState
+  - If more than one approach direction is available, wait for player to confirm direction before committing (see section 10.3); `CombatState` includes `approachDirection`
 
 ### 3.3 Tower jump
 - `getJumpRange(state, towerHex)` — own dice − enemy dice (min 1)
 - `getJumpReachableHexes(state, towerHex)` — hexes reachable by jumping die
 - `applyJumpAction(state, towerHex, targetHex)` — returns new state (detach top die, move it)
+- **Attack strength for a jump** uses the jumping die's face value alone — no tower bonus. This differs from a normal move that ends on an enemy (where attack strength = top die value + own dice count − enemy dice count). `getAttackStrength` must receive context indicating whether the attacker jumped.
 
 ### 3.4 Move Whole Tower action
 - `getTowerMoveRange(state, towerHex)` — own dice − enemy dice (min 1)
@@ -180,10 +183,10 @@ Pure functions that compute derived data from state:
 
 ### 5.1 Focal point scoring phase
 - `applyFocalPhase(state, extraDieRoll)` — processes focal points at turn start
-  - For each focal point held by current player at end of previous turn:
+  - For each active focal point held by current player at end of previous turn:
     - Award 1 point
     - Reroll that die: min(roll, original − 1)
-  - Roll extra D6 to activate second focal point (even = left, odd = right)
+  - If any passive focal points exist: roll extra D6 to select one passive group to activate; the mapping of roll values to groups is determined by the number of passive groups (e.g. with 2 passive groups: even = first, odd = second)
   - Accept roll values as parameters for purity
 
 ### 5.2 Focal point detection (end of action phase)
@@ -199,7 +202,7 @@ Pure functions that compute derived data from state:
   - `action → combat` (if combat triggered) or `action → victory` check → `focal` (next turn)
   - `combat → victory` check → `focal` (next turn)
   - `victory → (game over)`
-- `endTurn(state)` — switches `currentPlayer`, resets per-turn flags, updates focal holders
+- `endTurn(state)` — advances `currentPlayer` to the next player in `state.players` (wraps around), resets per-turn flags, updates focal holders
 
 ### 6.2 Legal move detection
 - `hasLegalMoves(state)` — returns false if no action is available (sudden death loss)
@@ -218,7 +221,7 @@ Pure functions that compute derived data from state:
 - Victory point token count display on focal point
 
 ### 7.3 Score display
-- `<ScoreBoard red, blue>` — shows current VP totals for both players
+- `<ScoreBoard players, scores>` — shows current VP totals for all players; `players` is the ordered list of player IDs
 
 ### 7.4 Action panel
 - `<ActionPanel currentPlayer, availableActions, onAction>` — buttons for the 4 actions
@@ -258,7 +261,7 @@ Pure functions that compute derived data from state:
   - `CONFIRM_ACTION`, `END_TURN`
 
 ### 9.2 React state integration
-- `useGameState()` hook — wraps `useReducer(gameReducer, createInitialState())`
+- `useGameState(players, boardFields)` hook — wraps `useReducer(gameReducer, createInitialState(players, boardFields))`
 - Exposes: `state`, `dispatch`, and convenience selectors
 
 ### 9.3 Top-level game component
@@ -278,12 +281,15 @@ Pure functions that compute derived data from state:
 ### 10.2 Action disambiguation
 - When multiple actions apply to same hex (e.g. move vs. jump), show a small popup to choose
 
-### 10.3 Animations (optional, later)
+### 10.3 Approach direction picker
+When a player hovers over an enemy-occupied reachable hex and more than one approach direction is available, the hex is visually divided into up to 6 directional segments (like a pie chart). Each segment corresponds to one valid approach direction. The highlighted segment indicates the selected direction — hovering near a segment selects it. Confirming (click) locks in that direction and triggers combat with `approachDirection` set accordingly. If only one approach direction is available, the picker is skipped and the attack proceeds directly.
+
+### 10.5 Animations (optional, later)
 - Die movement transition
 - Combat flash
 - Score increment animation
 
-### 10.4 Responsive layout
+### 10.6 Responsive layout
 - Board scales to viewport
 - UI panels reflow for narrow screens
 
