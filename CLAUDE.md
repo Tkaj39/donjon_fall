@@ -1,5 +1,4 @@
 # CLAUDE.md
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
@@ -51,7 +50,7 @@ npm run preview   # Preview production build
   - Cannot pass through enemy dice. 
   - Can pass through your own dice only if your die has higher attack strength on that field. 
   - Moving onto an empty field just moves there.
-  - Moving on friendly occupied field forms a tower. 
+  - Moving onto a friendly occupied field forms a tower, only if the moving die's attack strength exceeds the top die's attack strength on that field.
   - Moving onto an enemy field triggers either **Combat** or makes a **tower** (current player's choice). 
   - **Jump from tower**: a die on top of a tower may detach and jump up to (own dice in tower − enemy dice in tower, min 1) hexes; attack strength uses the jumping die's value alone.
 * **Tower collapse** — available when the tower has **3+ dice**.
@@ -82,12 +81,12 @@ Triggered when a move ends on an enemy-occupied field.
     - Mixed tower moves as a whole. 
     - Chain reaction: if another enemy formation is behind, each is pushed in turn; any formation that hits your own unit (see **Encirclement**) or the map edge (see **Off the map**) is **destroyed** (attacker scores points).
     - **Encirclement**: if your own unit blocks the retreat path, the pushed formation (last in the formation in the attack direction) cannot escape and is destroyed (one point per destroyed enemy die).
-    - **Off the map**: pushed off the edge → destroyed, each player scores 1 point per die destroyed. <!-- TODO: verify scoring for mixed tower pushed off map — only attacker scores? -->
+    - **Off the map**: pushed off the edge → destroyed, attacking player scores 1 point per enemy die destroyed.
   - **Occupy**: attacker's die is placed on top of the enemy die, creating a **Mixed tower**. Control belongs to the player whose die is on top. Defender does **not** reroll.
 
 ### Towers & Key Terms
 
-- **Tower**: 2+ dice on the same field. A new die can only be added if its attack value is **higher** than the current top die. Control = player with top die. <!-- TODO: verify tower entry condition — should be face value, not attack value/strength? -->
+- **Tower**: 2+ dice on the same field. A new die can only be added if its **attack strength** strictly exceeds the current top die's attack strength. Control = player with top die.
 - **Mixed tower**: tower containing both players' dice. Controlled by the player with the top die — only that player can move it, attack from it, or jump from it.
 - **Base**: starting row; no special rules during play.
 

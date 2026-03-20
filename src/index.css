@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+:root {
+    --color-hex-default: #e8d5a3;
+    --color-hex-selected: #f59e0b;
+    --color-hex-highlighted: #86efac;
+    --color-hex-focal: #c4b5fd;
+    --color-hex-stroke: #7c5c2a;
+    --color-focal-marker: #7c3aed;
+    --color-bg: #1c1917;
+    --color-title: #991b1b;
+}

@@ -1,4 +1,6 @@
 # Donjon Fall — Implementation Plan
+<!-- TODO: Make focal points more general. Define passive focal points array, active focal points array and make sure that focal points can be grouped together. -->
+<!-- TODO: Make number of players general. In the future, more players than two should be able to play a game. This makes bases general as well - one base per player. -->
 
 ## Overview
 
@@ -16,20 +18,41 @@ Build a two-player hex-grid board game as a React web app. All game logic runs c
 - Utility: `getPath(from, to)` — returns ordered list of hexes on a straight line
 - Utility: `isOnBoard(hex)` — validates hex belongs to the 61-field large hexagon
 
-### 1.2 Board shape definition
+### 1.2 Hex field properties
+Fields are plain objects with an optional `properties` bag. Two built-in property types:
+
+```
+HexField {
+  coords: { q, r, s }
+  properties: HexProperty[]
+}
+
+HexProperty =
+  | { type: 'startingField', owner: 'red' | 'blue' }
+  | { type: 'focalPoint', active: boolean, group: string }
+```
+
+- **`startingField`** — marks a field as belonging to a player's base; `owner` identifies which player.
+- **`focalPoint`** — marks a field as a focal point; `active` is its current state; `group` is a string identifier (e.g. `'left'`, `'center'`, `'right'`) that links a set of focal point fields — when a focal point activates, it may only move to fields sharing the same `group`.
+
+Helpers:
+- `getProperty(field, type)` — returns the property object or null
+- `hasProperty(field, type)` — boolean
+
+### 1.3 Board shape definition
 - Define the 61-field large hexagon as a set of valid cube coordinates
 - Map center at (0,0,0); radius 4 (standard hex grid: 1+6+12+18+24 = 61 fields)
-- Identify the **middle horizontal row** (r=0): 9 fields, positions for focal points (left, center, right)
-- Identify **red base** (top row) and **blue base** (bottom row)
+- Assign `startingField` property to red base (top row) and blue base (bottom row)
+- Assign `focalPoint` property to the 3 middle-row fields (groups: `'left'`, `'center'`, `'right'`); center starts `active: true`
 - Export constants: `BOARD_HEXES`, `RED_BASE_HEXES`, `BLUE_BASE_HEXES`, `FOCAL_POINT_HEXES`
 
-### 1.3 Hex rendering component
+### 1.5 Hex rendering component
 - `<HexTile hex coords, content, state, onClick>` — renders a single SVG hexagon
 - Props: `hex`, `isHighlighted`, `isFocalPoint`, `isSelected`, `onClick`
 - Flat-top or pointy-top orientation (pick one, stay consistent — pointy-top recommended)
 - Pixel conversion: `hexToPixel(hex, size)` for SVG positioning
 
-### 1.4 Board rendering component
+### 1.6 Board rendering component
 - `<Board>` — renders all 61 `<HexTile>` components inside an SVG
 - Handles board-level click delegation
 - Static render with no game state yet — just the empty board with focal point markers
@@ -278,6 +301,56 @@ Pure functions that compute derived data from state:
 
 ---
 
+## Phase 12: Board Creator
+
+A standalone editor tool (separate React route or page) for designing, saving, and loading game maps. Produces JSON files consumed by the game itself.
+
+### 12.1 Board data format (JSON)
+```
+BoardDefinition {
+  id: string               // unique map identifier
+  name: string
+  hexes: HexField[]        // all fields with their coords and properties
+}
+```
+- `HexField` reuses the structure from Phase 1.2 (`coords` + `properties[]`)
+- Save/load via `JSON.stringify` / `JSON.parse`; persist to `localStorage` keyed by `id`, with export/import as `.json` file
+
+### 12.2 Board Creator state model
+```
+BoardCreatorState {
+  board: BoardDefinition
+  selectedHex: HexKey | null
+  tool: 'place' | 'delete' | 'assignProperty' | 'removeProperty'
+  activeTool PropertyType | null   // which property to assign/remove
+}
+```
+
+### 12.3 Field operations
+Pure functions (no side effects):
+- `addHex(board, coords)` — adds a new empty field; no-op if already exists
+- `removeHex(board, coords)` — removes field and all its properties
+- `assignProperty(board, coords, property)` — adds or replaces a property of that type on the field
+- `removeProperty(board, coords, type)` — removes property of given type from field
+
+### 12.4 Persistence
+- `saveBoard(board)` — serialises to JSON, saves to `localStorage`
+- `loadBoard(id)` — reads from `localStorage`, deserialises
+- `listBoards()` — returns array of `{ id, name }` for all saved boards
+- `deleteBoard(id)` — removes from `localStorage`
+- `exportBoardJSON(board)` — triggers browser download of `.json` file
+- `importBoardJSON(file)` — reads uploaded `.json` file, returns `BoardDefinition`
+
+### 12.5 Board Creator UI
+- `<BoardCreator>` — top-level editor component
+- `<EditorBoard>` — renders the hex grid in edit mode; click adds/removes/selects fields
+- `<ToolPanel>` — selects active tool (place, delete, assign property, remove property)
+- `<PropertyPanel>` — when a hex is selected, shows its current properties and allows editing; inputs for `owner` (startingField) and `group` / `active` (focalPoint)
+- `<MapManager>` — lists saved maps with load, delete, export buttons; import button for `.json` upload
+- `<BoardNameInput>` — editable map name field
+
+---
+
 ## Suggested Implementation Order
 
 1. Phase 1 (hex utilities + board render) — visual foundation
@@ -291,6 +364,7 @@ Pure functions that compute derived data from state:
 9. Phase 7 (UI components) — playable UI
 10. Phase 10 (interactivity polish) — UX
 11. Phase 11 (tests) — confidence
+12. Phase 12 (board creator) — map authoring tool
 
 ---
 
