@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
     BOARD_HEXES,
-    isOnBoard,
     FOCAL_POINT_HEXES,
     FOCAL_POINT_KEYS,
     FOCAL_CENTER_KEY,
@@ -27,28 +26,14 @@ describe('BOARD_HEXES', () => {
     });
 });
 
-describe('isOnBoard', () => {
-    it('center hex → true', () => {
-        expect(isOnBoard({q: 0, r: 0, s: 0})).toBe(true);
-    });
-
-    it('corner hex → true', () => {
-        expect(isOnBoard({q: 4, r: -4, s: 0})).toBe(true);
-    });
-
-    it('out-of-bounds hex → false', () => {
-        expect(isOnBoard({q: 5, r: 0, s: -5})).toBe(false);
-    });
-});
-
 describe('FOCAL_POINT_HEXES', () => {
     it('has exactly 3 entries', () => {
         expect(FOCAL_POINT_HEXES).toHaveLength(3);
     });
 
-    it('all 3 are on the board', () => {
-        FOCAL_POINT_HEXES.forEach(hex => {
-            expect(isOnBoard(hex)).toBe(true);
+    it('all 3 are within board radius 4', () => {
+        FOCAL_POINT_HEXES.forEach(({q, r, s}) => {
+            expect(Math.max(Math.abs(q), Math.abs(r), Math.abs(s))).toBeLessThanOrEqual(4);
         });
     });
 

@@ -1,25 +1,25 @@
 import { hexCorners } from "../hex/hexUtils";
 
 // Renders a single pointy-top SVG hexagon.
-// cx            — pixel x coordinate of the hex center
-// cy            — pixel y coordinate of the hex center
+// center_x      — pixel x coordinate of the hex center
+// center_y      — pixel y coordinate of the hex center
 // size          — circumradius of the hex in pixels (center to corner)
-// isHighlighted — true when the hex is a valid move target; renders in highlight color
-// isFocalPoint  — true when the hex is one of the 3 focal point fields; renders a dot marker
-// isSelected    — true when the hex holds the currently selected die; takes priority over highlight/focal colors
+// isHighlighted — renders highlighted hex if true
+// isFocalPoint  — renders focal point hex if true
+// isSelected    — renders selected hex if true
 // onClick       — optional click handler; cursor becomes pointer when provided
 // children      — SVG content rendered inside the hex group (e.g. dice)
-export default function HexTile({ cx, cy, size, isHighlighted, isFocalPoint, isSelected, onClick, children }) {
-    const corners = hexCorners(cx, cy, size);
+export default function HexTile({ center_x, center_y, size, isHighlighted, isFocalPoint, isSelected, onClick, children }) {
+    const corners = hexCorners(center_x, center_y, size);
     const points = corners.map(({x, y}) => `${x},${y}`).join(' ');
 
     let fill = 'var(--color-hex-default)';
-    if (isSelected) fill = 'var(--color-hex-selected)';
+    if (isSelected) fill = 'var(--color-hex-selected)'; // takes priority over highlighted/focal point render
     else if (isHighlighted) fill = 'var(--color-hex-highlighted)';
     else if (isFocalPoint) fill = 'var(--color-hex-focal)';
 
     return (
-        <g onClick={onClick} style={{cursor: onClick ? 'pointer' : 'default'}}>
+        <g className={`${onClick ? "pointer" : "default"}`} onClick={onClick}>
             <polygon
                 points={points}
                 fill={fill}
@@ -27,7 +27,7 @@ export default function HexTile({ cx, cy, size, isHighlighted, isFocalPoint, isS
                 strokeWidth={1.5}
             />
             {isFocalPoint && (
-                <circle cx={cx} cy={cy} r={size * 0.18} fill="var(--color-focal-marker)" opacity={0.6}/>
+                <circle cx={center_x} cy={center_y} r={size * 0.18} fill="var(--color-focal-marker)" opacity={0.6}/>
             )}
             {children}
         </g>
