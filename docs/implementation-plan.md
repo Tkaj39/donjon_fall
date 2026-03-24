@@ -41,7 +41,7 @@ Helpers:
 - Define the 61-field large hexagon as a set of valid cube coordinates
 - Map center at (0,0,0); radius 4 (standard hex grid: 1+6+12+18+24 = 61 fields)
 - Assign `startingField` property to each player's base row; `owner` = player ID (default map: `'red'` top row, `'blue'` bottom row)
-- Assign `focalPoint` property to the 3 middle-row fields (groups: `'left'`, `'center'`, `'right'`); center starts `active: true`, left and right start `active: false`
+- Assign `focalPoint` property to the 3 middle-row fields; all three share the same group ID (e.g. `'main'`), meaning they form one focal point group where the D6 roll picks which passive hex activates next; center starts `active: true`, left and right start `active: false`
 - Export constants: `BOARD_HEXES`, `BASE_HEXES` (map `{ [playerId]: HexField[] }`), `FOCAL_POINT_HEXES`, `ACTIVE_FOCAL_HEXES`, `PASSIVE_FOCAL_HEXES`
 
 ### 1.5 Hex rendering component
@@ -186,7 +186,7 @@ Pure functions that compute derived data from state:
   - For each active focal point held by current player at end of previous turn:
     - Award 1 point
     - Reroll that die: min(roll, original − 1)
-  - If any passive focal points exist: roll extra D6 to select one passive group to activate; the mapping of roll values to groups is determined by the number of passive groups (e.g. with 2 passive groups: even = first, odd = second)
+  - For each scored active focal point: roll extra D6 to select which other passive hex **within the same group** becomes the next active focal point; the mapping of roll values to passive hexes is determined by the number of passive hexes in that group (e.g. with 2 passive hexes: even = first, odd = second)
   - Accept roll values as parameters for purity
 
 ### 5.2 Focal point detection (end of action phase)

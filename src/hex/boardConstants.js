@@ -49,10 +49,11 @@ export const RED_BASE_HEXES = BOARD_HEXES.filter(h => h.r === -BOARD_RADIUS);
 export const BLUE_BASE_HEXES = BOARD_HEXES.filter(h => h.r === BOARD_RADIUS);
 
 // Focal point property descriptors keyed by hex key.
+// All three hexes share the same group ID — they form one focal point group.
 const FOCAL_POINT_PROPS = {
-    [FOCAL_LEFT_KEY]:   { type: 'focalPoint', active: false, group: 'left' },
-    [FOCAL_CENTER_KEY]: { type: 'focalPoint', active: true,  group: 'center' },
-    [FOCAL_RIGHT_KEY]:  { type: 'focalPoint', active: false, group: 'right' },
+    [FOCAL_LEFT_KEY]:   { type: 'focalPoint', active: false, group: 'main' },
+    [FOCAL_CENTER_KEY]: { type: 'focalPoint', active: true,  group: 'main' },
+    [FOCAL_RIGHT_KEY]:  { type: 'focalPoint', active: false, group: 'main' },
 };
 
 // All 61 board fields as HexField objects: { coords, properties[] }.
