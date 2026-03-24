@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Claude AI agent memory
+.claude/agent-memory/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
