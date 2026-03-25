@@ -1,5 +1,12 @@
 # Donjon Fall — Implementační plán
 
+## TODO
+
+- **Code style** — definovat a zdokumentovat konzistentní styl kódu v `src/` (konvence pojmenování, struktura souborů, vzory JSDoc, pořadí importů atd.)
+- **Rozdělit fázi 7 (UI komponenty)** — místo implementace všech UI komponent najednou ve fázi 7 rozdělit jednotlivé komponenty do fází, kde je implementována jejich logika (např. `<Die>` ve fázi 2, `<HexTile>` / `<Board>` ve fázi 1, `<CombatOverlay>` ve fázi 4 atd.)
+
+---
+
 ## Přehled
 
 Hra pro více hráčů (N hráčů, N ≥ 2) na hexagonální mřížce postavená jako React webová aplikace. Výchozí konfigurace je pro dva hráče, ale veškerá herní logika je navržena pro N hráčů. Fáze 1–15 běží zcela na straně klienta (hot-seat místní hra). Fáze 16 zavádí backend pro online hraní přes internet.
