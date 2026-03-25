@@ -92,14 +92,19 @@ export function getTowerSize(state, hexKey) {
  * Returns the attack strength of the formation at a hex from the perspective of its controlling player.
  * Formula: top-die value + own-dice count − enemy-dice count.
  * Returns 0 for an empty hex.
+ *
  * @param {GameState} state
  * @param {string} hexKey
+ * @param {{ jumped?: boolean }} [opts]  - pass `{ jumped: true }` for a tower-jump attack;
+ *                                         in that case only the top die's face value is used
+ *                                         (no own/enemy tower bonus).
  * @returns {number}
  */
-export function getAttackStrength(state, hexKey) {
+export function getAttackStrength(state, hexKey, { jumped = false } = {}) {
     const stack = getDiceAt(state, hexKey);
     if (stack.length === 0) return 0;
     const top = stack[stack.length - 1];
+    if (jumped) return top.value;
     const ownCount = stack.filter(d => d.owner === top.owner).length;
     const enemyCount = stack.length - ownCount;
     return top.value + ownCount - enemyCount;

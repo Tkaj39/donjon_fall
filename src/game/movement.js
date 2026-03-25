@@ -1,14 +1,15 @@
 /**
  * Phase 3.1 — Path validation for Move Die
  * Phase 3.2 — Move Die action
+ * Phase 3.3 — Tower jump
  *
  * All functions are pure — they read GameState but never mutate it.
  * hexKey format: "q,r,s" (produced by hexUtils.hexKey)
  */
 
-import { hexKey, hexFromKey, getNeighbors } from '../hex/hexUtils.js';
+import { hexKey, hexFromKey, getNeighbors, hexesDistance } from '../hex/hexUtils.js';
 import { isOnBoard } from '../hex/boardUtils.js';
-import { getDiceAt, getTopDie, getController, canEnterTower } from './gameState.js';
+import { getDiceAt, getTopDie, getController, canEnterTower, getAttackStrength } from './gameState.js';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -276,6 +277,143 @@ export function applyMoveAction(state, fromKey, toKey, approachDirection = null)
             attackerHex: fromKey,
             defenderHex: toKey,
             approachDirection: resolvedDirection,
+            options: ['push', 'occupy'],
+        },
+    };
+}
+
+// ---------------------------------------------------------------------------
+// 3.3 — Tower jump
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the jump range for the top die at `towerKey`.
+ * Formula: own dice − enemy dice in the tower, minimum 1.
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} towerKey
+ * @returns {number}
+ */
+export function getJumpRange(state, towerKey) {
+    const stack = getDiceAt(state, towerKey);
+    if (stack.length < 2) return 0; // need at least 2 dice to jump
+    const jumper = stack[stack.length - 1];
+    const ownCount = stack.filter(d => d.owner === jumper.owner).length;
+    const enemyCount = stack.length - ownCount;
+    return Math.max(1, ownCount - enemyCount);
+}
+
+/**
+ * Returns the set of hexKeys reachable by the top die jumping out of `towerKey`.
+ * The jumping die uses only its face value for attack-strength purposes (no tower bonus),
+ * but the *range* is determined by getJumpRange (own − enemy, min 1).
+ *
+ * Traversal rules:
+ * - Cannot pass through enemy dice.
+ * - Can pass through own dice only if, as a solo die, it could enter that tower
+ *   (i.e. its face value + 1 own − 0 enemy > top die strength there).
+ * - Cannot land back on the source tower.
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} towerKey
+ * @returns {Set<string>}
+ */
+export function getJumpReachableHexes(state, towerKey) {
+    const stack = getDiceAt(state, towerKey);
+    if (stack.length < 2) return new Set(); // need at least 2 dice to jump
+    const jumper = stack[stack.length - 1];
+    const maxSteps = getJumpRange(state, towerKey);
+    const reachable = new Set();
+    const minSteps = new Map([[towerKey, 0]]);
+    const queue = [[towerKey, 0]];
+
+    while (queue.length > 0) {
+        const [currentKey, steps] = queue.shift();
+        if (steps >= maxSteps) continue;
+
+        for (const neighbor of getNeighbors(hexFromKey(currentKey))) {
+            if (!isOnBoard(neighbor)) continue;
+            const neighborKey = hexKey(neighbor);
+            if (neighborKey === towerKey) continue;
+
+            const newSteps = steps + 1;
+            const prevBest = minSteps.get(neighborKey);
+            if (prevBest !== undefined && prevBest <= newSteps) continue;
+
+            const ctrl = getController(state, neighborKey);
+            const isEnemy = ctrl !== null && ctrl !== jumper.owner;
+
+            reachable.add(neighborKey);
+            minSteps.set(neighborKey, newSteps);
+
+            // Traversal: enemy blocks further movement; own only if jumper (solo) can enter
+            if (!isEnemy) {
+                const soloCanTraverse = ctrl === null || canEnterTower(state, jumper, neighborKey);
+                if (soloCanTraverse) queue.push([neighborKey, newSteps]);
+            }
+        }
+    }
+
+    return reachable;
+}
+
+/**
+ * Applies the Jump action: detaches the top die from `towerKey` and moves it to `targetKey`.
+ *
+ * Outcomes:
+ * - **Empty / own destination** — die is placed there (stacked if own and canEnterTower).
+ * - **Enemy destination** — combat is set up; die stays at towerKey until resolved.
+ *   Attack strength recorded in combat is the **jump** variant (face value only).
+ *
+ * Returns state unchanged if the move is illegal (no die, only 1 die in tower,
+ * target not reachable, or own target where canEnterTower is false).
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} towerKey
+ * @param {string} targetKey
+ * @param {string|null} [approachDirection]
+ * @returns {import('./gameState.js').GameState}
+ */
+export function applyJumpAction(state, towerKey, targetKey, approachDirection = null) {
+    const stack = getDiceAt(state, towerKey);
+    if (stack.length < 2) return state;
+    const jumper = stack[stack.length - 1];
+
+    const reachable = getJumpReachableHexes(state, towerKey);
+    if (!reachable.has(targetKey)) return state;
+
+    const ctrl = getController(state, targetKey);
+
+    // Empty or own — physically move the die
+    if (ctrl === null || ctrl === jumper.owner) {
+        if (ctrl === jumper.owner && !canEnterTower(state, jumper, targetKey)) return state;
+        return { ...moveTopDie(state, towerKey, targetKey), phase: 'action' };
+    }
+
+    // Enemy — set up combat (jump variant: face value only)
+    let resolvedDirection = approachDirection;
+    if (!resolvedDirection) {
+        // If target is adjacent (1 step), there is exactly one approach direction: the source.
+        if (hexesDistance(hexFromKey(towerKey), hexFromKey(targetKey)) === 1) {
+            resolvedDirection = towerKey;
+        } else {
+            const paths = getPathsToHex(state, towerKey, targetKey);
+            const dirs = new Set(paths.filter(p => p.length >= 2).map(p => p[p.length - 2]));
+            if (dirs.size === 1) resolvedDirection = [...dirs][0];
+        }
+    }
+
+    const jumperStrength = getAttackStrength(state, towerKey, { jumped: true });
+
+    return {
+        ...state,
+        phase: 'combat',
+        actionTaken: true,
+        combat: {
+            attackerHex: towerKey,
+            defenderHex: targetKey,
+            approachDirection: resolvedDirection,
+            attackStrengthOverride: jumperStrength, // face value only
             options: ['push', 'occupy'],
         },
     };

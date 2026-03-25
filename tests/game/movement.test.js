@@ -4,6 +4,9 @@ import {
     getPathsToHex,
     getApproachDirections,
     applyMoveAction,
+    getJumpRange,
+    getJumpReachableHexes,
+    applyJumpAction,
 } from '../../src/game/movement.js';
 
 // ---------------------------------------------------------------------------
@@ -498,5 +501,375 @@ describe('applyMoveAction', () => {
         });
         const result = applyMoveAction(state, CENTER, N2);
         expect(result.combat.approachDirection).toBe(null);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getJumpRange
+// ---------------------------------------------------------------------------
+
+describe('getJumpRange', () => {
+    it('returns 0 when no die at towerKey', () => {
+        const state = makeState();
+        expect(getJumpRange(state, CENTER)).toBe(0);
+    });
+
+    it('returns 0 for a single die (not a tower)', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 4 }] },
+        });
+        expect(getJumpRange(state, CENTER)).toBe(0);
+    });
+
+    it('returns own dice count minus enemy dice count for two own dice', () => {
+        // 2 own - 0 enemy = 2
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        expect(getJumpRange(state, CENTER)).toBe(2);
+    });
+
+    it('returns minimum 1 for mixed tower with one own and one enemy', () => {
+        // 1 own - 1 enemy = 0 → max(1, 0) = 1
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 5 },
+            ]},
+        });
+        expect(getJumpRange(state, CENTER)).toBe(1);
+    });
+
+    it('returns 1 for two own and one enemy', () => {
+        // 2 own - 1 enemy = 1
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        expect(getJumpRange(state, CENTER)).toBe(1);
+    });
+
+    it('returns minimum 1 even when enemy dice outnumber own dice', () => {
+        // 1 own - 2 enemy = -1 → max(1, -1) = 1
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'blue', value: 3 },
+                { owner: 'red', value: 5 },
+            ]},
+        });
+        expect(getJumpRange(state, CENTER)).toBe(1);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getJumpReachableHexes
+// ---------------------------------------------------------------------------
+
+describe('getJumpReachableHexes', () => {
+    it('returns empty set for a single die', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 4 }] },
+        });
+        const result = getJumpReachableHexes(state, CENTER);
+        expect(result.size).toBe(0);
+    });
+
+    it('returns empty set when no die at towerKey', () => {
+        const state = makeState();
+        const result = getJumpReachableHexes(state, CENTER);
+        expect(result.size).toBe(0);
+    });
+
+    it('returns reachable hexes within range for two own dice', () => {
+        // range = 2 own - 0 enemy = 2
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = getJumpReachableHexes(state, CENTER);
+        expect(result.has(N1)).toBe(true);     // 1-step neighbor
+        expect(result.has(N1_N1)).toBe(true);  // 2-step neighbor
+    });
+
+    it('does not allow landing back on source tower', () => {
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = getJumpReachableHexes(state, CENTER);
+        expect(result.has(CENTER)).toBe(false);
+    });
+
+    it('includes enemy hex but does not traverse through it', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = getJumpReachableHexes(state, CENTER);
+        expect(result.has(N1)).toBe(true);      // can land on enemy
+        expect(result.has(N1_N1)).toBe(false);  // cannot traverse through enemy
+    });
+
+    it('can traverse through own hex if jumper (solo) can enter tower', () => {
+        // Jumper value 5, own die at N1 value 2: as solo (5+1-0 > 2+1-0) can enter
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 5 },
+                ],
+                [N1]: [{ owner: 'red', value: 2 }],
+            },
+        });
+        const result = getJumpReachableHexes(state, CENTER);
+        expect(result.has(N1)).toBe(true);      // can land on own
+        expect(result.has(N1_N1)).toBe(true);   // can traverse through own
+    });
+
+    it('cannot traverse through own hex if jumper (solo) cannot enter tower', () => {
+        // Jumper value 2, own die at N1 value 5: as solo (2+1-0 = 3 NOT > 5+1-0 = 6) cannot enter
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 2 },
+                ],
+                [N1]: [{ owner: 'red', value: 5 }],
+            },
+        });
+        const result = getJumpReachableHexes(state, CENTER);
+        expect(result.has(N1)).toBe(true);      // can land on own
+        expect(result.has(N1_N1)).toBe(false);  // only reachable via N1 which blocks traversal
+    });
+
+    it('respects range from getJumpRange', () => {
+        // 1 own - 1 enemy = 0 → max(1, 0) = 1, so range is 1
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 5 },
+            ]},
+        });
+        const result = getJumpReachableHexes(state, CENTER);
+        expect(result.has(N1)).toBe(true);      // 1-step neighbor
+        expect(result.has(N1_N1)).toBe(false);  // 2-step neighbor, out of range
+    });
+});
+
+// ---------------------------------------------------------------------------
+// applyJumpAction
+// ---------------------------------------------------------------------------
+
+describe('applyJumpAction', () => {
+    it('returns state unchanged when no die at towerKey', () => {
+        const state = makeState();
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result).toBe(state);
+    });
+
+    it('returns state unchanged for a single die (not a tower)', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 4 }] },
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result).toBe(state);
+    });
+
+    it('returns state unchanged when target is not reachable', () => {
+        // N1_N1 is out of range for jump range 1
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyJumpAction(state, CENTER, N1_N1);
+        expect(result).toBe(state);
+    });
+
+    it('moves die to empty hex and sets actionTaken true and phase action', () => {
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result.dice[N1]).toEqual([{ owner: 'red', value: 4 }]);
+        expect(result.dice[CENTER]).toEqual([{ owner: 'red', value: 3 }]);
+        expect(result.actionTaken).toBe(true);
+        expect(result.phase).toBe('action');
+    });
+
+    it('removes top die from source tower leaving remaining dice', () => {
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result.dice[CENTER]).toEqual([
+            { owner: 'red', value: 2 },
+            { owner: 'red', value: 3 },
+        ]);
+    });
+
+    it('stacks die on own die when canEnterTower is true', () => {
+        // Jumper value 5, own die at N1 value 2: can enter (5+1-0 > 2+1-0)
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 5 },
+                ],
+                [N1]: [{ owner: 'red', value: 2 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result.dice[N1]).toEqual([
+            { owner: 'red', value: 2 },
+            { owner: 'red', value: 5 },
+        ]);
+        expect(result.actionTaken).toBe(true);
+        expect(result.phase).toBe('action');
+    });
+
+    it('returns state unchanged when jumping to own die and canEnterTower is false', () => {
+        // Jumper value 2, own die at N1 value 5: cannot enter (2+1-0 NOT > 5+1-0)
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 2 },
+                ],
+                [N1]: [{ owner: 'red', value: 5 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result).toBe(state);
+    });
+
+    it('sets phase to combat and actionTaken true when jumping to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result.phase).toBe('combat');
+        expect(result.actionTaken).toBe(true);
+    });
+
+    it('does not move die when jumping to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result.dice[CENTER]).toEqual([
+            { owner: 'red', value: 3 },
+            { owner: 'red', value: 4 },
+        ]);
+        expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 5 }]);
+    });
+
+    it('sets combat with attackStrengthOverride equal to jumper face value only', () => {
+        // Jumper value 4 in a tower of 2 red dice: normal strength would be 4+2-0=6,
+        // but jump uses only face value = 4
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result.combat.attackStrengthOverride).toBe(4);
+    });
+
+    it('sets combat.attackerHex and combat.defenderHex when jumping to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result.combat.attackerHex).toBe(CENTER);
+        expect(result.combat.defenderHex).toBe(N1);
+    });
+
+    it('sets combat.options to push and occupy when jumping to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result.combat.options).toEqual(['push', 'occupy']);
+    });
+
+    it('records explicit approachDirection in combat when provided', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1_N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1_N1, N1);
+        expect(result.combat.approachDirection).toBe(N1);
+    });
+
+    it('auto-resolves approachDirection for adjacent enemy (single direction)', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1);
+        expect(result.combat.approachDirection).toBe(CENTER);
     });
 });

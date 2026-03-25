@@ -156,6 +156,23 @@ describe('getAttackStrength', () => {
         ]}});
         expect(getAttackStrength(state, A)).toBe(3);
     });
+
+    it('with jumped option: solo die returns only its face value', () => {
+        const state = makeState({ dice: { [A]: [{ owner: 'red', value: 4 }] } });
+        // Without jumped: 4 + 1 - 0 = 5, with jumped: just 4
+        expect(getAttackStrength(state, A, { jumped: true })).toBe(4);
+    });
+
+    it('with jumped option: mixed tower returns only top die face value, ignoring tower bonus', () => {
+        // top is red(5), stack: [blue(2), red(3), red(5)]
+        // Without jumped: 5 + 2 - 1 = 6, with jumped: just 5
+        const state = makeState({ dice: { [A]: [
+            { owner: 'blue', value: 2 },
+            { owner: 'red',  value: 3 },
+            { owner: 'red',  value: 5 },
+        ]}});
+        expect(getAttackStrength(state, A, { jumped: true })).toBe(5);
+    });
 });
 
 // ---------------------------------------------------------------------------
