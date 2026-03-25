@@ -169,14 +169,10 @@ Presentation-layer React components tied to the game logic implemented in Phases
   - Derives per-hex highlight from `highlightedHexes` map before passing to `<HexTile>`
   - SVG or CSS-grid based layout; no third-party hex library
 
-### 4.2 Player colour system & die rendering
-Each player is assigned a unique colour derived from their `owner` ID (i.e. their base position in the map). Colours are defined as CSS custom properties so the palette can be extended without touching component code.
-
-- `PLAYER_COLORS` — a fixed ordered palette (e.g. `['#dc2626', '#2563eb', '#16a34a', '#d97706', ...]`) indexed by the player's position in `state.players`; the mapping `owner → colour` is derived once at game-start and passed down as a `playerColors: { [owner]: cssColor }` prop or React context
-- **Base hex tint**: `<HexTile>` reads `startingField.owner` from `fieldProperties` and applies that player's colour (lighter tint) as the hex fill
-- `<Die value, owner, playerColors, isTop>` — renders a single die face (pip count or numeral)
-  - Background colour taken from `playerColors[owner]`
-  - `isTop` controls full vs. dimmed opacity in a tower stack
+### 4.2 Die rendering
+- `<Die value, owner, isTop>` — renders a single die face (pip count or numeral)
+  - Color and border derived from `owner` player ID
+  - `isTop` controls full vs. dimmed appearance in a tower stack
   - Tower stack: multiple `<Die>` elements rendered with a small vertical offset per layer
 
 ### 4.3 Focal point marker
@@ -317,7 +313,7 @@ BoardDefinition {
 ### 9.5 Player setup
 - One player slot per base defined in the selected map
 - Each player enters a name and chooses a **coat of arms** (heraldic emblem) from a preset selection
-- **Color is not chosen** — it is assigned automatically based on the player's index in `state.players` using the `PLAYER_COLORS` palette defined in Phase 4.2; the coat of arms is overlaid on that color in the UI
+- **Color is not chosen** — it is assigned automatically based on the player's base position in the map (e.g. top base = red, bottom base = blue); the coat of arms is overlaid on that color in the UI
 - Confirm → Game loading screen
 
 ### 9.6 Game loading screen

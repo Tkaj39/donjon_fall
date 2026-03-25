@@ -53,6 +53,8 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
 
     return (
         <g
+            data-hex={hexKey(coords)}
+            data-highlight={highlight ?? undefined}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
             onClick={onClick ? () => onClick(hexKey(coords)) : undefined}
         >
