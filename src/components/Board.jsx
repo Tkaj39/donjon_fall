@@ -7,7 +7,41 @@ import { BOARD_HEXES, BOARD_FIELDS } from '../hex/boardConstants.js';
 import { hexToPixel, hexKey } from '../hex/hexUtils.js';
 import { HexTile } from './HexTile.jsx';
 
+/** Circumradius in pixels for each hex tile. */
 const HEX_SIZE = 36;
+
+/** Padding multiplier for extra space around the board edge. */
+const PADDING_RATIO = 1.2;
+
+/**
+ * Ordered colour palette for up to 6 players.
+ * Player at index 0 in state.players gets palette[0], etc.
+ * `primary` — die body colour; `tint` — base-hex background tint.
+ */
+const PLAYER_PALETTE = [
+    { primary: '#dc2626', tint: '#fca5a5' }, // red
+    { primary: '#2563eb', tint: '#93c5fd' }, // blue
+    { primary: '#16a34a', tint: '#86efac' }, // green
+    { primary: '#d97706', tint: '#fcd34d' }, // amber
+    { primary: '#9333ea', tint: '#d8b4fe' }, // purple
+    { primary: '#0891b2', tint: '#67e8f9' }, // cyan
+];
+
+/**
+ * Fallback playerColors derived from BOARD_FIELDS for empty-board dev rendering.
+ * Owners are discovered by the order they first appear in BOARD_FIELDS properties.
+ */
+const DEFAULT_PLAYER_COLORS = (() => {
+    const owners = [];
+    for (const field of BOARD_FIELDS) {
+        for (const prop of field.properties) {
+            if (prop.type === 'startingField' && !owners.includes(prop.owner)) {
+                owners.push(prop.owner);
+            }
+        }
+    }
+    return Object.fromEntries(owners.map((id, i) => [id, PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]));
+})();
 
 /** Pre-computed pixel centres of every hex. */
 const PIXELS = BOARD_HEXES.map(h => hexToPixel(h, HEX_SIZE));
@@ -18,13 +52,18 @@ const minY = Math.min(...PIXELS.map(p => p.y));
 const maxY = Math.max(...PIXELS.map(p => p.y));
 
 /** Extra space around the board so edge hexes are never clipped by the SVG boundary. */
-const BOARD_PADDING = HEX_SIZE * 1.2;
+const BOARD_PADDING = HEX_SIZE * PADDING_RATIO;
 
+/** Total SVG canvas width. */
 const SVG_WIDTH  = maxX - minX + BOARD_PADDING * 2;
+
+/** Total SVG canvas height. */
 const SVG_HEIGHT = maxY - minY + BOARD_PADDING * 2;
 
 /** Shifts hex pixel coords so the leftmost/topmost center lands at BOARD_PADDING. */
 const OFFSET_X = -minX + BOARD_PADDING;
+
+/** Vertical coordinate offset for hex rendering. */
 const OFFSET_Y = -minY + BOARD_PADDING;
 
 /** Static field-properties lookup: hexKey → HexField.properties[]. */
@@ -44,6 +83,11 @@ const FIELD_PROPS_BY_KEY = Object.fromEntries(
  */
 export function Board({ state = null, selectedHex = null, highlightedHexes = {}, onHexClick }) {
     const dice = state?.dice ?? {};
+
+    const players = state?.players ?? [];
+    const playerColors = players.length > 0
+        ? Object.fromEntries(players.map((id, i) => [id, PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]))
+        : DEFAULT_PLAYER_COLORS;
 
     return (
         <svg
@@ -67,6 +111,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                         diceStack={dice[key] ?? []}
                         highlight={highlightedHexes[key] ?? null}
                         isSelected={selectedHex === key}
+                        playerColors={playerColors}
                         onClick={onHexClick}
                     />
                 );

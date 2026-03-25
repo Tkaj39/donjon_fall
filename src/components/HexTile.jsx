@@ -4,20 +4,21 @@
  */
 
 import { hexCorners, hexKey } from '../hex/hexUtils.js';
+import { Die } from './Die.jsx';
 
 /** Highlight-type to CSS variable name mapping. */
 const HIGHLIGHT_FILL = {
-    reachable:       'var(--color-hex-reachable)',
-    selected:        'var(--color-hex-highlighted)',
-    trajectory:      'var(--color-hex-trajectory)',
+    reachable:         'var(--color-hex-reachable)',
+    selected:          'var(--color-hex-highlighted)',
+    trajectory:        'var(--color-hex-trajectory)',
     'enemy-reachable': 'var(--color-hex-enemy-reachable)',
 };
 
-/** Owner ID to die-fill CSS variable. */
-const OWNER_DIE_FILL = {
-    red:  'var(--color-die-red)',
-    blue: 'var(--color-die-blue)',
-};
+/** Focal point marker circle radius as a fraction of hex size. */
+const FOCAL_MARKER_RATIO = 0.18;
+
+/** Vertical spacing between stacked dice as a fraction of hex size. */
+const STACK_OFFSET_RATIO = 0.22;
 
 /**
  * Renders a single pointy-top SVG hexagon with optional dice stack overlay.
@@ -30,59 +31,23 @@ const OWNER_DIE_FILL = {
  * @param {import('../game/gameState.jsx').Die[]} props.diceStack - Dice at this hex (bottom → top).
  * @param {'reachable'|'selected'|'trajectory'|'enemy-reachable'|null} props.highlight - Visual overlay type.
  * @param {boolean}  props.isSelected                      - Whether the player has selected this hex.
+ * @param {Object.<string,{primary:string,tint:string}>} [props.playerColors]
+ *   Map of owner ID → colour pair; controls die body colour and base-hex tint.
  * @param {function(): void} [props.onClick]               - Click handler; cursor becomes pointer when provided.
  * @returns {JSX.Element}
  */
-export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, onClick }) {
+export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, onClick }) {
     const corners = hexCorners(centerX, centerY, size);
     const points = corners.map(({ x, y }) => `${x},${y}`).join(' ');
 
+    const startingProp = fieldProperties.find(p => p.type === 'startingField');
     const isFocalPoint = fieldProperties.some(p => p.type === 'focalPoint');
-    const isStartingField = fieldProperties.some(p => p.type === 'startingField');
 
     let fill = 'var(--color-hex-default)';
-    if (isStartingField) fill = 'var(--color-hex-starting)';
-    if (isFocalPoint)    fill = 'var(--color-hex-focal)';
-    if (highlight)       fill = HIGHLIGHT_FILL[highlight] ?? fill;
-    if (isSelected)      fill = 'var(--color-hex-selected)';
-
-    /**
-     * Renders a single die as a coloured circle with a value label (Phase 4.2 will replace this).
-     *
-     * @param {import('../game/gameState.jsx').Die} die - The die object to render.
-     * @param {number} index - Position in the stack (0 = bottom).
-     * @returns {JSX.Element}
-     */
-    function renderDie(die, index) {
-        const dieFill = OWNER_DIE_FILL[die.owner] ?? 'var(--color-die-default)';
-        const stackOffsetY = (diceStack.length - 1 - index) * (size * 0.22);
-        const dieR = size * 0.28;
-        return (
-            <g key={index} transform={`translate(0, ${-stackOffsetY})`}>
-                <circle
-                    cx={centerX}
-                    cy={centerY}
-                    r={dieR}
-                    fill={dieFill}
-                    stroke="var(--color-hex-stroke)"
-                    strokeWidth={1}
-                    opacity={index === diceStack.length - 1 ? 1 : 0.55}
-                />
-                <text
-                    x={centerX}
-                    y={centerY}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize={dieR * 1.1}
-                    fontWeight="bold"
-                    fill="white"
-                    style={{ userSelect: 'none', pointerEvents: 'none' }}
-                >
-                    {die.value}
-                </text>
-            </g>
-        );
-    }
+    if (startingProp) fill = playerColors[startingProp.owner]?.tint ?? 'var(--color-hex-starting)';
+    if (isFocalPoint) fill = 'var(--color-hex-focal)';
+    if (highlight)    fill = HIGHLIGHT_FILL[highlight] ?? fill;
+    if (isSelected)   fill = 'var(--color-hex-selected)';
 
     return (
         <g
@@ -99,12 +64,27 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                 <circle
                     cx={centerX}
                     cy={centerY}
-                    r={size * 0.18}
+                    r={size * FOCAL_MARKER_RATIO}
                     fill="var(--color-focal-marker)"
                     opacity={0.6}
                 />
             )}
-            {diceStack.map(renderDie)}
+            {diceStack.map((die, index) => {
+                const isTop = index === diceStack.length - 1;
+                const stackOffsetY = (diceStack.length - 1 - index) * (size * STACK_OFFSET_RATIO);
+                const color = playerColors[die.owner]?.primary ?? 'var(--color-die-default)';
+                return (
+                    <Die
+                        key={index}
+                        cx={centerX}
+                        cy={centerY - stackOffsetY}
+                        hexSize={size}
+                        value={die.value}
+                        color={color}
+                        isTop={isTop}
+                    />
+                );
+            })}
         </g>
     );
 }

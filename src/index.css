@@ -3,7 +3,7 @@
 :root {
     /* Hex fill colours */
     --color-hex-default:        #e8e677;
-    --color-hex-starting:       #d4c89a;
+    --color-hex-starting:       #9b9ad4;
     --color-hex-focal:          #c4b5fd;
     --color-hex-selected:       #f59e0b;
     --color-hex-stroke:         #7c5c2a;
@@ -17,9 +17,7 @@
     /* Focal point marker */
     --color-focal-marker:       #7c3aed;
 
-    /* Die colours per player */
-    --color-die-red:            #dc2626;
-    --color-die-blue:           #2563eb;
+    /* Die colours — per-player colours are defined in PLAYER_PALETTE (Board.jsx) */
     --color-die-default:        #6b7280;
 
     /* App background & title */
