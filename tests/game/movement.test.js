@@ -12,6 +12,7 @@ import {
     applyMoveTowerAction,
     canCollapse,
     applyCollapseAction,
+    applyRerollAction,
 } from '../../src/game/movement.js';
 
 // ---------------------------------------------------------------------------
@@ -1390,6 +1391,148 @@ describe('applyCollapseAction', () => {
         state.scores = { red: 3, blue: 2 };
         const result = applyCollapseAction(state, CENTER);
         expect(result.scores).toEqual({ red: 4, blue: 2 });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// applyRerollAction
+// ---------------------------------------------------------------------------
+
+describe('applyRerollAction', () => {
+    it('returns state unchanged when hex is empty', () => {
+        const state = makeState();
+        const result = applyRerollAction(state, CENTER, 4);
+        expect(result).toBe(state);
+    });
+
+    it('returns state unchanged when top die belongs to opponent', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [{ owner: 'blue', value: 3 }] },
+        });
+        const result = applyRerollAction(state, CENTER, 5);
+        expect(result).toBe(state);
+    });
+
+    it('updates die value when newValue is greater than original', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [{ owner: 'red', value: 2 }] },
+        });
+        const result = applyRerollAction(state, CENTER, 5);
+        expect(result.dice[CENTER]).toEqual([{ owner: 'red', value: 5 }]);
+    });
+
+    it('keeps original value when newValue is less than original', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [{ owner: 'red', value: 5 }] },
+        });
+        const result = applyRerollAction(state, CENTER, 2);
+        expect(result.dice[CENTER]).toEqual([{ owner: 'red', value: 5 }]);
+    });
+
+    it('keeps original value when newValue equals original', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [{ owner: 'red', value: 4 }] },
+        });
+        const result = applyRerollAction(state, CENTER, 4);
+        expect(result.dice[CENTER]).toEqual([{ owner: 'red', value: 4 }]);
+    });
+
+    it('sets actionTaken to true', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [{ owner: 'red', value: 3 }] },
+        });
+        const result = applyRerollAction(state, CENTER, 5);
+        expect(result.actionTaken).toBe(true);
+    });
+
+    it('works on tower top (not bottom die)', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 2 },
+                { owner: 'red', value: 3 },
+            ]},
+        });
+        const result = applyRerollAction(state, CENTER, 5);
+        expect(result.dice[CENTER]).toEqual([
+            { owner: 'red', value: 2 },
+            { owner: 'red', value: 5 },
+        ]);
+    });
+
+    it('does not modify other dice', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'red', value: 4 }],
+            },
+        });
+        const result = applyRerollAction(state, CENTER, 6);
+        expect(result.dice[CENTER]).toEqual([{ owner: 'red', value: 6 }]);
+        expect(result.dice[N1]).toEqual([{ owner: 'red', value: 4 }]);
+    });
+
+    it('does not modify other state properties', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [{ owner: 'red', value: 3 }] },
+        });
+        const result = applyRerollAction(state, CENTER, 5);
+        expect(result.currentPlayer).toBe('red');
+        expect(result.phase).toBe('action');
+        expect(result.scores).toEqual({ red: 0, blue: 0 });
+        expect(result.combat).toBeNull();
+    });
+
+    it('works on mixed tower top when current player owns top die', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 3 },
+            ]},
+        });
+        const result = applyRerollAction(state, CENTER, 5);
+        expect(result.dice[CENTER]).toEqual([
+            { owner: 'blue', value: 2 },
+            { owner: 'red', value: 5 },
+        ]);
+    });
+
+    it('returns state unchanged for mixed tower when opponent owns top die', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 2 },
+                { owner: 'blue', value: 3 },
+            ]},
+        });
+        const result = applyRerollAction(state, CENTER, 5);
+        expect(result).toBe(state);
+    });
+
+    it('handles value 1 rerolled to value 6', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [{ owner: 'red', value: 1 }] },
+        });
+        const result = applyRerollAction(state, CENTER, 6);
+        expect(result.dice[CENTER]).toEqual([{ owner: 'red', value: 6 }]);
+    });
+
+    it('handles value 6 rerolled to value 1 (keeps 6)', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [{ owner: 'red', value: 6 }] },
+        });
+        const result = applyRerollAction(state, CENTER, 1);
+        expect(result.dice[CENTER]).toEqual([{ owner: 'red', value: 6 }]);
     });
 });
 

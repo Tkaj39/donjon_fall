@@ -601,3 +601,36 @@ export function applyCollapseAction(state, hex) {
 
     return { ...state, dice: newDice, scores: newScores, actionTaken: true };
 }
+
+// ---------------------------------------------------------------------------
+// 3.6 — Reroll action
+// ---------------------------------------------------------------------------
+
+/**
+ * Applies the Reroll action on the top die at `hex`.
+ *
+ * Rules:
+ * - The die's new value = max(newValue, originalValue) — value can only stay or increase.
+ * - Die must belong to the current player (standalone or tower top).
+ * - Sets `actionTaken: true`.
+ * - Returns state unchanged if there is no die at `hex` or the top die does not
+ *   belong to the current player.
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} hex
+ * @param {number} newValue  - the raw roll result (1–6); caller is responsible for randomness
+ * @returns {import('./gameState.js').GameState}
+ */
+export function applyRerollAction(state, hex, newValue) {
+    const stack = getDiceAt(state, hex);
+    if (stack.length === 0) return state;
+
+    const topDie = stack[stack.length - 1];
+    if (topDie.owner !== state.currentPlayer) return state;
+
+    const finalValue = Math.max(newValue, topDie.value);
+    const updatedDie = { ...topDie, value: finalValue };
+    const newStack = [...stack.slice(0, -1), updatedDie];
+
+    return { ...state, dice: { ...state.dice, [hex]: newStack }, actionTaken: true };
+}
