@@ -615,6 +615,12 @@ Online multiplayer allows players to play against each other over the internet. 
 
 ---
 
+## Notes
+
+> **Don't forget graphics!** — Die faces, hex tiles, focal point markers, and player bases will need proper artwork/icons at some point. Currently all visuals are SVG primitives. Revisit in Phase 18.4 (Visual tuning).
+
+---
+
 ## Open Questions (from CLAUDE.md TODOs)
 
 - **Off-map mixed tower scoring**: does only the attacker score, or both players per die?

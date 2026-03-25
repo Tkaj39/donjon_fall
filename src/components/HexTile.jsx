@@ -1,25 +1,63 @@
-import { hexCorners } from "../hex/hexUtils";
+/**
+ * HexTile component — renders a single SVG hexagon with dice stack overlay.
+ * Phase 4 — Board visualization.
+ */
 
-// Renders a single pointy-top SVG hexagon.
-// center_x      — pixel x coordinate of the hex center
-// center_y      — pixel y coordinate of the hex center
-// size          — circumradius of the hex in pixels (center to corner)
-// isHighlighted — renders highlighted hex if true
-// isFocalPoint  — renders focal point hex if true
-// isSelected    — renders selected hex if true
-// onClick       — optional click handler; cursor becomes pointer when provided
-// children      — SVG content rendered inside the hex group (e.g. dice)
-export default function HexTile({ center_x, center_y, size, isHighlighted, isFocalPoint, isSelected, onClick, children }) {
-    const corners = hexCorners(center_x, center_y, size);
-    const points = corners.map(({x, y}) => `${x},${y}`).join(' ');
+import { hexCorners, hexKey } from '../hex/hexUtils.js';
+import { Die } from './Die.jsx';
+import { FocalPointMarker } from './FocalPointMarker.jsx';
+
+/** Highlight-type to CSS variable name mapping. */
+const HIGHLIGHT_FILL = {
+    reachable:         'var(--color-hex-reachable)',
+    selected:          'var(--color-hex-highlighted)',
+    trajectory:        'var(--color-hex-trajectory)',
+    'enemy-reachable': 'var(--color-hex-enemy-reachable)',
+};
+
+/** Focal point marker circle radius as a fraction of hex size. */
+const FOCAL_MARKER_RATIO = 0.18;
+
+/** Vertical spacing between stacked dice as a fraction of hex size. */
+const STACK_OFFSET_RATIO = 0.22;
+
+/**
+ * Renders a single pointy-top SVG hexagon with optional dice stack overlay.
+ *
+ * @param {{q:number,r:number,s:number}} props.coords      - Cube coordinates of this hex.
+ * @param {number}   props.centerX                         - Pixel x of hex centre.
+ * @param {number}   props.centerY                         - Pixel y of hex centre.
+ * @param {number}   props.size                            - Circumradius in pixels.
+ * @param {Array<{type:string}>} props.fieldProperties     - Static field properties from BOARD_FIELDS.
+ * @param {import('../game/gameState.jsx').Die[]} props.diceStack - Dice at this hex (bottom → top).
+ * @param {'reachable'|'selected'|'trajectory'|'enemy-reachable'|null} props.highlight - Visual overlay type.
+ * @param {boolean}  props.isSelected                      - Whether the player has selected this hex.
+ * @param {Object.<string,{primary:string,tint:string}>} [props.playerColors]
+ *   Map of owner ID → colour pair; controls die body colour and base-hex tint.
+ * @param {boolean} [props.isActiveFocalPoint] - Whether this focal point is currently active (ignored for non-focal hexes).
+ * @param {function(): void} [props.onClick]               - Click handler; cursor becomes pointer when provided.
+ * @returns {JSX.Element}
+ */
+export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, onClick }) {
+    const corners = hexCorners(centerX, centerY, size);
+    const points = corners.map(({ x, y }) => `${x},${y}`).join(' ');
+
+    const startingProp = fieldProperties.find(p => p.type === 'startingField');
+    const isFocalPoint = fieldProperties.some(p => p.type === 'focalPoint');
 
     let fill = 'var(--color-hex-default)';
-    if (isSelected) fill = 'var(--color-hex-selected)'; // takes priority over highlighted/focal point render
-    else if (isHighlighted) fill = 'var(--color-hex-highlighted)';
-    else if (isFocalPoint) fill = 'var(--color-hex-focal)';
+    if (startingProp) fill = playerColors[startingProp.owner]?.tint ?? 'var(--color-hex-starting)';
+    if (isFocalPoint) fill = 'var(--color-hex-focal)';
+    if (highlight)    fill = HIGHLIGHT_FILL[highlight] ?? fill;
+    if (isSelected)   fill = 'var(--color-hex-selected)';
 
     return (
-        <g className={`${onClick ? "pointer" : "default"}`} onClick={onClick}>
+        <g
+            data-hex={hexKey(coords)}
+            data-highlight={highlight ?? undefined}
+            style={{ cursor: onClick ? 'pointer' : 'default' }}
+            onClick={onClick ? () => onClick(hexKey(coords)) : undefined}
+        >
             <polygon
                 points={points}
                 fill={fill}
@@ -27,9 +65,30 @@ export default function HexTile({ center_x, center_y, size, isHighlighted, isFoc
                 strokeWidth={1.5}
             />
             {isFocalPoint && (
-                <circle cx={center_x} cy={center_y} r={size * 0.18} fill="var(--color-focal-marker)" opacity={0.6}/>
+                <FocalPointMarker
+                    cx={centerX}
+                    cy={centerY}
+                    hexSize={size}
+                    isActive={isActiveFocalPoint}
+                />
             )}
-            {children}
+            {diceStack.map((die, index) => {
+                const isTop = index === diceStack.length - 1;
+                const stackOffsetY = (diceStack.length - 1 - index) * (size * STACK_OFFSET_RATIO);
+                const color = playerColors[die.owner]?.primary ?? 'var(--color-die-default)';
+                return (
+                    <Die
+                        key={index}
+                        cx={centerX}
+                        cy={centerY - stackOffsetY}
+                        hexSize={size}
+                        value={die.value}
+                        color={color}
+                        isTop={isTop}
+                    />
+                );
+            })}
         </g>
     );
 }
+
