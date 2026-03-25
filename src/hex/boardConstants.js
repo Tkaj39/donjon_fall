@@ -1,12 +1,15 @@
-import { hexKey } from "./hexUtils";
+import { hexKey } from './hexUtils.js';
 
 // The board is a large hexagon of radius 4 centered at (0,0,0)
 // Total hexes: 1 + 6 + 12 + 18 + 24 = 61
 const BOARD_RADIUS = 4;
 
-// Generates all cube-coordinate hexes that form the board.
-// Iterates over all q values in [-BOARD_RADIUS, BOARD_RADIUS], then clamps
-// r to the valid range so that s = -q-r stays within the same radius bound.
+/**
+ * Generates all cube-coordinate hexes that form the board.
+ * Iterates over all q values in [-BOARD_RADIUS, BOARD_RADIUS], then clamps
+ * r to the valid range so that s = -q-r stays within the same radius bound.
+ * @returns {{q: number, r: number, s: number}[]}
+ */
 function buildBoardHexes() {
     const hexes = [];
     for (let q = -BOARD_RADIUS; q <= BOARD_RADIUS; q++) {

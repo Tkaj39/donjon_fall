@@ -5,16 +5,22 @@
 //   { type: 'startingField', owner: 'red' | 'blue' }
 //   { type: 'focalPoint', active: boolean, group: 'left' | 'center' | 'right' }
 
-// Returns the property object of the given type, or null if not present.
-// @param {Object} field - HexField
-// @param {string} type - property type
+/**
+ * Returns the property object of the given type, or null if not present.
+ * @param {{coords: object, properties: object[]}} field - HexField
+ * @param {string} type - property type
+ * @returns {object|null}
+ */
 export function getProperty(field, type) {
     return field.properties.find(p => p.type === type) ?? null;
 }
 
-// Returns true if the field has a property of the given type.
-// @param {Object} field - HexField
-// @param {string} type - property type
+/**
+ * Returns true if the field has a property of the given type.
+ * @param {{coords: object, properties: object[]}} field - HexField
+ * @param {string} type - property type
+ * @returns {boolean}
+ */
 export function hasProperty(field, type) {
     return field.properties.some(p => p.type === type);
 }
