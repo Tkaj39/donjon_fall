@@ -39,3 +39,112 @@
  * @property {CombatState|null}                  combat             - Set when combat needs to be resolved, null otherwise
  * @property {boolean}                           actionTaken        - Whether the current player has used their one action this turn
  */
+
+// ---------------------------------------------------------------------------
+// Phase 2.2 — Derived selectors
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the array of dice stacked at the given hex key (bottom → top order).
+ * Returns an empty array if nobody is there.
+ * @param {GameState} state
+ * @param {string} hexKey
+ * @returns {Die[]}
+ */
+export function getDiceAt(state, hexKey) {
+    return state.dice[hexKey] ?? [];
+}
+
+/**
+ * Returns the topmost die at a hex, or null if the hex is empty.
+ * @param {GameState} state
+ * @param {string} hexKey
+ * @returns {Die|null}
+ */
+export function getTopDie(state, hexKey) {
+    const stack = getDiceAt(state, hexKey);
+    return stack.length > 0 ? stack[stack.length - 1] : null;
+}
+
+/**
+ * Returns the player ID that controls a hex (owner of the top die), or null if empty.
+ * @param {GameState} state
+ * @param {string} hexKey
+ * @returns {string|null}
+ */
+export function getController(state, hexKey) {
+    return getTopDie(state, hexKey)?.owner ?? null;
+}
+
+/**
+ * Returns the total number of dice stacked at a hex.
+ * @param {GameState} state
+ * @param {string} hexKey
+ * @returns {number}
+ */
+export function getTowerSize(state, hexKey) {
+    return getDiceAt(state, hexKey).length;
+}
+
+/**
+ * Returns the attack strength of the formation at a hex from the perspective of its controlling player.
+ * Formula: top-die value + own-dice count − enemy-dice count.
+ * Returns 0 for an empty hex.
+ * @param {GameState} state
+ * @param {string} hexKey
+ * @returns {number}
+ */
+export function getAttackStrength(state, hexKey) {
+    const stack = getDiceAt(state, hexKey);
+    if (stack.length === 0) return 0;
+    const top = stack[stack.length - 1];
+    const ownCount = stack.filter(d => d.owner === top.owner).length;
+    const enemyCount = stack.length - ownCount;
+    return top.value + ownCount - enemyCount;
+}
+
+/**
+ * Returns true if `moverDie` can be placed on top of the formation at `targetHexKey`.
+ * A die can enter a tower only if its attack strength (computed as if already on the target hex)
+ * strictly exceeds the current top die's attack strength at the target.
+ * @param {GameState} state
+ * @param {Die} moverDie
+ * @param {string} targetHexKey
+ * @returns {boolean}
+ */
+export function canEnterTower(state, moverDie, targetHexKey) {
+    const stack = getDiceAt(state, targetHexKey);
+    if (stack.length === 0) return true; // empty hex — always fine
+
+    // Top die's attack strength before mover arrives
+    const topStrength = getAttackStrength(state, targetHexKey);
+
+    // Mover's attack strength as if it were placed on top
+    const ownAfter = stack.filter(d => d.owner === moverDie.owner).length + 1; // +1 for the mover
+    const enemyAfter = stack.filter(d => d.owner !== moverDie.owner).length;
+    const moverStrength = moverDie.value + ownAfter - enemyAfter;
+
+    return moverStrength > topStrength;
+}
+
+/**
+ * Returns true if the focal point at the given hex key is currently active.
+ * Returns false for hexes that are not focal points.
+ * @param {GameState} state
+ * @param {string} hexKey
+ * @returns {boolean}
+ */
+export function isFocalPointActive(state, hexKey) {
+    return state.focalPoints[hexKey]?.isActive ?? false;
+}
+
+/**
+ * Returns the list of hex keys of all currently active focal points.
+ * @param {GameState} state
+ * @returns {string[]}
+ */
+export function getActiveFocalPoints(state) {
+    return Object.entries(state.focalPoints)
+        .filter(([, fp]) => fp.isActive)
+        .map(([key]) => key);
+}
