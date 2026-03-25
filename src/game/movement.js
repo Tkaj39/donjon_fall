@@ -2,6 +2,7 @@
  * Phase 3.1 — Path validation for Move Die
  * Phase 3.2 — Move Die action
  * Phase 3.3 — Tower jump
+ * Phase 3.4 — Move Whole Tower action
  *
  * All functions are pure — they read GameState but never mutate it.
  * hexKey format: "q,r,s" (produced by hexUtils.hexKey)
@@ -415,6 +416,138 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
             approachDirection: resolvedDirection,
             attackStrengthOverride: jumperStrength, // face value only
             options: ['push', 'occupy'],
+        },
+    };
+}
+
+// ---------------------------------------------------------------------------
+// 3.4 — Move Whole Tower action
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the move range for moving the whole tower at `towerKey`.
+ * Formula: own dice − enemy dice, minimum 1.
+ * Returns 0 if the hex is empty or has only one die (no tower to move).
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} towerKey
+ * @returns {number}
+ */
+export function getTowerMoveRange(state, towerKey) {
+    const stack = getDiceAt(state, towerKey);
+    if (stack.length < 2) return 0;
+    const top = stack[stack.length - 1];
+    const ownCount = stack.filter(d => d.owner === top.owner).length;
+    const enemyCount = stack.length - ownCount;
+    return Math.max(1, ownCount - enemyCount);
+}
+
+/**
+ * Returns the set of hexKeys reachable by moving the whole tower at `towerKey`.
+ *
+ * Movement rules:
+ * - Range = getTowerMoveRange.
+ * - The entire tower moves as one unit — can only traverse empty hexes.
+ * - Can land on enemy hex (triggers combat — push only).
+ * - Cannot return to the source hex.
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} towerKey
+ * @returns {Set<string>}
+ */
+export function getTowerReachableHexes(state, towerKey) {
+    const stack = getDiceAt(state, towerKey);
+    if (stack.length < 2) return new Set();
+
+    const maxSteps = getTowerMoveRange(state, towerKey);
+    if (maxSteps === 0) return new Set();
+
+    const reachable = new Set();
+    const minSteps = new Map([[towerKey, 0]]);
+    const queue = [[towerKey, 0]];
+
+    while (queue.length > 0) {
+        const [currentKey, steps] = queue.shift();
+        if (steps >= maxSteps) continue;
+
+        for (const neighbor of getNeighbors(hexFromKey(currentKey))) {
+            if (!isOnBoard(neighbor)) continue;
+            const neighborKey = hexKey(neighbor);
+            if (neighborKey === towerKey) continue;
+
+            const newSteps = steps + 1;
+            const prevBest = minSteps.get(neighborKey);
+            if (prevBest !== undefined && prevBest <= newSteps) continue;
+
+            const ctrl = getController(state, neighborKey);
+            const isOccupied = ctrl !== null;
+
+            reachable.add(neighborKey);
+            minSteps.set(neighborKey, newSteps);
+
+            // Only continue traversal through empty hexes
+            if (!isOccupied) {
+                queue.push([neighborKey, newSteps]);
+            }
+        }
+    }
+
+    return reachable;
+}
+
+/**
+ * Applies the Move Whole Tower action: moves all dice from `fromKey` to `toKey`.
+ *
+ * Outcomes:
+ * - **Empty destination** — entire stack is moved; actionTaken true, phase 'action'.
+ * - **Enemy at destination** — combat is set up with push only (occupy not available).
+ *   Stack stays at fromKey until combat resolves.
+ *
+ * Returns state unchanged if:
+ * - The hex has fewer than 2 dice.
+ * - `toKey` is not in getTowerReachableHexes.
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} fromKey
+ * @param {string} toKey
+ * @param {string|null} [approachDirection]
+ * @returns {import('./gameState.js').GameState}
+ */
+export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = null) {
+    const stack = getDiceAt(state, fromKey);
+    if (stack.length < 2) return state;
+
+    const reachable = getTowerReachableHexes(state, fromKey);
+    if (!reachable.has(toKey)) return state;
+
+    const ctrl = getController(state, toKey);
+
+    // Empty destination — move the whole stack
+    if (ctrl === null) {
+        const newDice = { ...state.dice };
+        delete newDice[fromKey];
+        newDice[toKey] = [...stack];
+        return { ...state, dice: newDice, actionTaken: true, phase: 'action' };
+    }
+
+    // Enemy destination — combat, push only
+    let resolvedDirection = approachDirection;
+    if (!resolvedDirection) {
+        if (hexesDistance(hexFromKey(fromKey), hexFromKey(toKey)) === 1) {
+            resolvedDirection = fromKey;
+        }
+        // Multi-step: direction stays null — UI must confirm.
+    }
+
+    return {
+        ...state,
+        phase: 'combat',
+        actionTaken: true,
+        combat: {
+            attackerHex: fromKey,
+            defenderHex: toKey,
+            approachDirection: resolvedDirection,
+            options: ['push'], // occupy not available for whole-tower moves
         },
     };
 }

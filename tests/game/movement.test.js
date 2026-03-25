@@ -7,6 +7,9 @@ import {
     getJumpRange,
     getJumpReachableHexes,
     applyJumpAction,
+    getTowerMoveRange,
+    getTowerReachableHexes,
+    applyMoveTowerAction,
 } from '../../src/game/movement.js';
 
 // ---------------------------------------------------------------------------
@@ -871,5 +874,302 @@ describe('applyJumpAction', () => {
         });
         const result = applyJumpAction(state, CENTER, N1);
         expect(result.combat.approachDirection).toBe(CENTER);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getTowerMoveRange
+// ---------------------------------------------------------------------------
+
+describe('getTowerMoveRange', () => {
+    it('returns 0 for a single die', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 4 }] },
+        });
+        expect(getTowerMoveRange(state, CENTER)).toBe(0);
+    });
+
+    it('returns 0 for empty hex', () => {
+        const state = makeState();
+        expect(getTowerMoveRange(state, CENTER)).toBe(0);
+    });
+
+    it('returns 2 for two own dice', () => {
+        // 2 own - 0 enemy = 2
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        expect(getTowerMoveRange(state, CENTER)).toBe(2);
+    });
+
+    it('returns 1 for two own and one enemy', () => {
+        // 2 own - 1 enemy = 1
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        expect(getTowerMoveRange(state, CENTER)).toBe(1);
+    });
+
+    it('returns minimum 1 for mixed tower with one own and one enemy', () => {
+        // 1 own - 1 enemy = 0 → max(1, 0) = 1
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 5 },
+            ]},
+        });
+        expect(getTowerMoveRange(state, CENTER)).toBe(1);
+    });
+
+    it('returns minimum 1 when enemy dice outnumber own dice', () => {
+        // 1 own - 2 enemy = -1 → max(1, -1) = 1
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'blue', value: 3 },
+                { owner: 'red', value: 5 },
+            ]},
+        });
+        expect(getTowerMoveRange(state, CENTER)).toBe(1);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getTowerReachableHexes
+// ---------------------------------------------------------------------------
+
+describe('getTowerReachableHexes', () => {
+    it('returns empty set for a single die', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 4 }] },
+        });
+        const result = getTowerReachableHexes(state, CENTER);
+        expect(result.size).toBe(0);
+    });
+
+    it('returns reachable hexes for two own dice with range 2', () => {
+        // range = 2 own - 0 enemy = 2
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = getTowerReachableHexes(state, CENTER);
+        expect(result.has(N1)).toBe(true);     // 1-step neighbor
+        expect(result.has(N1_N1)).toBe(true);  // 2-step neighbor via empty hexes
+    });
+
+    it('includes own die blocking hex but does not traverse through it', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'red', value: 5 }],
+            },
+        });
+        const result = getTowerReachableHexes(state, CENTER);
+        expect(result.has(N1)).toBe(true);      // can land on own
+        expect(result.has(N1_N1)).toBe(false);  // cannot traverse through own
+    });
+
+    it('includes enemy hex but does not traverse through it', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = getTowerReachableHexes(state, CENTER);
+        expect(result.has(N1)).toBe(true);      // can land on enemy
+        expect(result.has(N1_N1)).toBe(false);  // cannot traverse through enemy
+    });
+
+    it('does not allow landing back on source hex', () => {
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = getTowerReachableHexes(state, CENTER);
+        expect(result.has(CENTER)).toBe(false);
+    });
+
+    it('respects range 1 for mixed tower with one own and one enemy', () => {
+        // 1 own - 1 enemy = 0 → max(1, 0) = 1, so range is 1
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 5 },
+            ]},
+        });
+        const result = getTowerReachableHexes(state, CENTER);
+        expect(result.has(N1)).toBe(true);      // 1-step neighbor
+        expect(result.has(N1_N1)).toBe(false);  // 2-step neighbor, out of range
+    });
+});
+
+// ---------------------------------------------------------------------------
+// applyMoveTowerAction
+// ---------------------------------------------------------------------------
+
+describe('applyMoveTowerAction', () => {
+    it('returns state unchanged for a single die', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 4 }] },
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1);
+        expect(result).toBe(state);
+    });
+
+    it('returns state unchanged when target is not reachable', () => {
+        // N1_N1 is out of range if N1 is occupied (blocks traversal)
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'red', value: 5 }],
+            },
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1_N1);
+        expect(result).toBe(state);
+    });
+
+    it('moves entire stack to empty hex and deletes fromKey', () => {
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1);
+        expect(result.dice[N1]).toEqual([
+            { owner: 'red', value: 3 },
+            { owner: 'red', value: 4 },
+        ]);
+        expect(result.dice[CENTER]).toBeUndefined();
+        expect(result.actionTaken).toBe(true);
+        expect(result.phase).toBe('action');
+    });
+
+    it('preserves dice order when moving to empty hex', () => {
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1);
+        expect(result.dice[N1]).toEqual([
+            { owner: 'blue', value: 2 },
+            { owner: 'red', value: 3 },
+            { owner: 'red', value: 4 },
+        ]);
+    });
+
+    it('sets phase to combat and actionTaken true when moving to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1);
+        expect(result.phase).toBe('combat');
+        expect(result.actionTaken).toBe(true);
+    });
+
+    it('sets combat.options to push only when moving to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1);
+        expect(result.combat.options).toEqual(['push']);
+    });
+
+    it('sets combat.attackerHex and combat.defenderHex when moving to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1);
+        expect(result.combat.attackerHex).toBe(CENTER);
+        expect(result.combat.defenderHex).toBe(N1);
+    });
+
+    it('auto-resolves approachDirection to fromKey for adjacent enemy', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1);
+        expect(result.combat.approachDirection).toBe(CENTER);
+    });
+
+    it('records explicit approachDirection in combat when provided', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1_N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1_N1, N1);
+        expect(result.combat.approachDirection).toBe(N1);
+    });
+
+    it('leaves stack at fromKey when moving to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'red', value: 3 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1]: [{ owner: 'blue', value: 5 }],
+            },
+        });
+        const result = applyMoveTowerAction(state, CENTER, N1);
+        expect(result.dice[CENTER]).toEqual([
+            { owner: 'red', value: 3 },
+            { owner: 'red', value: 4 },
+        ]);
+        expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 5 }]);
     });
 });
