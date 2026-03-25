@@ -1,12 +1,5 @@
 ﻿# Donjon Fall — Implementation Plan
 
-## TODO
-
-- **Code style** — define and document a consistent code style across `src/` (naming conventions, file structure, JSDoc patterns, import order etc.)
-- **Split Phase 8 (UI components)** — Phase 4 now covers the UI foundation for Phases 1–3 (`<Board>`, `<HexTile>`, `<Die>`, `<FocalPointMarker>`, movement highlights). Continue splitting by moving `<CombatOverlay>` into Phase 5, `<ScoreBoard>` / `<PhaseIndicator>` into Phase 7, etc., so that Phase 8 contains only the remaining complex UI components.
-
----
-
 ## Overview
 
 Build a multi-player hex-grid board game as a React web app. The default configuration is two players, but all game logic is designed for N players (N ≥ 2). Phases 1–16 run entirely client-side (hot-seat local play). Phase 17 introduces a backend for online multiplayer over the internet.
@@ -215,6 +208,10 @@ Presentation-layer React components tied to the game logic implemented in Phases
   - Attacker die decreases by 1 (min 1)
   - No defender reroll
 
+### 5.4 Combat overlay
+- `<CombatOverlay options, onChoose>` — appears when combat is triggered
+- Shows attacker/defender strength, available options (push / occupy)
+
 ---
 
 ## Phase 6: Focal Point Logic
@@ -246,39 +243,27 @@ Presentation-layer React components tied to the game logic implemented in Phases
 - `hasLegalMoves(state)` — returns false if no action is available (sudden death loss)
 - Check: any die can move, any collapse available, any reroll available
 
+### 7.3 Score display
+- `<ScoreBoard players, scores>` — shows current VP totals for all players; `players` is the ordered list of player IDs
+
+### 7.4 Phase indicator
+- `<PhaseIndicator phase, currentPlayer>` — shows whose turn and current phase
+
 ---
 
 ## Phase 8: UI Components
 
-### 8.1 Die component
-- `<Die value, owner, isTop>` — renders die face (pip count or number) on a hex
-- Stacked dice shown with offset/shadow to indicate tower height
-
-### 8.2 Focal point marker
-- Visual indicator on focal point hexes (active vs. inactive)
-- Victory point token count display on focal point
-
-### 8.3 Score display
-- `<ScoreBoard players, scores>` — shows current VP totals for all players; `players` is the ordered list of player IDs
-
-### 8.4 Action panel
+### 8.1 Action panel
 - `<ActionPanel currentPlayer, availableActions, activeAction, onActionSelect>` — shown at the bottom of the screen after the player selects a piece
 - Actions are listed in this fixed order: **Move tower** (hidden if selected piece is not a tower), **Move die**, **Reroll**
 - The first applicable action in that order is pre-selected automatically when a piece is selected
 - Switching the active action updates the highlighted reachable hexes on the board immediately
 - Disabled state when action already taken or action not legal
 
-### 8.5 Phase indicator
-- `<PhaseIndicator phase, currentPlayer>` — shows whose turn and current phase
-
-### 8.6 Combat modal / overlay
-- `<CombatOverlay options, onChoose>` — appears when combat is triggered
-- Shows attacker/defender strength, available options (push / occupy)
-
-### 8.7 Victory screen
+### 8.2 Victory screen
 - `<VictoryScreen winner>` — shown when a player reaches 5 VP or opponent has no moves
 
-### 8.8 Rules viewer
+### 8.3 Rules viewer
 - `<RulesViewer onClose>` — modal or full-screen overlay displaying the game rules
 - Accessible from the main menu (section 9.3) and from within an active game (e.g. a **?** button in the game UI)
 - Content mirrors the rules defined in CLAUDE.md; structured into collapsible sections (Board & Components, Win Condition, Turn Structure, Actions, Combat, Towers)
@@ -303,7 +288,7 @@ Navigation is handled via React Router or a simple top-level screen state machin
 
 ### 9.3 Main menu
 - **Play** button → navigates to Map selection
-- **Rules** button → opens the rules viewer (see section 8.7)
+- **Rules** button → opens the rules viewer (see section 8.3)
 - (Further menu options TBD, e.g. credits)
 
 ### 9.4 Map selection
