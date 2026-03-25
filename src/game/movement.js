@@ -1,5 +1,6 @@
 /**
  * Phase 3.1 — Path validation for Move Die
+ * Phase 3.2 — Move Die action
  *
  * All functions are pure — they read GameState but never mutate it.
  * hexKey format: "q,r,s" (produced by hexUtils.hexKey)
@@ -7,7 +8,7 @@
 
 import { hexKey, hexFromKey, getNeighbors } from '../hex/hexUtils.js';
 import { isOnBoard } from '../hex/boardUtils.js';
-import { getTopDie, getController, canEnterTower } from './gameState.js';
+import { getDiceAt, getTopDie, getController, canEnterTower } from './gameState.js';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -185,4 +186,97 @@ export function getApproachDirections(state, fromKey, toKey) {
         }
     }
     return directions;
+}
+
+// ---------------------------------------------------------------------------
+// Internal helper — move a single die from one hex to another (pure)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a new state with the top die at `fromKey` moved onto `toKey`.
+ * Does NOT validate legality — callers must check before invoking.
+ * Sets `actionTaken: true`.
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} fromKey
+ * @param {string} toKey
+ * @returns {import('./gameState.js').GameState}
+ */
+function moveTopDie(state, fromKey, toKey) {
+    const fromStack = getDiceAt(state, fromKey);
+    const die = fromStack[fromStack.length - 1];
+    const newFromStack = fromStack.slice(0, -1);
+    const newToStack = [...getDiceAt(state, toKey), die];
+
+    const newDice = { ...state.dice };
+    if (newFromStack.length === 0) {
+        delete newDice[fromKey];
+    } else {
+        newDice[fromKey] = newFromStack;
+    }
+    newDice[toKey] = newToStack;
+
+    return { ...state, dice: newDice, actionTaken: true };
+}
+
+// ---------------------------------------------------------------------------
+// 3.2 — applyMoveAction
+// ---------------------------------------------------------------------------
+
+/**
+ * Applies the Move Die action: moves the top die at `fromKey` to `toKey`.
+ *
+ * Outcomes:
+ * - **Empty destination** — die is placed there; action phase ends.
+ * - **Own die at destination** — die is stacked if `canEnterTower`; illegal otherwise (returns state unchanged).
+ * - **Enemy at destination** — the attacker's die stays at `fromKey` and combat is
+ *   set up via `CombatState`. The die only physically moves when combat is resolved
+ *   (`applyPush` / `applyOccupy`).
+ *   - If exactly one approach direction exists it is recorded automatically.
+ *   - If multiple directions exist and none is passed, `approachDirection` is `null`
+ *     (UI must confirm before resolving combat — see section 11.4).
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} fromKey
+ * @param {string} toKey
+ * @param {string|null} [approachDirection]  - hexKey of the last-step neighbor used
+ *                                             to arrive at `toKey` (needed for push direction).
+ *                                             Pass `null` to auto-resolve when unambiguous.
+ * @returns {import('./gameState.js').GameState}
+ */
+export function applyMoveAction(state, fromKey, toKey, approachDirection = null) {
+    const moverDie = getTopDie(state, fromKey);
+    if (!moverDie) return state;
+
+    const controller = getController(state, toKey);
+
+    // --- Empty destination ---
+    if (controller === null) {
+        return { ...moveTopDie(state, fromKey, toKey), phase: 'action' };
+    }
+
+    // --- Own die: form a tower (if legal) ---
+    if (controller === moverDie.owner) {
+        if (!canEnterTower(state, moverDie, toKey)) return state;
+        return { ...moveTopDie(state, fromKey, toKey), phase: 'action' };
+    }
+
+    // --- Enemy die: set up combat (die does NOT move yet) ---
+    let resolvedDirection = approachDirection;
+    if (!resolvedDirection) {
+        const dirs = getApproachDirections(state, fromKey, toKey);
+        if (dirs.size === 1) resolvedDirection = [...dirs][0];
+    }
+
+    return {
+        ...state,
+        phase: 'combat',
+        actionTaken: true,
+        combat: {
+            attackerHex: fromKey,
+            defenderHex: toKey,
+            approachDirection: resolvedDirection,
+            options: ['push', 'occupy'],
+        },
+    };
 }

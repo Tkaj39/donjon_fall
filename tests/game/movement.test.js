@@ -3,6 +3,7 @@ import {
     getReachableHexes,
     getPathsToHex,
     getApproachDirections,
+    applyMoveAction,
 } from '../../src/game/movement.js';
 
 // ---------------------------------------------------------------------------
@@ -361,5 +362,141 @@ describe('getApproachDirections', () => {
         const resultArray = Array.from(result);
         const uniqueSet = new Set(resultArray);
         expect(resultArray.length).toBe(uniqueSet.size);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// applyMoveAction
+// ---------------------------------------------------------------------------
+
+describe('applyMoveAction', () => {
+    it('moves die to empty hex and sets actionTaken true and phase action', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 3 }] },
+        });
+        const result = applyMoveAction(state, CENTER, N1);
+        expect(result.dice[N1]).toEqual([{ owner: 'red', value: 3 }]);
+        expect(result.actionTaken).toBe(true);
+        expect(result.phase).toBe('action');
+    });
+
+    it('removes fromKey from dice when last die moves away to empty hex', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 2 }] },
+        });
+        const result = applyMoveAction(state, CENTER, N1);
+        expect(result.dice[CENTER]).toBeUndefined();
+        expect(result.dice[N1]).toEqual([{ owner: 'red', value: 2 }]);
+    });
+
+    it('stacks die on own die when canEnterTower is true', () => {
+        // Mover value 5 at CENTER, own die value 2 at N1: can enter (5+1-0 > 2+1-0)
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 5 }],
+                [N1]: [{ owner: 'red', value: 2 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1);
+        expect(result.dice[N1]).toEqual([
+            { owner: 'red', value: 2 },
+            { owner: 'red', value: 5 },
+        ]);
+        expect(result.actionTaken).toBe(true);
+        expect(result.phase).toBe('action');
+    });
+
+    it('returns state unchanged when moving to own die and canEnterTower is false', () => {
+        // Mover value 2 at CENTER, own die value 5 at N1: cannot enter (2+1-0 NOT > 5+1-0)
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 2 }],
+                [N1]: [{ owner: 'red', value: 5 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1);
+        expect(result).toBe(state); // Same reference
+    });
+
+    it('sets phase to combat and actionTaken true when moving to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'blue', value: 2 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1);
+        expect(result.phase).toBe('combat');
+        expect(result.actionTaken).toBe(true);
+    });
+
+    it('does not move die when moving to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'blue', value: 2 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1);
+        expect(result.dice[CENTER]).toEqual([{ owner: 'red', value: 3 }]);
+        expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 2 }]);
+    });
+
+    it('sets combat.attackerHex and combat.defenderHex when moving to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'blue', value: 2 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1);
+        expect(result.combat.attackerHex).toBe(CENTER);
+        expect(result.combat.defenderHex).toBe(N1);
+    });
+
+    it('sets combat.options to push and occupy when moving to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'blue', value: 2 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1);
+        expect(result.combat.options).toEqual(['push', 'occupy']);
+    });
+
+    it('records explicit approachDirection in combat when moving to enemy hex', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'blue', value: 2 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1_N1, N1);
+        expect(result.combat.approachDirection).toBe(N1);
+    });
+
+    it('auto-resolves approachDirection when single approach direction exists', () => {
+        // Direct neighbor: only one approach (CENTER)
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 1 }],
+                [N1]: [{ owner: 'blue', value: 2 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1);
+        expect(result.combat.approachDirection).toBe(CENTER);
+    });
+
+    it('sets approachDirection to null when multiple approaches exist and none passed', () => {
+        // N2 can be reached from CENTER directly or via N1 (different approach directions)
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 2 }],
+                [N2]: [{ owner: 'blue', value: 2 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N2);
+        expect(result.combat.approachDirection).toBe(null);
     });
 });
