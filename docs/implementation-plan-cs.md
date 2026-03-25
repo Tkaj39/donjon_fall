@@ -614,6 +614,12 @@ Online hraní umožňuje hráčům hrát spolu přes internet. Tato fáze zavád
 
 ---
 
+## Poznámky
+
+> **Nezapomeň na grafiku!** — Kostky, hexová pole, markery ohniskových bodů a základny hráčů budou někdy potřebovat pořádnou grafiku/ikonky. Zatím jsou všechny vizuály SVG primitiva. Vrátit se ve fázi 18.4 (vizuální ladění).
+
+---
+
 ## Otevřené otázky (z TODO v CLAUDE.md)
 
 - **Bodování smíšené věže mimo mapu**: boduje si body pouze útočník, nebo oba hráči za každou vlastní kostku?
