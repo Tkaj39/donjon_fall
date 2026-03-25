@@ -1,5 +1,12 @@
 # Donjon Fall — Implementation Plan
 
+## TODO
+
+- **Code style** — define and document a consistent code style across `src/` (naming conventions, file structure, JSDoc patterns, import order etc.)
+- **Split Phase 7 (UI components)** — instead of implementing all UI components at once in Phase 7, distribute individual components into the phases where their logic is implemented (e.g. `<Die>` in Phase 2, `<HexTile>` / `<Board>` in Phase 1, `<CombatOverlay>` in Phase 4, etc.)
+
+---
+
 ## Overview
 
 Build a multi-player hex-grid board game as a React web app. The default configuration is two players, but all game logic is designed for N players (N ≥ 2). Phases 1–15 run entirely client-side (hot-seat local play). Phase 16 introduces a backend for online multiplayer over the internet.
