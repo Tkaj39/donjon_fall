@@ -551,3 +551,53 @@ export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = 
         },
     };
 }
+
+// ---------------------------------------------------------------------------
+// 3.5 — Tower Collapse action
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true if the current player can trigger a tower collapse at `hex`.
+ *
+ * Conditions:
+ * - Tower has 3 or more dice.
+ * - The current player's die is on top.
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} hex
+ * @returns {boolean}
+ */
+export function canCollapse(state, hex) {
+    const stack = getDiceAt(state, hex);
+    if (stack.length < 3) return false;
+    return getController(state, hex) === state.currentPlayer;
+}
+
+/**
+ * Applies the Tower Collapse action: removes the bottom die from the tower at `hex`.
+ *
+ * - If the bottom die belongs to the opponent, `state.scores` for the current player
+ *   is incremented by 1.
+ * - Sets `actionTaken: true`.
+ * - Returns state unchanged if `canCollapse` is false.
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} hex
+ * @returns {import('./gameState.js').GameState}
+ */
+export function applyCollapseAction(state, hex) {
+    if (!canCollapse(state, hex)) return state;
+
+    const stack = getDiceAt(state, hex);
+    const bottomDie = stack[0];
+    const newStack = stack.slice(1);
+
+    const newDice = { ...state.dice, [hex]: newStack };
+
+    const isEnemy = bottomDie.owner !== state.currentPlayer;
+    const newScores = isEnemy
+        ? { ...state.scores, [state.currentPlayer]: (state.scores[state.currentPlayer] ?? 0) + 1 }
+        : state.scores;
+
+    return { ...state, dice: newDice, scores: newScores, actionTaken: true };
+}

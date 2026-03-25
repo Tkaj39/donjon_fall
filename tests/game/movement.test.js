@@ -10,6 +10,8 @@ import {
     getTowerMoveRange,
     getTowerReachableHexes,
     applyMoveTowerAction,
+    canCollapse,
+    applyCollapseAction,
 } from '../../src/game/movement.js';
 
 // ---------------------------------------------------------------------------
@@ -1173,3 +1175,221 @@ describe('applyMoveTowerAction', () => {
         expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 5 }]);
     });
 });
+
+// ---------------------------------------------------------------------------
+// canCollapse
+// ---------------------------------------------------------------------------
+
+describe('canCollapse', () => {
+    it('returns false for empty hex', () => {
+        const state = makeState();
+        expect(canCollapse(state, CENTER)).toBe(false);
+    });
+
+    it('returns false for single die', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 4 }] },
+        });
+        expect(canCollapse(state, CENTER)).toBe(false);
+    });
+
+    it('returns false for two dice', () => {
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        expect(canCollapse(state, CENTER)).toBe(false);
+    });
+
+    it('returns false for three dice when current player is NOT on top', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'blue', value: 4 },
+            ]},
+        });
+        expect(canCollapse(state, CENTER)).toBe(false);
+    });
+
+    it('returns true for three dice with current player on top', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        expect(canCollapse(state, CENTER)).toBe(true);
+    });
+
+    it('returns true for mixed tower with 3+ dice and current player on top', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        expect(canCollapse(state, CENTER)).toBe(true);
+    });
+
+    it('returns true for four dice with current player on top', () => {
+        const state = makeState({
+            currentPlayer: 'blue',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 1 },
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'blue', value: 5 },
+            ]},
+        });
+        expect(canCollapse(state, CENTER)).toBe(true);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// applyCollapseAction
+// ---------------------------------------------------------------------------
+
+describe('applyCollapseAction', () => {
+    it('returns state unchanged when hex is empty', () => {
+        const state = makeState();
+        const result = applyCollapseAction(state, CENTER);
+        expect(result).toBe(state);
+    });
+
+    it('returns state unchanged when tower has only one die', () => {
+        const state = makeState({
+            dice: { [CENTER]: [{ owner: 'red', value: 4 }] },
+        });
+        const result = applyCollapseAction(state, CENTER);
+        expect(result).toBe(state);
+    });
+
+    it('returns state unchanged when tower has only two dice', () => {
+        const state = makeState({
+            dice: { [CENTER]: [
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyCollapseAction(state, CENTER);
+        expect(result).toBe(state);
+    });
+
+    it('returns state unchanged when current player is not on top', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'blue', value: 4 },
+            ]},
+        });
+        const result = applyCollapseAction(state, CENTER);
+        expect(result).toBe(state);
+    });
+
+    it('removes bottom die when it belongs to current player (no score change)', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyCollapseAction(state, CENTER);
+        expect(result.dice[CENTER]).toEqual([
+            { owner: 'red', value: 3 },
+            { owner: 'red', value: 4 },
+        ]);
+        expect(result.scores).toEqual({ red: 0, blue: 0 });
+    });
+
+    it('removes enemy bottom die and increments score', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyCollapseAction(state, CENTER);
+        expect(result.dice[CENTER]).toEqual([
+            { owner: 'red', value: 3 },
+            { owner: 'red', value: 4 },
+        ]);
+        expect(result.scores).toEqual({ red: 1, blue: 0 });
+    });
+
+    it('sets actionTaken to true', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyCollapseAction(state, CENTER);
+        expect(result.actionTaken).toBe(true);
+    });
+
+    it('does not modify other state properties', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        const result = applyCollapseAction(state, CENTER);
+        expect(result.phase).toBe('action');
+        expect(result.currentPlayer).toBe('red');
+        expect(result.focalPoints).toEqual({});
+        expect(result.combat).toBeNull();
+    });
+
+    it('works correctly for four-dice tower removing enemy bottom die', () => {
+        const state = makeState({
+            currentPlayer: 'blue',
+            dice: { [CENTER]: [
+                { owner: 'red', value: 1 },
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'blue', value: 5 },
+            ]},
+        });
+        const result = applyCollapseAction(state, CENTER);
+        expect(result.dice[CENTER]).toEqual([
+            { owner: 'blue', value: 2 },
+            { owner: 'red', value: 3 },
+            { owner: 'blue', value: 5 },
+        ]);
+        expect(result.scores).toEqual({ red: 0, blue: 1 });
+    });
+
+    it('increments existing score correctly', () => {
+        const state = makeState({
+            currentPlayer: 'red',
+            dice: { [CENTER]: [
+                { owner: 'blue', value: 2 },
+                { owner: 'red', value: 3 },
+                { owner: 'red', value: 4 },
+            ]},
+        });
+        state.scores = { red: 3, blue: 2 };
+        const result = applyCollapseAction(state, CENTER);
+        expect(result.scores).toEqual({ red: 4, blue: 2 });
+    });
+});
+
