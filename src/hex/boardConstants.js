@@ -23,14 +23,11 @@ function buildBoardHexes() {
 export const BOARD_HEXES = buildBoardHexes();
 
 // A Set of stringified hex keys (e.g. "0,0,0") for all 61 board hexes.
-// Used for O(1) membership checks — isOnBoard() looks up a hex here instead
+// Used for O(1) membership checks — isOnBoard() in boardUtils.js looks up a hex here instead
 // of scanning the BOARD_HEXES array, which matters when validating every step
 // of a move path or every neighbor during rendering.
 export const BOARD_HEX_SET = new Set(BOARD_HEXES.map(hexKey));
 
-export function isOnBoard(hex) {
-    return BOARD_HEX_SET.has(hexKey(hex));
-}
 
 // Focal points: left, center, right in the middle row
 // Center = (0,0,0), left = (-2,0,2), right = (2,0,-2)
@@ -52,10 +49,11 @@ export const RED_BASE_HEXES = BOARD_HEXES.filter(h => h.r === -BOARD_RADIUS);
 export const BLUE_BASE_HEXES = BOARD_HEXES.filter(h => h.r === BOARD_RADIUS);
 
 // Focal point property descriptors keyed by hex key.
+// All three hexes share the same group ID — they form one focal point group.
 const FOCAL_POINT_PROPS = {
-    [FOCAL_LEFT_KEY]:   { type: 'focalPoint', active: false, group: 'left' },
-    [FOCAL_CENTER_KEY]: { type: 'focalPoint', active: true,  group: 'center' },
-    [FOCAL_RIGHT_KEY]:  { type: 'focalPoint', active: false, group: 'right' },
+    [FOCAL_LEFT_KEY]:   { type: 'focalPoint', active: false, group: 'main' },
+    [FOCAL_CENTER_KEY]: { type: 'focalPoint', active: true,  group: 'main' },
+    [FOCAL_RIGHT_KEY]:  { type: 'focalPoint', active: false, group: 'main' },
 };
 
 // All 61 board fields as HexField objects: { coords, properties[] }.

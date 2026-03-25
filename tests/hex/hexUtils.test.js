@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-    cubeDistance,
+    hexesDistance,
     getNeighbors,
     hexesInRange,
     getPath,
@@ -12,16 +12,16 @@ import {
 
 describe('cubeDistance', () => {
     it('same hex → 0', () => {
-        expect(cubeDistance({q: 0, r: 0, s: 0}, {q: 0, r: 0, s: 0})).toBe(0);
+        expect(hexesDistance({q: 0, r: 0, s: 0}, {q: 0, r: 0, s: 0})).toBe(0);
     });
 
     it('adjacent hex → 1', () => {
-        expect(cubeDistance({q: 0, r: 0, s: 0}, {q: 1, r: -1, s: 0})).toBe(1);
+        expect(hexesDistance({q: 0, r: 0, s: 0}, {q: 1, r: -1, s: 0})).toBe(1);
     });
 
     it('multi-step → correct value', () => {
-        expect(cubeDistance({q: 0, r: 0, s: 0}, {q: 3, r: -1, s: -2})).toBe(3);
-        expect(cubeDistance({q: -2, r: 1, s: 1}, {q: 2, r: -3, s: 1})).toBe(4);
+        expect(hexesDistance({q: 0, r: 0, s: 0}, {q: 3, r: -1, s: -2})).toBe(3);
+        expect(hexesDistance({q: -2, r: 1, s: 1}, {q: 2, r: -3, s: 1})).toBe(4);
     });
 });
 
@@ -33,7 +33,7 @@ describe('getNeighbors', () => {
     it('all neighbors are 1 step away', () => {
         const center = {q: 0, r: 0, s: 0};
         getNeighbors(center).forEach(n => {
-            expect(cubeDistance(center, n)).toBe(1);
+            expect(hexesDistance(center, n)).toBe(1);
         });
     });
 
@@ -63,7 +63,7 @@ describe('hexesInRange', () => {
         const center = {q: 1, r: -1, s: 0};
         const range = 3;
         hexesInRange(center, range).forEach(h => {
-            expect(cubeDistance(center, h)).toBeLessThanOrEqual(range);
+            expect(hexesDistance(center, h)).toBeLessThanOrEqual(range);
         });
     });
 });
@@ -85,16 +85,16 @@ describe('getPath', () => {
         const to = {q: 3, r: 0, s: -3};
         const path = getPath(from, to);
         expect(path).toHaveLength(4);
-        expect(cubeDistance(path[0], from)).toBe(0);
-        expect(cubeDistance(path[1], {q: 1, r: 0, s: -1})).toBe(0);
-        expect(cubeDistance(path[2], {q: 2, r: 0, s: -2})).toBe(0);
-        expect(cubeDistance(path[3], {q: 3, r: 0, s: -3})).toBe(0);
+        expect(hexesDistance(path[0], from)).toBe(0);
+        expect(hexesDistance(path[1], {q: 1, r: 0, s: -1})).toBe(0);
+        expect(hexesDistance(path[2], {q: 2, r: 0, s: -2})).toBe(0);
+        expect(hexesDistance(path[3], {q: 3, r: 0, s: -3})).toBe(0);
     });
 
     it('all hexes in path are within distance 1 of each other', () => {
         const path = getPath({q: -2, r: 1, s: 1}, {q: 2, r: -3, s: 1});
         for (let i = 1; i < path.length; i++) {
-            expect(cubeDistance(path[i - 1], path[i])).toBe(1);
+            expect(hexesDistance(path[i - 1], path[i])).toBe(1);
         }
     });
 });

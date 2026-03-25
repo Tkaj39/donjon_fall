@@ -1,12 +1,5 @@
 // Cube coordinate utilities for hex grid
 
-// Returns the distance in steps between two hexes in cube coordinates.
-// @param {Object} a - source hex {q, r, s}
-// @param {Object} b - target hex {q, r, s}
-export function cubeDistance(a, b) {
-    return Math.max(Math.abs(a.q - b.q), Math.abs(a.r - b.r), Math.abs(a.s - b.s));
-}
-
 // The 6 cube directions
 const CUBE_DIRECTIONS = [
     {q: 1, r: -1, s: 0},
@@ -17,13 +10,26 @@ const CUBE_DIRECTIONS = [
     {q: 0, r: -1, s: 1},
 ];
 
-// Returns the 6 neighboring hexes of a given hex in cube coordinates.
-// @param {Object} hex - center hex {q, r, s}
-export function getNeighbors({q, r, s}) {
-    return CUBE_DIRECTIONS.map((d) => ({q: q + d.q, r: r + d.r, s: s + d.s}));
+// Returns the distance in steps between two hexes in cube coordinates. Has no board awareness
+// @param {Object} first - a hex {q, r, s}
+// @param {Object} second - another hex {q, r, s}
+export function hexesDistance(first, second) {
+    return Math.max(
+        Math.abs(first.q - second.q),
+        Math.abs(first.r - second.r),
+        Math.abs(first.s - second.s)
+    );
 }
 
-// Returns all hexes within a given range of a center hex (inclusive of center).
+// Returns the 6 neighboring hexes of a given hex in cube coordinates. Has no board awareness, may return hexes outside
+// the board.
+// @param {Object} - center hex {q, r, s}
+export function getNeighbors({q, r, s}) {
+    return CUBE_DIRECTIONS.map((direction) => ({q: q + direction.q, r: r + direction.r, s: s + direction.s}));
+}
+
+// Returns all hexes within a given range of a center hex (inclusive of center). Has no board awareness, may return
+// hexes outside the board.
 // @param {Object} hex - center hex {q, r, s}
 // @param {number} range - number of steps outward
 export function hexesInRange(hex, range) {
@@ -37,13 +43,15 @@ export function hexesInRange(hex, range) {
     return results;
 }
 
-// Returns hexes along the straight line from `from` to `to` (inclusive).
+// Returns hexes along the straight line from `from` to `to` (inclusive). Has no board awareness, may return hexes
+// outside the board.
 // @param {Object} from - start hex {q, r, s}
 // @param {Object} to - end hex {q, r, s}
 export function getPath(from, to) {
-    const dist = cubeDistance(from, to);
+    const dist = hexesDistance(from, to);
     if (dist === 0) return [from];
     const results = [];
+
     for (let i = 0; i <= dist; i++) {
         const t = i / dist;
         results.push(cubeRound({
@@ -64,41 +72,32 @@ export function getPath(from, to) {
 // the q+r+s=0 constraint, giving the hexes that make up the path.
 // @param {Object} hex - fractional cube coordinates {q, r, s}
 function cubeRound({q, r, s}) {
-    let rq = Math.round(q);
-    let rr = Math.round(r);
-    let rs = Math.round(s);
-    const dq = Math.abs(rq - q);
-    const dr = Math.abs(rr - r);
-    const ds = Math.abs(rs - s);
-    if (dq > dr && dq > ds) rq = -rr - rs;
-    else if (dr > ds) rr = -rq - rs;
-    else rs = -rq - rr;
-    return {q: rq, r: rr, s: rs};
-}
-
-// Converts cube coordinates to offset coordinates (odd-r layout, pointy-top).
-// @param {Object} hex - {q, r, s}
-export function cubeToOffset({q, r}) {
-    return {col: q + (r - (r & 1)) / 2, row: r};
-}
-
-// Converts offset coordinates (odd-r layout, pointy-top) to cube coordinates.
-// @param {Object} offset - {col, row}
-export function offsetToCube({col, row}) {
-    const q = col - (row - (row & 1)) / 2;
-    const r = row;
-    return {q, r, s: -q - r};
+    let rounded_q = Math.round(q);
+    let rounded_r = Math.round(r);
+    let rounded_s = Math.round(s);
+    const error_q = Math.abs(rounded_q - q); // rounding error
+    const error_r = Math.abs(rounded_r - r); // rounding error
+    const error_s = Math.abs(rounded_s - s); // rounding error
+    if (error_q > error_r && error_q > error_s) {
+        rounded_q = -rounded_r - rounded_s;
+    } else if (error_r > error_s) {
+        rounded_r = -rounded_q - rounded_s;
+    } else {
+        rounded_s = -rounded_q - rounded_r;
+    }
+    return {q: rounded_q, r: rounded_r, s: rounded_s};
 }
 
 // Converts a hex to a stable string key (e.g. "1,-2,1") for use in Maps and Sets.
-// Two separate {q,r,s} objects with the same values would be treated as different
-// keys by JavaScript, since object identity is used — stringifying them gives a
-// value-based key that works correctly.
+// Two separate {q,r,s} objects with the same values would be treated as different keys by JavaScript, since object
+// identity is used — serializing them gives a value-based key that works correctly.
 // @param {Object} hex - {q, r, s}
 export function hexKey({q, r, s}) {
     return `${q},${r},${s}`;
 }
 
+// Parses a hex key string (e.g. "1,-2,1") back into a cube coordinate object.
+// @param {string} key - a string produced by hexKey()
 export function hexFromKey(key) {
     const [q, r, s] = key.split(',').map(Number);
     return {q, r, s};
@@ -112,12 +111,15 @@ export function hexToPixel({q, r}, size) {
 }
 
 // Returns the 6 corner points of a pointy-top hexagon centered at (cx, cy)
-export function hexCorners(cx, cy, size) {
+// @param {number} center_x - center x pixel coordinate
+// @param {number} center_y - center y pixel coordinate
+// @param {number} size - hex size (circumradius, i.e. center to corner distance) in pixels
+export function hexCorners(center_x, center_y, size) {
     return Array.from({length: 6}, (_, i) => {
         const angle = (Math.PI / 180) * (60 * i - 30);
         return {
-            x: cx + size * Math.cos(angle),
-            y: cy + size * Math.sin(angle),
+            x: center_x + size * Math.cos(angle),
+            y: center_y + size * Math.sin(angle),
         };
     });
 }

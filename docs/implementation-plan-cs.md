@@ -1,18 +1,16 @@
 # Donjon Fall — Implementační plán
-<!-- TODO: Make focal points more general. Define passive focal points array, active focal points array and make sure that focal points can be grouped together. -->
-<!-- TODO: Make number of players general. In the future, more players than two should be able to play a game. This makes bases general as well - one base per player. -->
 
 ## Přehled
 
-Hra pro dva hráče na hexagonální mřížce postavená jako React webová aplikace. Veškerá herní logika běží na straně klienta; backend zatím není potřeba. Hráči sdílejí jednu obrazovku (hot-seat).
+Hra pro více hráčů (N hráčů, N ≥ 2) na hexagonální mřížce postavená jako React webová aplikace. Výchozí konfigurace je pro dva hráče, ale veškerá herní logika je navržena pro N hráčů. Fáze 1–15 běží zcela na straně klienta (hot-seat místní hra). Fáze 16 zavádí backend pro online hraní přes internet.
 
 ---
 
 ## Fáze 1: Základ hexagonální mřížky
 
 ### 1.1 Souřadnicový systém hexů
-- Implementovat cubické souřadnice (q, r, s) pro hexagony
-- Utility: `cubeToOffset`, `offsetToCube`, `cubeDistance`
+- Používat cubické souřadnice (q, r, s) výhradně v celém kódu. Offsetové souřadnice nejsou používány.
+- Utility: `cubeDistance`
 - Utility: `getNeighbors(hex)` — vrátí 6 sousedních hexů
 - Utility: `hexesInRange(hex, range)` — vrátí všechny hexy do N kroků
 - Utility: `getPath(from, to)` — vrátí seřazený seznam hexů na přímé linii
@@ -28,12 +26,12 @@ HexField {
 }
 
 HexProperty =
-  | { type: 'startingField', owner: 'red' | 'blue' }
+  | { type: 'startingField', owner: string }
   | { type: 'focalPoint', active: boolean, group: string }
 ```
 
-- **`startingField`** — označuje pole jako základnu hráče; `owner` určuje, kterého hráče.
-- **`focalPoint`** — označuje pole jako ohnisko; `active` je jeho aktuální stav; `group` je řetězcový identifikátor (např. `'left'`, `'center'`, `'right'`) propojující skupinu ohniskových polí — po aktivaci se aktivní ohnisko může přesunout pouze na pole se stejným `group`.
+- **`startingField`** — označuje pole jako základnu hráče; `owner` je ID hráče (řetězec, např. `'red'`, `'blue'` nebo jakýkoliv budoucí ID hráče). Jedna základna na hráče.
+- **`focalPoint`** — označuje pole jako ohnisko; `active` je jeho počáteční stav (true = aktivní na začátku hry, false = pasivní); `group` je řetězcový identifikátor (např. `'left'`, `'center'`, `'right'`) — každá grupa představuje jednu logickou pozici ohniska, která se může pohybovat mezi poli se stejným `group`. Definice plochy plně řídí počet ohnisek, jejich grupy a které začínají aktivní.
 
 Pomocné funkce:
 - `getProperty(field, type)` — vrátí objekt vlastnosti nebo null
@@ -42,9 +40,9 @@ Pomocné funkce:
 ### 1.3 Definice tvaru hrací plochy
 - Definovat 61-polní velký hexagon jako množinu platných cubických souřadnic
 - Střed mapy na (0,0,0); poloměr 4 (standardní hex mřížka: 1+6+12+18+24 = 61 polí)
-- Přiřadit vlastnost `startingField` základně červeného (horní řada) a základně modrého (dolní řada)
-- Přiřadit vlastnost `focalPoint` 3 polím prostřední řady (skupiny: `'left'`, `'center'`, `'right'`); střed začíná jako `active: true`
-- Exportovat konstanty: `BOARD_HEXES`, `RED_BASE_HEXES`, `BLUE_BASE_HEXES`, `FOCAL_POINT_HEXES`
+- Přiřadit vlastnost `startingField` každé základně hráče; `owner` = ID hráče (výchozí mapa: `'red'` horní řada, `'blue'` dolní řada)
+- Přiřadit vlastnost `focalPoint` 3 polím prostřední řady (grupy: `'left'`, `'center'`, `'right'`); střed začíná jako `active: true`, levé a pravé jako `active: false`
+- Exportovat konstanty: `BOARD_HEXES`, `BASE_HEXES` (mapa `{ [playerId]: HexField[] }`), `FOCAL_POINT_HEXES`, `ACTIVE_FOCAL_HEXES`, `PASSIVE_FOCAL_HEXES`
 
 ### 1.5 Komponenta pro vykreslení hexu
 - `<HexTile hex coords, content, state, onClick>` — vykreslí jeden SVG hexagon
@@ -66,16 +64,17 @@ Definovat kanonický tvar herního stavu jako plain JS objekty (bez tříd):
 
 ```
 GameState {
-  currentPlayer: 'red' | 'blue'
+  players: string[]           // seřazený seznam ID hráčů, např. ['red', 'blue']
+  currentPlayer: string       // ID hráče aktivního hráče
   phase: 'focal' | 'action' | 'combat' | 'victory'
   dice: {
     [hexKey]: Die[]          // hexKey = "q,r,s"
   }
   focalPoints: {
-    [hexKey]: FocalPointState  // { isActive, victoryPointsStored }
+    [hexKey]: FocalPointState
   }
-  scores: { red: number, blue: number }
-  activeFocalHolders: { red: hexKey|null, blue: hexKey|null }
+  scores: { [playerId]: number }
+  activeFocalHolders: { [playerId]: hexKey|null }
     // sleduje, na kterém hexu měl každý hráč kostku na fokálním bodu na konci předchozího tahu
   combat: CombatState | null
   selectedHex: hexKey | null
@@ -84,12 +83,13 @@ GameState {
 }
 
 Die {
-  owner: 'red' | 'blue'
+  owner: string        // ID hráče
   value: 1..6
 }
 
 FocalPointState {
   isActive: boolean
+  group: string        // zkopírováno z definice plochy; používá se k nalezení sesterských polí ve stejné grupě
 }
 
 CombatState {
@@ -103,7 +103,7 @@ CombatState {
 Čisté funkce počítající odvozená data ze stavu:
 - `getDiceAt(state, hex)` — pole kostek na hexu
 - `getTopDie(state, hex)` — vrchní kostka
-- `getController(state, hex)` — 'red' | 'blue' | null (hráč, jehož kostka je nahoře)
+- `getController(state, hex)` — ID hráče | null (hráč, jehož kostka je nahoře)
 - `getTowerSize(state, hex)` — počet kostek
 - `getAttackStrength(state, attackerHex)` — hodnota vrchní kostky + počet vlastních − počet nepřátel
 - `canEnterTower(state, moverDie, targetHex)` — ověří, zda útočná síla pohybující se kostky překračuje útočnou sílu vrchní kostky
@@ -111,7 +111,7 @@ CombatState {
 - `getActiveFocalPoints(state)` — seznam hexů aktivních fokálních bodů
 
 ### 2.3 Továrna počátečního stavu
-- `createInitialState()` — umístí 5 kostek na základní řady každého hráče (přesné startovní pozice TBD), nastaví střední fokální bod jako aktivní, všechna skóre na 0
+- `createInitialState(players, boardFields)` — bere seřazený seznam ID hráčů a definice polí plochy; umístí 5 kostek na příslušné základní řady každého hráče (přesné startovní pozice TBD), inicializuje fokální body ze `boardFields` (aktivní/pasivní podle definice v ploše), všechna skóre na 0
 
 ---
 
@@ -123,17 +123,20 @@ CombatState {
   - Lze procházet přes vlastní kostky pouze pokud má pohybující se kostka vyšší útočnou sílu než vrchní kostka na daném poli
   - Vrátí množinu dosažitelných cílových hexů (ne mezilehlé cesty)
 - `getPathsToHex(state, fromHex, toHex)` — vrátí platné cesty (potřebné pro směr odsunu)
+- `getApproachDirections(state, fromHex, toHex)` — vrátí množinu rozlišných směrů, ze kterých se útočník může na `toHex` dostat (tj. unikátní poslední sousední hexes), odvozené ze všech platných cest; relevantní pouze pokud je cílové pole obsazeno nepřítelem
 
 ### 3.2 Akce pohybu kostky
 - `applyMoveAction(state, fromHex, toHex)` — vrátí nový stav
   - Přesune kostku ze zdroje do cíle
   - Pokud je cíl obsazen vlastní kostkou: přidá do věže (pokud `canEnterTower`)
   - Pokud je cíl obsazen nepřítelem: nastaví fázi na 'combat', zaznamená `CombatState`
+  - Pokud je dostupnější více než jeden směr příchodu, počkaj na potvrzení směru hráčem před potvrzením (viz oddíl 11.4); `CombatState` zahrnuje `approachDirection`
 
 ### 3.3 Skok z věže
 - `getJumpRange(state, towerHex)` — vlastní kostky − nepřátelské kostky (min 1)
 - `getJumpReachableHexes(state, towerHex)` — hexy dosažitelné skákající kostkou
 - `applyJumpAction(state, towerHex, targetHex)` — vrátí nový stav (oddělí vrchní kostku, přesune ji)
+- **Útočná síla při skoku** používá pouze hodnotu kostky skákajícího hráče — bez bonusu věže. To se liší od normálního pohybu, který skončí na nepříteli (kde útočná síla = hodnota vrchní kostky + počet vlastních − počet nepřátel). `getAttackStrength` musí obdržet kontext, který uvádí, zda se útočník skákal.
 
 ### 3.4 Akce pohybu celé věže
 - `getTowerMoveRange(state, towerHex)` — vlastní kostky − nepřátelské kostky (min 1)
@@ -180,10 +183,10 @@ CombatState {
 
 ### 5.1 Fáze bodování fokálních bodů
 - `applyFocalPhase(state, extraDieRoll)` — zpracuje fokální body na začátku tahu
-  - Pro každý fokální bod držený aktuálním hráčem na konci předchozího tahu:
+  - Pro každý aktivní fokální bod držený aktuálním hráčem na konci předchozího tahu:
     - Udělí 1 bod
     - Přehodí danou kostku: min(hod, původní − 1)
-  - Hodí extra D6 pro aktivaci druhého fokálního bodu (sudé = levý, liché = pravý)
+  - Pokud existují pasivní fokální body: hodí extra D6 pro výběr jedné pasivní grupy k aktivaci; mapování hodnot hodů na grupy je určeno počtem pasivních grup (např. se 2 pasivními grupami: sudé = první, liché = druhá)
   - Přijme hodnoty hodů jako parametry pro čistotu
 
 ### 5.2 Detekce fokálních bodů (konec akční fáze)
@@ -199,7 +202,7 @@ CombatState {
   - `action → combat` (pokud byl spuštěn souboj) nebo `action → victory` kontrola → `focal` (další tah)
   - `combat → victory` kontrola → `focal` (další tah)
   - `victory → (konec hry)`
-- `endTurn(state)` — přepne `currentPlayer`, resetuje příznaky tahu, aktualizuje držitele fokálních bodů
+- `endTurn(state)` — posune `currentPlayer` na dalšího hráče v poli `state.players` (zabalení), resetuje příznaky tahu, aktualizuje držitele fokálních bodů
 
 ### 6.2 Detekce legálních tahů
 - `hasLegalMoves(state)` — vrátí false, pokud není dostupná žádná akce (prohra náhlou smrtí)
@@ -218,10 +221,13 @@ CombatState {
 - Zobrazení počtu uložených bodů vítězství na fokálním bodu
 
 ### 7.3 Zobrazení skóre
-- `<ScoreBoard red, blue>` — zobrazí aktuální celkové body vítězství obou hráčů
+- `<ScoreBoard players, scores>` — zobrazí aktuální celkové body vítězství všech hráčů; `players` je seřazený seznam ID hráčů
 
 ### 7.4 Panel akcí
-- `<ActionPanel currentPlayer, availableActions, onAction>` — tlačítka pro 4 akce
+- `<ActionPanel currentPlayer, availableActions, activeAction, onActionSelect>` — zobrazí se v dolní části obrazovky poté, co hráč vybere kostku
+- Akce jsou uvedeny v tomto pevném pořadí: **Pohyb věže** (skrytý, pokud vybraná kostka není věž), **Pohyb kostky**, **Přehození**
+- První použitelná akce v tomto pořadí je automaticky preselektována, když je kostka vybrána
+- Přepnutí aktivní akce okamžitě aktualizuje zvýrazněné dosažitelné hexy na ploše
 - Zakázaný stav, pokud již byla akce provedena nebo akce není legální
 
 ### 7.5 Indikátor fáze
@@ -234,78 +240,198 @@ CombatState {
 ### 7.7 Obrazovka vítězství
 - `<VictoryScreen winner>` — zobrazí se, když hráč dosáhne 5 bodů nebo soupeř nemá tahy
 
+### 7.8 Prohlížeč pravidel
+- `<RulesViewer onClose>` — modální okno nebo celoobrazovkové překrytí zobrazující pravidla hry
+- Přístupný z hlavního menu (oddíl 8.3) a v rámci aktivní hry (např. tlačítko **?** v herním UI)
+- Obsah zrcadlí pravidla definovaná v CLAUDE.md; strukturovaná do sbalitelných sekcí (Hrací plocha a komponenty, Podmínka vítězství, Struktura tahu, Akce, Souboj, Věže)
+- Otevření prohlížeče pravidel během hry nepozastavuje hru ani neovlivňuje herní stav
+
 ---
 
-## Fáze 8: Hody kostkami
+## Fáze 8: Nastavení hry a navigace
 
-### 8.1 Náhodné utility
+### 8.1 Tok obrazovek aplikace
+Aplikace má následující obrazovky v pořadí:
+
+```
+Splash obrazovka → Hlavní menu → Výběr mapy → Nastavení hráčů → Obrazovka načítání hry → Hra
+```
+
+Navigace se řeší přes React Router nebo jednoduchou stavovou mašinu na nejvyšší úrovni.
+
+### 8.2 Splash obrazovka
+- Zobrazí se krátce na začátku aplikace během načítání assetsů
+- Zobrazí logo/název hry
+
+### 8.3 Hlavní menu
+- Tlačítko **Hrát** → naviguje na Výběr mapy
+- Tlačítko **Pravidla** → otevře prohlížeč pravidel (viz oddíl 8.7)
+- (Další možnosti menu TBD, např. titulky)
+
+### 8.4 Výběr mapy
+- Vypíše všechny dostupné mapy (vestavěná výchozí mapa + všechny uložené mapy z Board Creatoru)
+- Každá karta mapy zobrazuje:
+  - Náhledový obrázek rozložení hrací plochy
+  - Název mapy
+  - Počet hráčů (min–max podporovaných mapou, vycházející z počtu `startingField` základen)
+  - Cíl bodů vítězství (např. "První na 5 bodů")
+- Výběr mapy pokračuje na Nastavení hráčů
+
+`BoardDefinition` je rozšířena o:
+```
+BoardDefinition {
+  ...
+  minPlayers: number      // vycházející z počtu rozlišných vlastníků základen v mapě
+  maxPlayers: number      // totéž jako minPlayers pro mapy s pevným počtem hráčů; může se lišit pro flexibilní mapy
+  victoryPoints: number   // počet bodů potřebných k vítězství
+}
+```
+
+### 8.5 Nastavení hráčů
+- Jeden slot hráče na základnu definovanou ve vybrané mapě
+- Každý hráč si zvolí jméno a vybere si **znak** (heraldickou embléma) z nabídky předvoleb
+- **Barva se nevybírá** — je přiřazena automaticky na základě pozice základny hráče v mapě (např. horní základna = červená, dolní základna = modrá); znak je překryt na tuto barvu v uživatelském rozhraní
+- Potvrzení → Obrazovka načítání hry
+
+### 8.6 Obrazovka načítání hry
+- Krátká obrazovka zobrazená během běhu `createInitialState` a přípravy assetů pro herní obrazovku
+- Zobrazuje jména hráčů, jejich barvy a znaky jako shrnutí před začátkem hry
+
+---
+
+## Fáze 9: Hody kostkami
+
+### 9.1 Náhodné utility
 - `rollD6()` — vrátí 1–6
 - `rollFocalDie()` — vrátí 1–6 (používá se pro určení, který fokální bod se aktivuje)
 
-### 8.2 Počáteční umístění kostek
+### 9.2 Počáteční umístění kostek
 - Určit startovní pozice a hodnoty pro 5 kostek každého hráče (v jejich základních řadách)
 - Startovní hodnoty: všechny kostky začínají na hodnotě 3 (nebo náhodný hod — TBD)
 
 ---
 
-## Fáze 9: Orchestrace hry
+## Fáze 10: Orchestrace hry
 
-### 9.1 Herní reducer
+### 10.1 Herní reducer
 - `gameReducer(state, action)` — centrální reducer zpracovávající všechny herní akce:
   - `MOVE_DIE`, `MOVE_TOWER`, `JUMP`, `COLLAPSE`, `REROLL`
   - `CHOOSE_COMBAT_OPTION` (odsun / obsazení)
   - `ADVANCE_FOCAL_PHASE`
   - `CONFIRM_ACTION`, `END_TURN`
 
-### 9.2 Integrace React stavu
-- Hook `useGameState()` — obaluje `useReducer(gameReducer, createInitialState())`
+### 10.2 Integrace React stavu
+- Hook `useGameState(players, boardFields)` — obaluje `useReducer(gameReducer, createInitialState(players, boardFields))`
 - Exponuje: `state`, `dispatch` a pomocné selektory
 
-### 9.3 Vrcholová herní komponenta
+### 10.3 Vrcholová herní komponenta
 - `<Game>` — orchestruje hrací plochu, UI panely, modální okna
 - Spravuje stav výběru (vybraný hex → zvýrazněné hexy)
 - Zpracovává tok kliknutí: vyber jednotku → vyber cíl → potvrď
 
 ---
 
-## Fáze 10: Interaktivita a vylepšení
+## Fáze 11: Interaktivita a vylepšení
 
-### 10.1 Výběr a zvýrazňování hexů
-- Klik na vlastní kostku → zvýraznit dosažitelné hexy pro zvolenou akci
-- Klik na zvýrazněný hex → odeslat akci
-- Zrušit výběr druhým klikem nebo klávesou Escape
+### 11.1 Výběr a zvýrazňování hexů
+- Klik na vlastní kostku → vybrat ji; panel akcí se zobrazí v dolní části s první použitelnou akcí preselektovanou; dosažitelné hexy se zvýrazní
+- Přepnutí akce v panelu znovu vypočítá a zvýrazní dosažitelné hexy
+- Zrušit výběr druhým klikem na stejnou kostku nebo klávesou Escape
 
-### 10.2 Disambiguace akcí
-- Pokud se na stejný hex vztahuje více akcí (např. pohyb vs. skok), zobrazí malé popup pro výběr
+### 11.2 Plánování trajektorie (Pohyb kostky / Pohyb věže)
+Pohyb prochází dvoustupňovým tokem — plánování a potvrzením:
 
-### 10.3 Animace (volitelné, později)
+**Krok 1 — Plánování trajektorie.** Dvě ekvivalentní vstupní metody:
+- **Ruční cesta**: klikejte na hexy jeden po druhém podél požadované trasy od vybrané kostky; každý klik rozšíří trajektorii o jeden krok (zvýrazněno jako cesta na ploše)
+- **Automatická cesta**: klikněte přímo na libovolný dosažitelný cílový hex; nejkratší platná cesta se vypočítá automaticky a zobrazí se jako plánovaná trajektorie
+
+Obě metody vedou ke stejnému výsledku: zvýrazněná trajektorie od vybrané kostky do cílového hexu. Pohyb v tomto bodě **ještě není potvrzen**.
+
+**Krok 2 — Potvrzení.** Jakmile je trajektorie naplánována, jsou dostupné dvě možnosti:
+- **Klikněte na cílový hex** (konec trajektorie) — potvrdí pohyb jako jednoduchý pohyb; tah se posune do další fáze
+- **Klikněte na nepřátelskou kostku**, která je dosažitelná z cíle (tj. sousední a v dosahu útoku) — potvrdí pohyb a okamžitě spustí souboj; směr příchodu trajektorie určuje směr odsunu (viz oddíl 11.3)
+
+Nepřátelské kostky, které jsou dosažitelné z aktuálního koncového bodu trajektorie, jsou zvýrazněny odlišně, když je trajektorie naplánována, což signalizuje, že je lze zacílit pro ukončení tahu.
+
+Stisknutí klávesy Escape nebo kliknutí na vybranou kostku zruší plánovanou trajektorii a vrátí se ke kroku 1.
+
+### 11.3 Disambiguace akcí (mimo pohyb)
+- Když se na stejný hex vztahuje více akcí (např. přehození vs. zřícení), zobrazí se malé popup pro výběr
+
+### 11.4 Výběr směru příchodu
+Když se hráč najeď myší na dosažitelný hex obsazený nepřítelem a více než jeden směr příchodu je dostupné, je hex vizuálně rozdělen na až 6 směrových segmentů (jako koláčový graf). Každý segment odpovídá jednomu platnému směru příchodu. Zvýrazněný segment indikuje vybraný směr — najetím myší blízko segmentu jej vyberete. Potvrzením (klik) zamknete ten směr a spustíte souboj s `approachDirection` odpovídajícím vybranému směru. Pokud je dostupný pouze jeden směr příchodu, výběr se přeskočí a útok se spustí přímo.
+
+### 11.6 Animace (volitelné, později)
 - Přechod pohybu kostky
 - Záblesk souboje
 - Animace přírůstku skóre
 
-### 10.4 Responzivní rozložení
+### 11.7 Responzivní rozložení
 - Hrací plocha se přizpůsobuje viewportu
 - UI panely se přeuspořádávají na úzkých obrazovkách
 
 ---
 
-## Fáze 11: Testování
+## Fáze 12: Testování
 
-### 11.1 Unit testy herní logiky
+### 12.1 Unit testy herní logiky
 - Otestovat všechny čisté logické funkce (pohyb, souboj, fokální body, bodování)
 - Nainstalovat Vitest + React Testing Library
 
-### 11.2 Integrační testy
+### 12.2 Integrační testy
 - Celé sekvence tahů
 - Okrajové případy: útok kostkou s hodnotou 1, bodování zřícení věže, řetězový odsun s obklíčením, bodování při vypadnutí z mapy
 
 ---
 
-## Fáze 12: Board Creator
+## Fáze 13: AI Opponent
+
+Počítačově řízený hráč, který může obsadit jakýkoliv slot hráče. Všechny boty sdílejí společné rozhraní, takže je herní smyčka považuje za stejné jako lidské hráče.
+
+### 13.1 Rozhraní AI hráče
+- `AIPlayer { id: string, getAction(state): Promise<GameAction> }` — abstraktní rozhraní, které implementují všechny boty
+- Herní smyčka automaticky volá `getAction`, když se `currentPlayer` shoduje s ID AI hráče
+- Před potvrzením akce se přidá malá umělá prodleva, aby se pohyby zdály přirozené
+- Obrazovka nastavení hry (Fáze 8.5) umožňuje přiřadit každý slot hráče buď člověku, nebo botovi na vybrané úrovni obtížnosti
+
+### 13.2 Náhodný bot
+- Vyjmenuje všechny legální akce a vybere jednu rovnoměrně náhodně
+- Užitečný jako výchozí bod a pro automatizované testování herní logiky
+
+### 13.3 Heuristický bot
+Rozhodování na základě pravidel, vyhodnocené v pořadí priorit:
+- Zaútočit na kteréhokoliv nepřítele, který může být poražen (největší výhoda útočné síly první)
+- Obsadit aktivní fokální body, pokud jsou dosažitelné
+- Pohybovat se směrem k nejbližšímu nepříteli
+- Přehodit jakoukoliv kostku, jejíž hodnota je pod průměrem
+- Vrátit se na náhodný legální tah
+
+### 13.4 Minimax bot (s alpha-beta pruningem)
+- Vytváří herní strom do konfigurabilní hloubky hledání
+- Evaluační funkce bere v úvahu: rozdíl skóre, kontrolu fokálních bodů, celková hodnota kostky na ploše, pozici na ploše (blízkost k fokálním bodům)
+- Alpha-beta pruning pro zmenšení prostoru hledání
+- Běží ve Web Workeru, aby se zabránilo blokování vlákna UI
+
+### 13.5 Úrovně obtížnosti
+| Úroveň  | Bot               | Poznámky                        |
+|---------|-------------------|---------------------------------|
+| Snadná  | Náhodný bot       | Zcela nepředvídatelný           |
+| Střední | Heuristický bot   | Hraje rozumně, bez přehledu     |
+| Těžká   | Minimax hloubka 3 | Vidí dopředu, hraje dobře       |
+| Expert  | Minimax hloubka 5 | Pomalý, ale silný               |
+
+### 13.6 Integrace do herní smyčky
+- `createInitialState` přijímá mapu `botPlayers: { [playerId]: AIPlayer }`
+- Po každé akci člověka, která ukončí tah, detektor v reduceru zjistí, že dalším hráčem je bot, a automaticky odešle `BOT_MOVE`
+- Akce botů procházejí stejným reducerem jako lidské akce — žádné zvláštní zpracování v herní logice
+
+---
+
+## Fáze 14: Board Creator
 
 Samostatný editor (samostatná React route nebo stránka) pro navrhování, ukládání a načítání herních map. Produkuje JSON soubory, které hra samotná načítá.
 
-### 12.1 Datový formát mapy (JSON)
+### 14.1 Datový formát mapy (JSON)
 ```
 BoardDefinition {
   id: string               // unikátní identifikátor mapy
@@ -314,9 +440,10 @@ BoardDefinition {
 }
 ```
 - `HexField` reuse strukturu z Fáze 1.2 (`coords` + `properties[]`)
+- `minPlayers`, `maxPlayers` odvozené z počtu rozlišných vlastníků `startingField`; `victoryPoints` nastavený autorem mapy
 - Uložení/načtení přes `JSON.stringify` / `JSON.parse`; persist do `localStorage` klíčovaný podle `id`, export/import jako `.json` soubor
 
-### 12.2 Model stavu Board Creatoru
+### 14.2 Model stavu Board Creatoru
 ```
 BoardCreatorState {
   board: BoardDefinition
@@ -326,14 +453,14 @@ BoardCreatorState {
 }
 ```
 
-### 12.3 Operace s políčky
+### 14.3 Operace s políčky
 Čisté funkce (bez vedlejších efektů):
 - `addHex(board, coords)` — přidá nové prázdné pole; no-op pokud již existuje
 - `removeHex(board, coords)` — odstraní pole i všechny jeho vlastnosti
 - `assignProperty(board, coords, property)` — přidá nebo nahradí vlastnost daného typu na poli
 - `removeProperty(board, coords, type)` — odebere vlastnost daného typu z pole
 
-### 12.4 Persistence
+### 14.4 Persistence
 - `saveBoard(board)` — serializuje do JSON, uloží do `localStorage`
 - `loadBoard(id)` — načte z `localStorage`, deserializuje
 - `listBoards()` — vrátí pole `{ id, name }` pro všechny uložené mapy
@@ -341,7 +468,7 @@ BoardCreatorState {
 - `exportBoardJSON(board)` — spustí stažení `.json` souboru v prohlížeči
 - `importBoardJSON(file)` — načte nahraný `.json` soubor, vrátí `BoardDefinition`
 
-### 12.5 UI Board Creatoru
+### 14.5 UI Board Creatoru
 - `<BoardCreator>` — vrcholová komponenta editoru
 - `<EditorBoard>` — vykreslí hexagonální mřížku v editačním režimu; klik přidá/odstraní/vybere pole
 - `<ToolPanel>` — výběr aktivního nástroje (umístit, smazat, přiřadit vlastnost, odebrat vlastnost)
@@ -351,24 +478,120 @@ BoardCreatorState {
 
 ---
 
+## Fáze 15: Tutoriál
+
+### 15.1 Struktura tutoriálu
+- Interaktivní průvodce herními pravidly, který uživatele postupně provedl skutečným hráním
+- Běží jako speciální herní režim (odděleně route/stav obrazovky), přístupný z hlavního menu
+- Hrací plocha, kostky a herní UI jsou plně funkční — tutoriál vede hráče skrz skriptovaný scénář pomocí zvýrazněných podnětů a tooltipů
+- Postup je uložen do `localStorage`, takže si hráč může pokračovat po přerušení
+
+### 15.2 Scénář tutoriálu
+- Předdefinované nastavení plochy se specifickými pozicemi kostek určenými k demonstraci jednotlivých pravidel v pořadí
+- Kroky jsou skriptovány: každý krok má podmínku, která musí být splněna před pokračováním (např. "pohni tuto kostkou sem")
+- Pokrývá v pořadí: pohyb kostky, vytvoření věže, souboj (odsun a obsazení), bodování fokálních bodů, zřícení věže, přehození, podmínka vítězství
+
+### 15.3 UI komponenty tutoriálu
+- `<TutorialOverlay>` — zobrazuje aktuální text instrukce a zvýrazňuje relevantní kostku nebo hex
+- Šipka / ukazatel směřující na relevantní prvek UI
+- Tlačítko **Přeskočit** pro opuštění tutoriálu kdykoli
+- Tlačítko **Dalej** pro pokračování, když je krok dokončen (nebo se postoupí automaticky při správné akci)
+- Indikátor pokroku zobrazující aktuální krok z celkového počtu
+
+### 15.4 Engine skriptovaného scénáře
+- `TutorialStep { instruction: string, highlightHexes: hexKey[], expectedAction: GameAction | null, autoAdvance: boolean }` — typ pro jeden krok
+- `tutorialReducer(tutorialState, gameAction)` — ověří, zda akce hráče odpovídá `expectedAction`; v tom případě postoupí krok
+- Stav tutoriálu je oddělen od herního stavu; tutoriál může v případě potřeby injektovat vynucený počáteční herní stav pro jednotlivé kroky
+
+---
+
+## Fáze 16: Online hraní
+
+Online hraní umožňuje hráčům hrát spolu přes internet. Tato fáze zavádí backend poprvé. Režim hot-seat zůstává plně funkční vedle online hraní.
+
+### 16.1 Backend a přenos dat
+- Lehký server Node.js (např. Express + `ws` nebo Socket.IO) zpracovávající herní místnosti a komunikaci v reálném čase
+- WebSocket spojení mezi klienty a serverem
+- Veškerá herní logika běží na serveru (autoritativní stav); klienti posílají akce a přijímají aktualizace stavu
+- Server ověří každou akci pomocí stejných čistých herních logických funkcí z Fází 3–6
+
+### 16.2 Systém místností
+- **Vytvoření místnosti** — generuje krátký kód místnosti; hostitel zvolí mapu, počet hráčů a sloty botů
+- **Připojení do místnosti** — zadejte kód místnosti pro připojení; přiřazení volnému slotu hráče
+- **Lobby obrazovka** — zobrazuje připojené hráče, jejich zvolené znaky a stav připravenosti; hostitel může spustit hru, když jsou všechny sloty obsazeny
+- **Režim pozorovatele** — dodatoční hráči se mohou připojit jako pozorovatelé (bez práv na akce)
+
+### 16.3 Synchronizace herního stavu
+- Server drží autoritativní `GameState`; klienti mají místní kopii jen pro čtení
+- Klient odešle `GameAction` → server ověří → server vysílá nový stav všem klientům
+- Bot hráči (Fáze 13) běží na straně serveru v online hrách
+
+### 16.4 Zpracování odpojení a znovupřipojení
+- Pokud se hráč odpojí, jeho slot je označen jako odpojený; ostatní hráči vidí indikátor čekání
+- Hráč se může znovu připojit pomocí stejného kódu místnosti během lhůty (TBD); při znovupřipojení se pošle plný stav
+- Pokud se odpojený hráč znovu nepřipojí během lhůty, jeho slot převezme heuristický bot
+
+### 16.5 Identita hráče
+- Anonymní identita založená na relaci (není vyžadován účet); jméno a znak zvoleny před připojením
+- Volitelné: trvalý profil hráče uložený v `localStorage` (jméno + preference znaku)
+
+### 16.6 Odolnost sítě
+- Klient zobrazuje indikátor stavu připojení (připojen / znovupřipojování / odpojeno)
+- Optimistické místní vykreslování vlastních akcí, kde je to bezpečné; stav serveru vždy vítězí při konfliktu
+
+---
+
+## Fáze 17: Vyladění UI a ladění
+
+### 17.1 Ladicí overlay
+- Přepínatelný ladicí režim (klávesová zkratka, např. `Ctrl+D`), který překryje herní plochu informacemi o herním stavu:
+  - Souřadnice hexů na každém poli
+  - Hodnoty útočné síly pro každé obsazené pole
+  - Označení skupin fokálních bodů a aktivní/pasivní stav
+  - Aktuální hráč, fáze a příznak provedené akce
+
+### 17.2 Inspektor stavu
+- Čtetelný panel (sbalitelný) zobrazující celý serializovaný `GameState` jako formátovaný JSON
+- Užitečný pro diagnostiku neočekávaného chování hry během vývoje
+
+### 17.3 Přehrávání akcí
+- Schopnost zaznamenat sekvenci herních akcí a přehrát je krok za krokem
+- Užitečné pro reprodukci chyb a ověřování správnosti pravidel
+
+### 17.4 Vizuální vyladění
+- Vyladit velikost hexů, rozestupy, barvy a typografii v různých rozměrech obrazovky
+- Upravit značky fokálních bodů, vizuály věžů a zvýrazňování trajektorie
+- Ověřit kontrast barev a čitelnost všech barev hráčů
+
+### 17.5 Profilování výkonu
+- Identifikovat a opravit úzká místa při vykreslování (např. zbytečné překreslování všech 61 komponent HexTile)
+- Měřit čas odezvy bota Minimax na každé úrovni obtížnosti; v případě potřeby upravit limity hloubky
+
+---
+
 ## Doporučené pořadí implementace
 
 1. Fáze 1 (hex utility + vykreslení plochy) — vizuální základ
 2. Fáze 2 (model stavu) — datový základ
-3. Fáze 8.1 (utility pro hody) — potřebné téměř všude
+3. Fáze 9.1 (utility pro hody) — potřebné téměř všude
 4. Fáze 3 (logika pohybu) — jádro hry
 5. Fáze 4 (souboj) — jádro hry
 6. Fáze 5 (fokální body) — bodování
 7. Fáze 6 (správa tahů) — herní smyčka
-8. Fáze 9 (reducer + hook) — propojení logiky s Reactem
+8. Fáze 10 (reducer + hook) — propojení logiky s Reactem
 9. Fáze 7 (UI komponenty) — hratelné UI
-10. Fáze 10 (vylepšení interaktivity) — UX
-11. Fáze 11 (testování) — jistota
-12. Fáze 12 (board creator) — nástroj pro tvorbu map
+10. Fáze 11 (vylepšení interaktivity) — UX
+11. Fáze 8 (nastavení hry a navigace) — úplný tok aplikace
+12. Fáze 12 (testování) — jistota
+13. Fáze 13 (AI opponent) — podpora jednoho hráče
+14. Fáze 14 (board creator) — nástroj pro tvorbu map
+15. Fáze 15 (tutoriál) — interaktivní průvodce
+16. Fáze 16 (online hraní) — hraní přes internet
+17. Fáze 17 (vyladění UI a ladění) — vyladění a diagnostika
 
 ---
 
-## Otevřené otázky
+## Otevřené otázky (z TODO v CLAUDE.md)
 
 - **Bodování smíšené věže mimo mapu**: boduje si body pouze útočník, nebo oba hráči za každou vlastní kostku?
 - **Podmínka vstupu do věže**: je kontrola na základě hodnoty kostky nebo útočné síly? (Plán předpokládá hodnotu kostky.)
