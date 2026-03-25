@@ -1,15 +1,15 @@
-# Donjon Fall — Implementation Plan
+﻿# Donjon Fall — Implementation Plan
 
 ## TODO
 
 - **Code style** — define and document a consistent code style across `src/` (naming conventions, file structure, JSDoc patterns, import order etc.)
-- **Split Phase 7 (UI components)** — instead of implementing all UI components at once in Phase 7, distribute individual components into the phases where their logic is implemented (e.g. `<Die>` in Phase 2, `<HexTile>` / `<Board>` in Phase 1, `<CombatOverlay>` in Phase 4, etc.)
+- **Split Phase 8 (UI components)** — Phase 4 now covers the UI foundation for Phases 1–3 (`<Board>`, `<HexTile>`, `<Die>`, `<FocalPointMarker>`, movement highlights). Continue splitting by moving `<CombatOverlay>` into Phase 5, `<ScoreBoard>` / `<PhaseIndicator>` into Phase 7, etc., so that Phase 8 contains only the remaining complex UI components.
 
 ---
 
 ## Overview
 
-Build a multi-player hex-grid board game as a React web app. The default configuration is two players, but all game logic is designed for N players (N ≥ 2). Phases 1–15 run entirely client-side (hot-seat local play). Phase 16 introduces a backend for online multiplayer over the internet.
+Build a multi-player hex-grid board game as a React web app. The default configuration is two players, but all game logic is designed for N players (N ≥ 2). Phases 1–16 run entirely client-side (hot-seat local play). Phase 17 introduces a backend for online multiplayer over the internet.
 
 ---
 
@@ -137,7 +137,7 @@ Pure functions that compute derived data from state:
   - Moves die from source to destination
   - If destination occupied by own die: stack (if canEnterTower)
   - If destination occupied by enemy: set phase to 'combat', record CombatState
-  - If more than one approach direction is available, wait for player to confirm direction before committing (see section 11.4); `CombatState` includes `approachDirection`
+  - If more than one approach direction is available, wait for player to confirm direction before committing (see section 12.4); `CombatState` includes `approachDirection`
 
 ### 3.3 Tower jump
 - `getJumpRange(state, towerHex)` — own dice − enemy dice (min 1)
@@ -161,13 +161,44 @@ Pure functions that compute derived data from state:
 
 ---
 
-## Phase 4: Combat Logic
+## Phase 4: UI Foundation (Phases 1–3)
 
-### 4.1 Combat eligibility
+Presentation-layer React components tied to the game logic implemented in Phases 1–3. All components are stateless (or wrap minimal local state) and derive their display entirely from `GameState` and board data props.
+
+### 4.1 Board rendering
+- `<HexTile coords, diceStack, fieldProperties, highlight, isSelected, onClick>` — renders one hex field
+  - Background style reflects field type (`focalPoint` active/inactive, `startingField`)
+  - `highlight` prop: `null | 'reachable' | 'selected' | 'trajectory' | 'enemy-reachable'`
+  - Renders `<Die>` components for each die in the stack (with tower offset)
+  - Forwards click to parent via `onClick(hexKey)`
+- `<Board state, selectedHex, highlightedHexes, onHexClick>` — renders all 61 `<HexTile>` components
+  - Positions hexes using `hexToPixel` for SVG/CSS absolute positioning
+  - Derives per-hex highlight from `highlightedHexes` map before passing to `<HexTile>`
+  - SVG or CSS-grid based layout; no third-party hex library
+
+### 4.2 Die rendering
+- `<Die value, owner, isTop>` — renders a single die face (pip count or numeral)
+  - Color and border derived from `owner` player ID
+  - `isTop` controls full vs. dimmed appearance in a tower stack
+  - Tower stack: multiple `<Die>` elements rendered with a small vertical offset per layer
+
+### 4.3 Focal point marker
+- `<FocalPointMarker isActive>` — rendered inside `<HexTile>` for focal point hexes
+  - Distinct visual when active (e.g. glowing outline or icon); muted indicator when passive
+
+### 4.4 Movement highlight overlay
+- Visual states for highlighted hexes: **reachable** (pale glow), **selected** (bright outline), **trajectory** (path trace), **enemy-reachable** (warning color)
+- Derived from `getReachableHexes` / `getJumpReachableHexes` / `getTowerReachableHexes` output (Phase 3)
+
+---
+
+## Phase 5: Combat Logic
+
+### 5.1 Combat eligibility
 - `canAttack(state, attackerHex, defenderHex)` — attacker strength > defender strength
 - `getAvailableCombatOptions(state)` — ['push', 'occupy'] or just ['push'] for tower-vs-tower move
 
-### 4.2 Push resolution
+### 5.2 Push resolution
 - `getPushDirection(attackerHex, defenderHex)` — cube direction vector
 - `getPushChain(state, defenderHex, direction)` — ordered list of formations to push
 - `canPush(state, defenderHex, direction)` — checks free field exists at end of chain
@@ -178,7 +209,7 @@ Pure functions that compute derived data from state:
   - Rerolls one defeated enemy die (min(roll, original))
   - Attacker die decreases by 1 (min 1)
 
-### 4.3 Occupy resolution
+### 5.3 Occupy resolution
 - `applyOccupy(state)` — returns new state
   - Places attacker die on top of defender formation
   - Attacker die decreases by 1 (min 1)
@@ -186,9 +217,9 @@ Pure functions that compute derived data from state:
 
 ---
 
-## Phase 5: Focal Point Logic
+## Phase 6: Focal Point Logic
 
-### 5.1 Focal point scoring phase
+### 6.1 Focal point scoring phase
 - `applyFocalPhase(state, extraDieRoll)` — processes focal points at turn start
   - For each active focal point held by current player at end of previous turn:
     - Award 1 point
@@ -196,14 +227,14 @@ Pure functions that compute derived data from state:
   - For each scored active focal point: roll extra D6 to select which other passive hex **within the same group** becomes the next active focal point; the mapping of roll values to passive hexes is determined by the number of passive hexes in that group (e.g. with 2 passive hexes: even = first, odd = second)
   - Accept roll values as parameters for purity
 
-### 5.2 Focal point detection (end of action phase)
+### 6.2 Focal point detection (end of action phase)
 - `updateFocalHolders(state)` — after action, record which focal points each player's die currently holds
 
 ---
 
-## Phase 6: Turn & Phase Management
+## Phase 7: Turn & Phase Management
 
-### 6.1 Phase transitions
+### 7.1 Phase transitions
 - `advancePhase(state, ...rollResults)` — handles transitions:
   - `focal → action`
   - `action → combat` (if combat triggered) or `action → victory` check → `focal` (next turn)
@@ -211,53 +242,53 @@ Pure functions that compute derived data from state:
   - `victory → (game over)`
 - `endTurn(state)` — advances `currentPlayer` to the next player in `state.players` (wraps around), resets per-turn flags, updates focal holders
 
-### 6.2 Legal move detection
+### 7.2 Legal move detection
 - `hasLegalMoves(state)` — returns false if no action is available (sudden death loss)
 - Check: any die can move, any collapse available, any reroll available
 
 ---
 
-## Phase 7: UI Components
+## Phase 8: UI Components
 
-### 7.1 Die component
+### 8.1 Die component
 - `<Die value, owner, isTop>` — renders die face (pip count or number) on a hex
 - Stacked dice shown with offset/shadow to indicate tower height
 
-### 7.2 Focal point marker
+### 8.2 Focal point marker
 - Visual indicator on focal point hexes (active vs. inactive)
 - Victory point token count display on focal point
 
-### 7.3 Score display
+### 8.3 Score display
 - `<ScoreBoard players, scores>` — shows current VP totals for all players; `players` is the ordered list of player IDs
 
-### 7.4 Action panel
+### 8.4 Action panel
 - `<ActionPanel currentPlayer, availableActions, activeAction, onActionSelect>` — shown at the bottom of the screen after the player selects a piece
 - Actions are listed in this fixed order: **Move tower** (hidden if selected piece is not a tower), **Move die**, **Reroll**
 - The first applicable action in that order is pre-selected automatically when a piece is selected
 - Switching the active action updates the highlighted reachable hexes on the board immediately
 - Disabled state when action already taken or action not legal
 
-### 7.5 Phase indicator
+### 8.5 Phase indicator
 - `<PhaseIndicator phase, currentPlayer>` — shows whose turn and current phase
 
-### 7.6 Combat modal / overlay
+### 8.6 Combat modal / overlay
 - `<CombatOverlay options, onChoose>` — appears when combat is triggered
 - Shows attacker/defender strength, available options (push / occupy)
 
-### 7.7 Victory screen
+### 8.7 Victory screen
 - `<VictoryScreen winner>` — shown when a player reaches 5 VP or opponent has no moves
 
-### 7.8 Rules viewer
+### 8.8 Rules viewer
 - `<RulesViewer onClose>` — modal or full-screen overlay displaying the game rules
-- Accessible from the main menu (section 8.3) and from within an active game (e.g. a **?** button in the game UI)
+- Accessible from the main menu (section 9.3) and from within an active game (e.g. a **?** button in the game UI)
 - Content mirrors the rules defined in CLAUDE.md; structured into collapsible sections (Board & Components, Win Condition, Turn Structure, Actions, Combat, Towers)
 - Opening the rules viewer during a game does not pause or affect the game state
 
 ---
 
-## Phase 8: Game Setup & Navigation
+## Phase 9: Game Setup & Navigation
 
-### 8.1 App screen flow
+### 9.1 App screen flow
 The app has the following screens in order:
 
 ```
@@ -266,16 +297,16 @@ Splash screen → Main menu → Map selection → Player setup → Game loading 
 
 Navigation is handled via React Router or a simple top-level screen state machine.
 
-### 8.2 Splash screen
+### 9.2 Splash screen
 - Shown briefly on app start while assets load
 - Displays game logo / title
 
-### 8.3 Main menu
+### 9.3 Main menu
 - **Play** button → navigates to Map selection
 - **Rules** button → opens the rules viewer (see section 8.7)
 - (Further menu options TBD, e.g. credits)
 
-### 8.4 Map selection
+### 9.4 Map selection
 - Lists all available maps (built-in default map + any saved maps from Board Creator)
 - Each map card displays:
   - Preview thumbnail of the board layout
@@ -294,58 +325,58 @@ BoardDefinition {
 }
 ```
 
-### 8.5 Player setup
+### 9.5 Player setup
 - One player slot per base defined in the selected map
 - Each player enters a name and chooses a **coat of arms** (heraldic emblem) from a preset selection
 - **Color is not chosen** — it is assigned automatically based on the player's base position in the map (e.g. top base = red, bottom base = blue); the coat of arms is overlaid on that color in the UI
 - Confirm → Game loading screen
 
-### 8.6 Game loading screen
+### 9.6 Game loading screen
 - Brief screen shown while `createInitialState` runs and assets for the game screen are prepared
 - Shows player names, their colors and coats of arms as a summary before the game begins
 
 ---
 
-## Phase 9: Dice Rolling
+## Phase 10: Dice Rolling
 
-### 9.1 Random utilities
+### 10.1 Random utilities
 - `rollD6()` — returns 1–6
 - `rollFocalDie()` — returns 1–6 (used to determine which focal point activates)
 
-### 9.2 Initial die placement
+### 10.2 Initial die placement
 - Decide starting positions and values for 5 dice per player (within their base rows)
 - Starting values: all dice start at value 3 (or roll randomly — TBD)
 
 ---
 
-## Phase 10: Game Orchestration
+## Phase 11: Game Orchestration
 
-### 10.1 Game reducer
+### 11.1 Game reducer
 - `gameReducer(state, action)` — central reducer handling all game actions:
   - `MOVE_DIE`, `MOVE_TOWER`, `JUMP`, `COLLAPSE`, `REROLL`
   - `CHOOSE_COMBAT_OPTION` (push / occupy)
   - `ADVANCE_FOCAL_PHASE`
   - `CONFIRM_ACTION`, `END_TURN`
 
-### 10.2 React state integration
+### 11.2 React state integration
 - `useGameState(players, boardFields)` hook — wraps `useReducer(gameReducer, createInitialState(players, boardFields))`
 - Exposes: `state`, `dispatch`, and convenience selectors
 
-### 10.3 Top-level game component
+### 11.3 Top-level game component
 - `<Game>` — orchestrates board, UI panels, modals
 - Manages selection state (selected hex → highlighted hexes)
 - Handles click flow: select unit → select destination → confirm
 
 ---
 
-## Phase 11: Interactivity & Polish
+## Phase 12: Interactivity & Polish
 
-### 11.1 Hex selection & highlighting
+### 12.1 Hex selection & highlighting
 - Click own piece → select it; action panel appears at the bottom with the first applicable action pre-selected; reachable hexes are highlighted
 - Switching action in the panel re-computes and re-highlights reachable hexes
 - Deselect on second click on the same piece or Escape
 
-### 11.2 Trajectory planning (Move die / Move tower)
+### 12.2 Trajectory planning (Move die / Move tower)
 Movement goes through a two-step flow — planning and confirmation:
 
 **Step 1 — Plan trajectory.** Two equivalent input methods:
@@ -356,56 +387,56 @@ Both methods produce the same result: a highlighted trajectory from the selected
 
 **Step 2 — Commit.** Once a trajectory is planned, two options appear:
 - **Click the destination hex** (end of trajectory) — commits the move as a plain move; turn moves to the next phase
-- **Click an enemy piece** that is reachable from the destination (i.e. adjacent to it and within attack range) — commits the move and immediately triggers combat; the trajectory approach direction determines the push direction (see section 11.3)
+- **Click an enemy piece** that is reachable from the destination (i.e. adjacent to it and within attack range) — commits the move and immediately triggers combat; the trajectory approach direction determines the push direction (see section 12.3)
 
 Enemy pieces that are reachable from the current trajectory endpoint are highlighted distinctly while a trajectory is planned, signalling that they can be targeted to end the turn.
 
 Pressing Escape or clicking the selected piece cancels the planned trajectory and returns to step 1.
 
-### 11.3 Action disambiguation (non-movement)
+### 12.3 Action disambiguation (non-movement)
 - When multiple actions apply to the same hex (e.g. reroll vs. collapse), show a small popup to choose
 
-### 11.4 Approach direction picker
+### 12.4 Approach direction picker
 When a player hovers over an enemy-occupied reachable hex and more than one approach direction is available, the hex is visually divided into up to 6 directional segments (like a pie chart). Each segment corresponds to one valid approach direction. The highlighted segment indicates the selected direction — hovering near a segment selects it. Confirming (click) locks in that direction and triggers combat with `approachDirection` set accordingly. If only one approach direction is available, the picker is skipped and the attack proceeds directly.
 
-### 11.6 Animations (optional, later)
+### 12.6 Animations (optional, later)
 - Die movement transition
 - Combat flash
 - Score increment animation
 
-### 11.7 Responsive layout
+### 12.7 Responsive layout
 - Board scales to viewport
 - UI panels reflow for narrow screens
 
 ---
 
-## Phase 12: Testing
+## Phase 13: Testing
 
-### 12.1 Unit tests for game logic
+### 13.1 Unit tests for game logic
 - Test all pure logic functions (movement, combat, focal points, scoring)
 - Install Vitest + React Testing Library
 
-### 12.2 Integration tests
+### 13.2 Integration tests
 - Full turn sequences
 - Edge cases: die value 1 attacking, tower collapse scoring, chain push encirclement, off-map scoring
 
 ---
 
-## Phase 13: AI Opponent
+## Phase 14: AI Opponent
 
 A computer-controlled player that can take any player slot. All bots share a common interface so the game loop treats them identically to human players.
 
-### 13.1 AI player interface
+### 14.1 AI player interface
 - `AIPlayer { id: string, getAction(state): Promise<GameAction> }` — abstract interface all bots implement
 - The game loop calls `getAction` automatically when `currentPlayer` matches an AI player's ID
 - A small artificial delay is added before the bot commits its action so moves feel natural
-- The game setup screen (Phase 8.5) allows each player slot to be assigned to a human or to a bot at a chosen difficulty level
+- The game setup screen (Phase 9.5) allows each player slot to be assigned to a human or to a bot at a chosen difficulty level
 
-### 13.2 Random bot
+### 14.2 Random bot
 - Enumerates all legal actions and picks one uniformly at random
 - Useful as a baseline and for automated testing of game logic
 
-### 13.3 Heuristic bot
+### 14.3 Heuristic bot
 Rule-based decision making, evaluated in priority order:
 - Attack any enemy that can be beaten (highest attack-strength advantage first)
 - Occupy active focal points if reachable
@@ -413,13 +444,13 @@ Rule-based decision making, evaluated in priority order:
 - Reroll any die whose value is below average
 - Fall back to a random legal move
 
-### 13.4 Minimax bot (with alpha-beta pruning)
+### 14.4 Minimax bot (with alpha-beta pruning)
 - Builds a game tree to a configurable search depth
 - Evaluation function considers: score differential, focal point control, total die value on board, board position (proximity to focal points)
 - Alpha-beta pruning to reduce search space
 - Runs in a Web Worker to avoid blocking the UI thread
 
-### 13.5 Difficulty levels
+### 14.5 Difficulty levels
 | Level  | Bot            | Notes                          |
 |--------|----------------|--------------------------------|
 | Easy   | Random bot     | Completely unpredictable       |
@@ -427,18 +458,18 @@ Rule-based decision making, evaluated in priority order:
 | Hard   | Minimax depth 3| Looks ahead, plays well        |
 | Expert | Minimax depth 5| Slow but strong                |
 
-### 13.6 Game loop integration
+### 14.6 Game loop integration
 - `createInitialState` accepts a `botPlayers: { [playerId]: AIPlayer }` map
 - After each human action that ends a turn, the reducer detects the next player is a bot and dispatches `BOT_MOVE` automatically
 - Bot actions go through the same reducer as human actions — no special-casing in game logic
 
 ---
 
-## Phase 14: Board Creator
+## Phase 15: Board Creator
 
 A standalone editor tool (separate React route or page) for designing, saving, and loading game maps. Produces JSON files consumed by the game itself.
 
-### 14.1 Board data format (JSON)
+### 15.1 Board data format (JSON)
 ```
 BoardDefinition {
   id: string               // unique map identifier
@@ -450,7 +481,7 @@ BoardDefinition {
 - `minPlayers`, `maxPlayers` derived from number of distinct `startingField` base owners; `victoryPoints` set by map author
 - Save/load via `JSON.stringify` / `JSON.parse`; persist to `localStorage` keyed by `id`, with export/import as `.json` file
 
-### 14.2 Board Creator state model
+### 15.2 Board Creator state model
 ```
 BoardCreatorState {
   board: BoardDefinition
@@ -460,14 +491,14 @@ BoardCreatorState {
 }
 ```
 
-### 14.3 Field operations
+### 15.3 Field operations
 Pure functions (no side effects):
 - `addHex(board, coords)` — adds a new empty field; no-op if already exists
 - `removeHex(board, coords)` — removes field and all its properties
 - `assignProperty(board, coords, property)` — adds or replaces a property of that type on the field
 - `removeProperty(board, coords, type)` — removes property of given type from field
 
-### 14.4 Persistence
+### 15.4 Persistence
 - `saveBoard(board)` — serialises to JSON, saves to `localStorage`
 - `loadBoard(id)` — reads from `localStorage`, deserialises
 - `listBoards()` — returns array of `{ id, name }` for all saved boards
@@ -475,7 +506,7 @@ Pure functions (no side effects):
 - `exportBoardJSON(board)` — triggers browser download of `.json` file
 - `importBoardJSON(file)` — reads uploaded `.json` file, returns `BoardDefinition`
 
-### 14.5 Board Creator UI
+### 15.5 Board Creator UI
 - `<BoardCreator>` — top-level editor component
 - `<EditorBoard>` — renders the hex grid in edit mode; click adds/removes/selects fields
 - `<ToolPanel>` — selects active tool (place, delete, assign property, remove property)
@@ -485,92 +516,92 @@ Pure functions (no side effects):
 
 ---
 
-## Phase 15: Tutorial
+## Phase 16: Tutorial
 
-### 15.1 Tutorial structure
+### 16.1 Tutorial structure
 - A guided interactive tutorial that teaches the game rules step by step through actual gameplay
 - Runs as a special game mode (separate route / screen state), accessible from the main menu
 - The board, dice, and game UI are fully functional — the tutorial drives the player through a scripted scenario using highlighted prompts and tooltips
 - Progress is saved to `localStorage` so the player can resume if interrupted
 
-### 15.2 Tutorial scenario
+### 16.2 Tutorial scenario
 - Pre-defined board setup with specific dice positions designed to demonstrate each rule in sequence
 - Steps are scripted: each step has a condition that must be met before advancing (e.g. "move this die here")
 - Covers in order: moving a die, forming a tower, combat (push and occupy), focal point scoring, tower collapse, reroll, win condition
 
-### 15.3 Tutorial UI components
+### 16.3 Tutorial UI components
 - `<TutorialOverlay>` — shows the current instruction text and highlights the relevant piece or hex
 - Arrow / pointer indicator pointing at the relevant UI element
 - **Skip** button to exit the tutorial at any time
 - **Next** button to advance when the step is completed (or auto-advances on correct action)
 - Progress indicator showing current step out of total steps
 
-### 15.4 Scripted scenario engine
+### 16.4 Scripted scenario engine
 - `TutorialStep { instruction: string, highlightHexes: hexKey[], expectedAction: GameAction | null, autoAdvance: boolean }`
 - `tutorialReducer(tutorialState, gameAction)` — checks if the player's action matches `expectedAction`; advances the step if so
 - Tutorial state is separate from game state; tutorial can inject forced initial game state per step if needed
 
 ---
 
-## Phase 16: Online Multiplayer
+## Phase 17: Online Multiplayer
 
 Online multiplayer allows players to play against each other over the internet. This phase introduces a backend for the first time. The hot-seat local mode remains fully functional alongside online play.
 
-### 16.1 Backend & transport
+### 17.1 Backend & transport
 - Lightweight Node.js server (e.g. Express + `ws` or Socket.IO) handling game rooms and real-time message passing
 - WebSocket connection between clients and server
 - All game logic continues to run on the server (authoritative state); clients send actions and receive state updates
-- Server validates every action using the same pure game logic functions from Phase 3–6
+- Server validates every action using the same pure game logic functions from Phases 3, 5–7
 
-### 16.2 Room system
+### 17.2 Room system
 - **Create room** — generates a short room code; host chooses map, player count, and bot slots
 - **Join room** — enter room code to join; assigned to a free player slot
 - **Lobby screen** — shows connected players, their chosen coats of arms, and ready status; host can start the game when all slots are filled
 - **Spectator mode** — additional players can join as observers (no action rights)
 
-### 16.3 Game state synchronisation
+### 17.3 Game state synchronisation
 - Server holds the authoritative `GameState`; clients hold a local read-only copy
 - Client dispatches `GameAction` → server validates → server broadcasts new state to all clients
-- Bot players (Phase 13) run on the server side in online games
+- Bot players (Phase 14) run on the server side in online games
 
-### 16.4 Reconnection & disconnection handling
+### 17.4 Reconnection & disconnection handling
 - If a player disconnects, their slot is marked as disconnected; other players see a waiting indicator
 - Player can rejoin using the same room code within a grace period (TBD); full state is resent on reconnect
 - If disconnected player does not reconnect within the grace period, their slot is taken over by a heuristic bot
 
-### 16.5 Player identity
+### 17.5 Player identity
 - Anonymous session-based identity (no account required); player name and coat of arms chosen before joining
 - Optional: persistent player profile stored in `localStorage` (name + coat of arms preference)
 
-### 16.6 Network resilience
+### 17.6 Network resilience
 - Client shows a connection status indicator (connected / reconnecting / disconnected)
 - Optimistic local rendering for own actions where safe; server state always wins on conflict
 
 ---
 
-## Phase 17: UI Tuning & Debugging
+## Phase 18: UI Tuning & Debugging
 
-### 17.1 Debug overlay
+### 18.1 Debug overlay
 - Toggleable debug mode (keyboard shortcut, e.g. `Ctrl+D`) that overlays game state information on the board:
   - Hex coordinates on each field
   - Attack strength values for each occupied field
   - Focal point group labels and active/passive state
   - Current player, phase, and action taken flag
 
-### 17.2 State inspector
+### 18.2 State inspector
 - Read-only panel (collapsible) showing the full serialised `GameState` as formatted JSON
 - Useful for diagnosing unexpected game behaviour during development
 
-### 17.3 Action replay
+### 18.3 Action replay
 - Ability to record a sequence of game actions and replay them step by step
 - Useful for reproducing bugs and verifying rule correctness
 
-### 17.4 Visual tuning
+### 18.4 Visual tuning
 - Fine-tune hex size, spacing, colors, and typography across different screen sizes
 - Adjust focal point markers, tower stack visuals, and trajectory highlighting
 - Verify color contrast and readability for all player colors
 
-### 17.5 Performance profiling
+### 18.5 Performance profiling
 - Identify and fix rendering bottlenecks (e.g. unnecessary re-renders of all 61 HexTile components)
 - Measure minimax bot response time at each difficulty level; adjust depth limits if needed
 
@@ -580,21 +611,22 @@ Online multiplayer allows players to play against each other over the internet. 
 
 1. Phase 1 (hex utilities + board render) — visual foundation
 2. Phase 2 (state model) — data foundation
-3. Phase 9.1 (roll utilities) — needed by almost everything
+3. Phase 10.1 (roll utilities) — needed by almost everything
 4. Phase 3 (movement logic) — core gameplay
-5. Phase 4 (combat) — core gameplay
-6. Phase 5 (focal points) — scoring
-7. Phase 6 (turn management) — game loop
-8. Phase 10 (reducer + hook) — wire logic to React
-9. Phase 7 (UI components) — playable UI
-10. Phase 11 (interactivity polish) — UX
-11. Phase 8 (game setup & navigation) — full app flow
-12. Phase 12 (tests) — confidence
-13. Phase 13 (AI opponent) — single-player support
-14. Phase 14 (board creator) — map authoring tool
-15. Phase 15 (tutorial) — guided interactive tutorial
-16. Phase 16 (online multiplayer) — play over the internet
-17. Phase 17 (UI tuning & debugging) — polish and diagnostics
+5. Phase 4 (UI foundation) — first visual prototype
+6. Phase 5 (combat) — core gameplay
+7. Phase 6 (focal points) — scoring
+8. Phase 7 (turn management) — game loop
+9. Phase 11 (reducer + hook) — wire logic to React
+10. Phase 8 (UI components) — full playable UI
+11. Phase 12 (interactivity polish) — UX
+12. Phase 9 (game setup & navigation) — full app flow
+13. Phase 13 (tests) — confidence
+14. Phase 14 (AI opponent) — single-player support
+15. Phase 15 (board creator) — map authoring tool
+16. Phase 16 (tutorial) — guided interactive tutorial
+17. Phase 17 (online multiplayer) — play over the internet
+18. Phase 18 (UI tuning & debugging) — polish and diagnostics
 
 ---
 
