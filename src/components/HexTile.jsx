@@ -5,6 +5,7 @@
 
 import { hexCorners, hexKey } from '../hex/hexUtils.js';
 import { Die } from './Die.jsx';
+import { FocalPointMarker } from './FocalPointMarker.jsx';
 
 /** Highlight-type to CSS variable name mapping. */
 const HIGHLIGHT_FILL = {
@@ -33,10 +34,11 @@ const STACK_OFFSET_RATIO = 0.22;
  * @param {boolean}  props.isSelected                      - Whether the player has selected this hex.
  * @param {Object.<string,{primary:string,tint:string}>} [props.playerColors]
  *   Map of owner ID → colour pair; controls die body colour and base-hex tint.
+ * @param {boolean} [props.isActiveFocalPoint] - Whether this focal point is currently active (ignored for non-focal hexes).
  * @param {function(): void} [props.onClick]               - Click handler; cursor becomes pointer when provided.
  * @returns {JSX.Element}
  */
-export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, onClick }) {
+export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, onClick }) {
     const corners = hexCorners(centerX, centerY, size);
     const points = corners.map(({ x, y }) => `${x},${y}`).join(' ');
 
@@ -61,12 +63,11 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                 strokeWidth={1.5}
             />
             {isFocalPoint && (
-                <circle
+                <FocalPointMarker
                     cx={centerX}
                     cy={centerY}
-                    r={size * FOCAL_MARKER_RATIO}
-                    fill="var(--color-focal-marker)"
-                    opacity={0.6}
+                    hexSize={size}
+                    isActive={isActiveFocalPoint}
                 />
             )}
             {diceStack.map((die, index) => {

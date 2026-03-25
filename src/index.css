@@ -14,8 +14,10 @@
     --color-hex-trajectory:     #67e8f9;
     --color-hex-enemy-reachable:#fca5a5;
 
-    /* Focal point marker */
-    --color-focal-marker:       #7c3aed;
+    /* Focal point markers */
+    --color-focal-active:        #fbbf24;
+    --color-focal-active-stroke: #d97706;
+    --color-focal-passive:       #7c3aed;
 
     /* Die colours — per-player colours are defined in PLAYER_PALETTE (Board.jsx) */
     --color-die-default:        #6b7280;

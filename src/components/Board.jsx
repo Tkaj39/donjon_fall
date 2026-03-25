@@ -83,6 +83,7 @@ const FIELD_PROPS_BY_KEY = Object.fromEntries(
  */
 export function Board({ state = null, selectedHex = null, highlightedHexes = {}, onHexClick }) {
     const dice = state?.dice ?? {};
+    const focalPoints = state?.focalPoints ?? {};
 
     const players = state?.players ?? [];
     const playerColors = players.length > 0
@@ -112,6 +113,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                         highlight={highlightedHexes[key] ?? null}
                         isSelected={selectedHex === key}
                         playerColors={playerColors}
+                        isActiveFocalPoint={focalPoints[key]?.isActive ?? false}
                         onClick={onHexClick}
                     />
                 );
