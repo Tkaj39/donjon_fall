@@ -1,12 +1,29 @@
 @import "tailwindcss";
 
 :root {
-    --color-hex-default: #e8e677;
-    --color-hex-selected: #f59e0b;
-    --color-hex-highlighted: #86efac;
-    --color-hex-focal: #c4b5fd;
-    --color-hex-stroke: #7c5c2a;
-    --color-focal-marker: #7c3aed;
-    --color-bg: #1c1917;
-    --color-title: #991b1b;
+    /* Hex fill colours */
+    --color-hex-default:        #e8e677;
+    --color-hex-starting:       #d4c89a;
+    --color-hex-focal:          #c4b5fd;
+    --color-hex-selected:       #f59e0b;
+    --color-hex-stroke:         #7c5c2a;
+
+    /* Movement highlight overlays */
+    --color-hex-reachable:      #86efac;
+    --color-hex-highlighted:    #34d399;
+    --color-hex-trajectory:     #67e8f9;
+    --color-hex-enemy-reachable:#fca5a5;
+
+    /* Focal point marker */
+    --color-focal-marker:       #7c3aed;
+
+    /* Die colours per player */
+    --color-die-red:            #dc2626;
+    --color-die-blue:           #2563eb;
+    --color-die-default:        #6b7280;
+
+    /* App background & title */
+    --color-bg:                 #1c1917;
+    --color-title:              #991b1b;
 }
+
