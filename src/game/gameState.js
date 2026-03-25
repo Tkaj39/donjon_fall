@@ -5,6 +5,8 @@
  * hexKey format: "q,r,s"
  */
 
+import { hexKey as toHexKey } from '../hex/hexUtils.js';
+
 /**
  * @typedef {Object} Die
  * @property {string} owner   - Player ID (e.g. 'red', 'blue')
@@ -147,4 +149,69 @@ export function getActiveFocalPoints(state) {
     return Object.entries(state.focalPoints)
         .filter(([, fp]) => fp.isActive)
         .map(([key]) => key);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2.3 — Initial state factory
+// ---------------------------------------------------------------------------
+
+/** Default starting die value (face-up value for all dice at game start). */
+const DEFAULT_DIE_VALUE = 3;
+
+/**
+ * Builds the canonical starting GameState for a new game.
+ *
+ * @param {string[]} players        - Ordered list of player IDs (e.g. ['red', 'blue']).
+ *                                    The first player takes the first turn.
+ * @param {Array<{coords:{q,r,s}, properties:Array}>} boardFields
+ *                                  - Full list of HexField objects describing the board.
+ *                                    Each field may carry `startingField` and/or `focalPoint`
+ *                                    properties (see fieldProperties.js).
+ * @returns {GameState}
+ */
+export function createInitialState(players, boardFields) {
+    const dice = {};
+    const focalPoints = {};
+    const scores = {};
+    const activeFocalHolders = {};
+
+    // Initialise per-player entries
+    for (const player of players) {
+        scores[player] = 0;
+        activeFocalHolders[player] = null;
+    }
+
+    // Place starting dice
+    // Each player's `startingField` hexes in boardFields define where their dice begin.
+    // All starting dice have value DEFAULT_DIE_VALUE.
+    for (const field of boardFields) {
+        const startProp = field.properties.find(p => p.type === 'startingField');
+        if (startProp && players.includes(startProp.owner)) {
+            const key = toHexKey(field.coords);
+            dice[key] = [{ owner: startProp.owner, value: DEFAULT_DIE_VALUE }];
+        }
+    }
+
+    // Build focal point state from board definition
+    for (const field of boardFields) {
+        const fpProp = field.properties.find(p => p.type === 'focalPoint');
+        if (fpProp) {
+            const key = toHexKey(field.coords);
+            focalPoints[key] = { isActive: fpProp.active, group: fpProp.group };
+        }
+    }
+
+    return {
+        players: [...players],
+        currentPlayer: players[0],
+        phase: 'focal',
+        dice,
+        focalPoints,
+        scores,
+        activeFocalHolders,
+        combat: null,
+        selectedHex: null,
+        highlightedHexes: [],
+        actionTaken: false,
+    };
 }

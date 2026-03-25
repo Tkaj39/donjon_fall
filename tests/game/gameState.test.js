@@ -8,6 +8,7 @@ import {
     canEnterTower,
     isFocalPointActive,
     getActiveFocalPoints,
+    createInitialState,
 } from '../../src/game/gameState';
 
 // ---------------------------------------------------------------------------
@@ -239,5 +240,99 @@ describe('getActiveFocalPoints', () => {
             [B]: { isActive: true, group: 'left'   },
         }});
         expect(getActiveFocalPoints(state).sort()).toEqual([A, B].sort());
+    });
+});
+
+// ---------------------------------------------------------------------------
+// createInitialState
+// ---------------------------------------------------------------------------
+
+describe('createInitialState', () => {
+    it('returns a copy of the players array, not the same reference', () => {
+        const players = ['red', 'blue'];
+        const state = createInitialState(players, []);
+        expect(state.players).toEqual(players);
+        expect(state.players).not.toBe(players);
+    });
+
+    it('sets currentPlayer to the first player in the list', () => {
+        const state = createInitialState(['red', 'blue'], []);
+        expect(state.currentPlayer).toBe('red');
+    });
+
+    it('sets phase to focal', () => {
+        const state = createInitialState(['red', 'blue'], []);
+        expect(state.phase).toBe('focal');
+    });
+
+    it('sets actionTaken to false', () => {
+        const state = createInitialState(['red', 'blue'], []);
+        expect(state.actionTaken).toBe(false);
+    });
+
+    it('sets combat to null', () => {
+        const state = createInitialState(['red', 'blue'], []);
+        expect(state.combat).toBeNull();
+    });
+
+    it('places one die per startingField hex with the correct owner and value 3', () => {
+        const boardFields = [
+            { coords: { q: 0, r: 0, s: 0 }, properties: [{ type: 'startingField', owner: 'red' }] },
+            { coords: { q: 1, r: -1, s: 0 }, properties: [{ type: 'startingField', owner: 'blue' }] },
+            { coords: { q: 2, r: -2, s: 0 }, properties: [] }, // no starting field
+        ];
+        const state = createInitialState(['red', 'blue'], boardFields);
+        
+        expect(state.dice['0,0,0']).toEqual([{ owner: 'red', value: 3 }]);
+        expect(state.dice['1,-1,0']).toEqual([{ owner: 'blue', value: 3 }]);
+        expect(state.dice['2,-2,0']).toBeUndefined();
+    });
+
+    it('ignores startingField hexes whose owner is not in the players list', () => {
+        const boardFields = [
+            { coords: { q: 0, r: 0, s: 0 }, properties: [{ type: 'startingField', owner: 'red' }] },
+            { coords: { q: 1, r: -1, s: 0 }, properties: [{ type: 'startingField', owner: 'green' }] },
+        ];
+        const state = createInitialState(['red', 'blue'], boardFields);
+        
+        expect(state.dice['0,0,0']).toEqual([{ owner: 'red', value: 3 }]);
+        expect(state.dice['1,-1,0']).toBeUndefined();
+    });
+
+    it('builds focalPoints map correctly with active and passive focal points', () => {
+        const boardFields = [
+            { coords: { q: 0, r: 0, s: 0 }, properties: [{ type: 'focalPoint', active: true, group: 'center' }] },
+            { coords: { q: 1, r: -1, s: 0 }, properties: [{ type: 'focalPoint', active: false, group: 'left' }] },
+        ];
+        const state = createInitialState(['red', 'blue'], boardFields);
+        
+        expect(state.focalPoints['0,0,0']).toEqual({ isActive: true, group: 'center' });
+        expect(state.focalPoints['1,-1,0']).toEqual({ isActive: false, group: 'left' });
+    });
+
+    it('initialises all player scores to 0', () => {
+        const state = createInitialState(['red', 'blue'], []);
+        expect(state.scores).toEqual({ red: 0, blue: 0 });
+    });
+
+    it('initialises all activeFocalHolders to null', () => {
+        const state = createInitialState(['red', 'blue'], []);
+        expect(state.activeFocalHolders).toEqual({ red: null, blue: null });
+    });
+
+    it('produces an empty dice object when no startingField hexes are present', () => {
+        const boardFields = [
+            { coords: { q: 0, r: 0, s: 0 }, properties: [] },
+        ];
+        const state = createInitialState(['red', 'blue'], boardFields);
+        expect(state.dice).toEqual({});
+    });
+
+    it('produces an empty focalPoints object when no focalPoint hexes are present', () => {
+        const boardFields = [
+            { coords: { q: 0, r: 0, s: 0 }, properties: [{ type: 'startingField', owner: 'red' }] },
+        ];
+        const state = createInitialState(['red', 'blue'], boardFields);
+        expect(state.focalPoints).toEqual({});
     });
 });
