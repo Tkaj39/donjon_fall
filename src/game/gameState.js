@@ -123,13 +123,11 @@ export function canEnterTower(state, moverDie, targetHexKey) {
     const stack = getDiceAt(state, targetHexKey);
     if (stack.length === 0) return true; // empty hex — always fine
 
-    // Top die's attack strength before mover arrives
+    // Top die's attack strength at the target (current state, before mover arrives)
     const topStrength = getAttackStrength(state, targetHexKey);
 
-    // Mover's attack strength as if it were placed on top
-    const ownAfter = stack.filter(d => d.owner === moverDie.owner).length + 1; // +1 for the mover
-    const enemyAfter = stack.filter(d => d.owner !== moverDie.owner).length;
-    const moverStrength = moverDie.value + ownAfter - enemyAfter;
+    // Mover's standalone attack strength (solo die: own=1, enemy=0)
+    const moverStrength = moverDie.value + 1;
 
     return moverStrength > topStrength;
 }

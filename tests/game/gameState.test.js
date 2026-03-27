@@ -199,18 +199,18 @@ describe('canEnterTower', () => {
         expect(canEnterTower(state, { owner: 'red', value: 2 }, A)).toBe(false);
     });
 
-    it('enemy occupation (combat): mover strength must exceed defender strength', () => {
-        // target has blue(3) alone → strength 3+1-0=4
-        // red mover(4): after placing on top → 4 + 1 - 1 = 4  not > 4 ✗  (equal, not strictly greater)
-        const state = makeState({ dice: { [A]: [{ owner: 'blue', value: 3 }] } });
-        expect(canEnterTower(state, { owner: 'red', value: 4 }, A)).toBe(false);
+    it('equal-value own dice cannot stack (bug-fix: equal value must be blocked)', () => {
+        // target has red(3) alone → topStrength = 3+1-0 = 4
+        // mover red(3): solo strength = 3+1 = 4  →  4 > 4 ✗  (not strictly greater)
+        const state = makeState({ dice: { [A]: [{ owner: 'red', value: 3 }] } });
+        expect(canEnterTower(state, { owner: 'red', value: 3 }, A)).toBe(false);
     });
 
-    it('enemy occupation: mover with clear advantage can enter', () => {
-        // target has blue(2) alone → strength 2+1-0=3
-        // red mover(6): after placing on top → 6 + 1 - 1 = 6 > 3 ✓
-        const state = makeState({ dice: { [A]: [{ owner: 'blue', value: 2 }] } });
-        expect(canEnterTower(state, { owner: 'red', value: 6 }, A)).toBe(true);
+    it('higher-value own die can stack onto lower-value own die', () => {
+        // target has red(3) alone → topStrength = 3+1-0 = 4
+        // mover red(4): solo strength = 4+1 = 5  →  5 > 4 ✓
+        const state = makeState({ dice: { [A]: [{ owner: 'red', value: 3 }] } });
+        expect(canEnterTower(state, { owner: 'red', value: 4 }, A)).toBe(true);
     });
 });
 
