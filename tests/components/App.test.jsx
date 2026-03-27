@@ -52,7 +52,9 @@ describe('App', () => {
     test('clicking a different own die switches selection', () => {
         const { container } = render(<App />);
         const first = RED_HEXES[0];
-        const second = RED_HEXES[1];
+        // RED_HEXES[4] is 4 hexes away — beyond the die's range (value 3) so the
+        // click switches selection rather than dispatching a move.
+        const second = RED_HEXES[4];
         fireEvent.click(getHexGroup(container, first));  // select first
         fireEvent.click(getHexGroup(container, second)); // switch to second
         // Second die is now selected — clicking it again should deselect (no highlights)
@@ -66,8 +68,8 @@ describe('App', () => {
         fireEvent.click(getHexGroup(container, RED_HEXES[2]));
         const highlighted = container.querySelectorAll('g[data-highlight]');
         const types = [...highlighted].map(g => g.getAttribute('data-highlight'));
-        // Should contain 'reachable' and/or 'enemy-reachable'
-        const validTypes = new Set(['reachable', 'enemy-reachable', 'trajectory']);
+        // Should contain 'reachable' and/or 'enemy-reachable' (or 'selected' for the chosen hex)
+        const validTypes = new Set(['reachable', 'enemy-reachable', 'trajectory', 'selected']);
         expect(types.every(t => validTypes.has(t))).toBe(true);
     });
 
