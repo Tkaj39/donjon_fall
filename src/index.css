@@ -51,4 +51,10 @@
     /* App background & title */
     --color-bg:                 transparent;
     --color-title:              #991b1b;
+
+    /* Debug overlay (Phase 14.1) */
+    --color-debug-coords:        black;
+    --color-debug-attack:        red;
+    --color-debug-focal-active:  blue;
+    --color-debug-focal-passive: olive;
 }
