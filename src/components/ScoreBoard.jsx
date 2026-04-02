@@ -1,16 +1,21 @@
 /**
  * ScoreBoard component — displays current victory point totals for all players.
  * Phase 7.3 — Score display.
+ * Phase 12.6 — Score-pop animation when a player gains a point.
  */
 
-/** CSS colour for each known player ID. Fallback used for unknown IDs. */
-const PLAYER_COLORS = {
-    red:  '#ef4444',
-    blue: '#3b82f6',
-};
+import { useEffect, useMemo, useRef } from 'react';
 
-/** Fallback colour for player IDs not in PLAYER_COLORS. */
-const FALLBACK_COLOR = '#94a3b8';
+/**
+ * Returns the CSS variable for a player's label colour, falling back to the
+ * generic player-fallback variable for unknown IDs.
+ *
+ * @param {string} playerId
+ * @returns {string}
+ */
+function playerLabelColor(playerId) {
+    return `var(--color-player-${playerId}, var(--color-player-fallback))`;
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -18,6 +23,8 @@ const FALLBACK_COLOR = '#94a3b8';
 
 /**
  * Panel showing the victory point total for each player.
+ * Plays a brief scale-pop animation (Phase 12.6) on the VP number when a
+ * player's score increases.
  *
  * @param {Object}                 props
  * @param {string[]}               props.players - Ordered list of player IDs.
@@ -25,6 +32,27 @@ const FALLBACK_COLOR = '#94a3b8';
  * @returns {JSX.Element}
  */
 export function ScoreBoard({ players, scores }) {
+    /**
+     * Previous score snapshot — null on first render so no animation fires
+     * on mount.
+     */
+    const prevRef = useRef(null);
+
+    /**
+     * Set of player IDs whose score increased since the last render.
+     * Computed before prevRef is updated so the comparison uses the old value.
+     */
+    const animatedSet = useMemo(() => {
+        if (prevRef.current === null) return new Set();
+        return new Set(
+            players.filter(id => (scores[id] ?? 0) > (prevRef.current[id] ?? 0))
+        );
+    }, [players, scores]);
+
+    useEffect(() => {
+        prevRef.current = { ...scores };
+    }, [scores]);
+
     return (
         <div
             role="region"
@@ -57,14 +85,23 @@ export function ScoreBoard({ players, scores }) {
                             fontWeight:  600,
                             textTransform: 'uppercase',
                             letterSpacing: '0.05em',
-                            color:       PLAYER_COLORS[playerId] ?? FALLBACK_COLOR,
+                            color:       playerLabelColor(playerId),
                         }}
                     >
                         {playerId}
                     </span>
                     <span
+                        key={`${playerId}-${scores[playerId] ?? 0}`}
                         data-testid={`score-value-${playerId}`}
-                        style={{ fontSize: '1.8rem', fontWeight: 700, lineHeight: 1.1 }}
+                        style={{
+                            fontSize:  '1.8rem',
+                            fontWeight: 700,
+                            lineHeight: 1.1,
+                            display:   'inline-block',
+                            animation: animatedSet.has(playerId)
+                                ? 'score-pop 0.45s ease-out'
+                                : 'none',
+                        }}
                     >
                         {scores[playerId] ?? 0}
                     </span>

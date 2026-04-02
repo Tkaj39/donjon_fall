@@ -161,6 +161,94 @@ export function getPathsToHex(state, fromKey, toKey) {
 }
 
 // ---------------------------------------------------------------------------
+// 3.1b-2 — getShortestPathToHex
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the shortest valid movement path from `fromKey` to `toKey`.
+ *
+ * Uses BFS with a parent-pointer map so only one pass is needed.
+ * Traversal rules depend on `actionType`:
+ *   - `'move-die'`  : same rules as getReachableHexes — own/empty traversable if
+ *                     canTraverseThrough; enemies are valid destinations only.
+ *   - `'move-tower'`: whole tower moves — only empty hexes are traversable; enemy
+ *                     hexes are valid destinations only.
+ *
+ * @param {import('./gameState.js').GameState} state
+ * @param {string} fromKey
+ * @param {string} toKey
+ * @param {'move-die'|'move-tower'} [actionType='move-die']
+ * @returns {string[]}  Ordered array [fromKey, …, toKey], or [] if unreachable.
+ */
+export function getShortestPathToHex(state, fromKey, toKey, actionType = 'move-die') {
+    if (fromKey === toKey) return [];
+
+    const isTower = actionType === 'move-tower';
+    let moverDie = null;
+    let moverOwner = null;
+    let maxSteps = 0;
+
+    if (isTower) {
+        const stack = getDiceAt(state, fromKey);
+        if (stack.length < 2) return [];
+        maxSteps = getTowerMoveRange(state, fromKey);
+        if (maxSteps === 0) return [];
+        moverOwner = stack[stack.length - 1].owner;
+    } else {
+        moverDie = getTopDie(state, fromKey);
+        if (!moverDie) return [];
+        maxSteps = moverDie.value;
+        moverOwner = moverDie.owner;
+    }
+
+    // BFS — parent[key] = predecessor key (null for fromKey)
+    const parent = new Map([[fromKey, null]]);
+    const stepsMap = new Map([[fromKey, 0]]);
+    const queue = [fromKey];
+
+    while (queue.length > 0) {
+        const currentKey = queue.shift();
+        const currentSteps = stepsMap.get(currentKey);
+        if (currentSteps >= maxSteps) continue;
+
+        for (const neighbor of getNeighbors(hexFromKey(currentKey))) {
+            if (!isOnBoard(neighbor)) continue;
+            const neighborKey = hexKey(neighbor);
+            if (neighborKey === fromKey) continue;
+            if (parent.has(neighborKey)) continue; // already reached via shorter/equal path
+
+            const ctrl = getController(state, neighborKey);
+            const isEnemy = ctrl !== null && ctrl !== moverOwner;
+
+            parent.set(neighborKey, currentKey);
+            stepsMap.set(neighborKey, currentSteps + 1);
+
+            if (neighborKey === toKey) {
+                // Reconstruct path from parent map
+                const path = [];
+                let cur = toKey;
+                while (cur !== null) {
+                    path.unshift(cur);
+                    cur = parent.get(cur);
+                }
+                return path;
+            }
+
+            // Continue traversal only through traversable (non-blocking) hexes
+            if (isTower) {
+                if (ctrl === null) queue.push(neighborKey);
+            } else {
+                if (!isEnemy && canTraverseThrough(state, moverDie, neighborKey)) {
+                    queue.push(neighborKey);
+                }
+            }
+        }
+    }
+
+    return []; // toKey not reachable
+}
+
+// ---------------------------------------------------------------------------
 // 3.1c — getApproachDirections
 // ---------------------------------------------------------------------------
 

@@ -5,6 +5,7 @@
 
 import { hexCorners, hexKey } from '../hex/hexUtils.js';
 import { Die } from './Die.jsx';
+import { DirectionPickerOverlay } from './DirectionPickerOverlay.jsx';
 import { FocalPointMarker } from './FocalPointMarker.jsx';
 
 /** Highlight-type to CSS variable name mapping. */
@@ -29,16 +30,23 @@ const STACK_OFFSET_RATIO = 0.22;
  * @param {number}   props.centerY                         - Pixel y of hex centre.
  * @param {number}   props.size                            - Circumradius in pixels.
  * @param {Array<{type:string}>} props.fieldProperties     - Static field properties from BOARD_FIELDS.
- * @param {import('../game/gameState.jsx').Die[]} props.diceStack - Dice at this hex (bottom → top).
+ * @param {import('../game/gameState.js').Die[]} props.diceStack - Dice at this hex (bottom → top).
  * @param {'reachable'|'selected'|'trajectory'|'enemy-reachable'|null} props.highlight - Visual overlay type.
  * @param {boolean}  props.isSelected                      - Whether the player has selected this hex.
  * @param {Object.<string,{primary:string,tint:string}>} [props.playerColors]
  *   Map of owner ID → colour pair; controls die body colour and base-hex tint.
  * @param {boolean} [props.isActiveFocalPoint] - Whether this focal point is currently active (ignored for non-focal hexes).
+ * @param {{
+ *   enemyHexKey: string,
+ *   validApproachKeys: Set<string>,
+ *   selectedApproachKey: string|null,
+ *   onApproachHover: function(string): void,
+ * }|null} [props.directionPicker]
+ *   When non-null, renders the Phase 12.4 approach-direction picker overlay on this hex.
  * @param {function(): void} [props.onClick]               - Click handler; cursor becomes pointer when provided.
  * @returns {JSX.Element}
  */
-export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, onClick }) {
+export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, directionPicker = null, onClick }) {
     const corners = hexCorners(centerX, centerY, size);
     const points = corners.map(({ x, y }) => `${x},${y}`).join(' ');
 
@@ -88,7 +96,17 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     />
                 );
             })}
+            {directionPicker && (
+                <DirectionPickerOverlay
+                    cx={centerX}
+                    cy={centerY}
+                    size={size}
+                    enemyHexKey={directionPicker.enemyHexKey}
+                    validApproachKeys={directionPicker.validApproachKeys}
+                    selectedApproachKey={directionPicker.selectedApproachKey}
+                    onApproachHover={directionPicker.onApproachHover}
+                />
+            )}
         </g>
     );
 }
-
