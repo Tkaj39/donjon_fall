@@ -4,7 +4,7 @@
  */
 
 import { render, fireEvent, within } from '@testing-library/react';
-import { App } from '../../src/App.jsx';
+import { Game } from '../../src/components/Game.jsx';
 
 /** Red base hex keys — red occupies the top row (r = -4). */
 const RED_HEXES = ['0,-4,4', '1,-4,3', '2,-4,2', '3,-4,1', '4,-4,0'];
@@ -23,26 +23,26 @@ function getHighlightedKeys(container) {
 
 describe('App', () => {
     test('renders the game title', () => {
-        const { getByRole } = render(<App />);
+        const { getByRole } = render(<Game />);
         expect(getByRole('heading', { level: 1 })).toHaveTextContent('Donjon Fall');
     });
 
     test('clicking an empty hex does nothing', () => {
-        const { container } = render(<App />);
+        const { container } = render(<Game />);
         const g = getHexGroup(container, EMPTY_CENTER);
         fireEvent.click(g);
         expect(getHighlightedKeys(container)).toHaveLength(0);
     });
 
     test('clicking a red die highlights reachable hexes', () => {
-        const { container } = render(<App />);
+        const { container } = render(<Game />);
         const redHex = RED_HEXES[0];
         fireEvent.click(getHexGroup(container, redHex));
         expect(getHighlightedKeys(container).length).toBeGreaterThan(0);
     });
 
     test('clicking the same red die again deselects (no highlights)', () => {
-        const { container } = render(<App />);
+        const { container } = render(<Game />);
         const redHex = RED_HEXES[0];
         fireEvent.click(getHexGroup(container, redHex)); // select
         fireEvent.click(getHexGroup(container, redHex)); // deselect
@@ -50,7 +50,7 @@ describe('App', () => {
     });
 
     test('clicking a different own die switches selection', () => {
-        const { container } = render(<App />);
+        const { container } = render(<Game />);
         const first = RED_HEXES[0];
         // RED_HEXES[4] is 4 hexes away — beyond the die's range (value 3) so the
         // click switches selection rather than dispatching a move.
@@ -64,7 +64,7 @@ describe('App', () => {
     });
 
     test('reachable hexes have data-highlight attribute', () => {
-        const { container } = render(<App />);
+        const { container } = render(<Game />);
         fireEvent.click(getHexGroup(container, RED_HEXES[2]));
         const highlighted = container.querySelectorAll('g[data-highlight]');
         const types = [...highlighted].map(g => g.getAttribute('data-highlight'));
@@ -74,7 +74,7 @@ describe('App', () => {
     });
 
     test('clicking away from reachable area deselects', () => {
-        const { container } = render(<App />);
+        const { container } = render(<Game />);
         fireEvent.click(getHexGroup(container, RED_HEXES[0])); // select
         // Click a hex outside the reachable area — a blue hex is definitely not reachable from red base
         const blueHex = '0,4,-4';

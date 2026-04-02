@@ -46,8 +46,8 @@ import { VictoryScreen } from './VictoryScreen.jsx';
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Default player list for a two-player game. */
-const PLAYERS = ['red', 'blue'];
+/** Fallback player list used when Game is launched without setup flow. */
+const DEFAULT_PLAYERS = ['red', 'blue'];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -68,13 +68,15 @@ function rollD6() {
 
 /**
  * Top-level game orchestrator.
- * Intended to be used as the main game screen; receives no props — all state
- * is managed internally via useGameState.
  *
+ * @param {{
+ *   players?: string[],
+ *   boardFields?: import('../hex/fieldProperties.js').HexField[],
+ * }} props
  * @returns {JSX.Element}
  */
-export function Game() {
-    const { state, dispatch } = useGameState(PLAYERS, BOARD_FIELDS);
+export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) {
+    const { state, dispatch } = useGameState(players, boardFields);
 
     // -----------------------------------------------------------------------
     // Local UI state
@@ -149,6 +151,12 @@ export function Game() {
     // -----------------------------------------------------------------------
 
     useEffect(() => {
+        /**
+         * Handles keydown events; cancels trajectory or deselects piece on Escape.
+         *
+         * @param {KeyboardEvent} e
+         * @returns {void}
+         */
         function handleKeyDown(e) {
             if (e.key !== 'Escape') return;
             setTrajectoryPath((prev) => {

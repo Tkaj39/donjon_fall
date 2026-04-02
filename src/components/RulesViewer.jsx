@@ -10,6 +10,20 @@
 import { useState } from 'react';
 
 // ---------------------------------------------------------------------------
+// Shared style helpers
+// ---------------------------------------------------------------------------
+
+const smallBtnStyle = {
+    padding:      '0.25rem 0.65rem',
+    borderRadius: '0.4rem',
+    border:       '1px solid rgba(255,255,255,0.2)',
+    background:   'rgba(255,255,255,0.07)',
+    color:        'rgba(241,245,249,0.75)',
+    fontSize:     '0.75rem',
+    cursor:       'pointer',
+};
+
+// ---------------------------------------------------------------------------
 // Rules data
 // ---------------------------------------------------------------------------
 
@@ -182,6 +196,12 @@ export function RulesViewer({ onClose }) {
     // Track which section IDs are open; start with all closed.
     const [openSections, setOpenSections] = useState(new Set());
 
+    /**
+     * Toggles the open/closed state of a rules section.
+     *
+     * @param {string} id - Section ID to toggle.
+     * @returns {void}
+     */
     function toggleSection(id) {
         setOpenSections((prev) => {
             const next = new Set(prev);
@@ -194,10 +214,20 @@ export function RulesViewer({ onClose }) {
         });
     }
 
+    /**
+     * Expands all rules sections.
+     *
+     * @returns {void}
+     */
     function expandAll() {
         setOpenSections(new Set(SECTIONS.map((s) => s.id)));
     }
 
+    /**
+     * Collapses all rules sections.
+     *
+     * @returns {void}
+     */
     function collapseAll() {
         setOpenSections(new Set());
     }
@@ -314,17 +344,3 @@ export function RulesViewer({ onClose }) {
         </div>
     );
 }
-
-// ---------------------------------------------------------------------------
-// Shared style helpers
-// ---------------------------------------------------------------------------
-
-const smallBtnStyle = {
-    padding:      '0.25rem 0.65rem',
-    borderRadius: '0.4rem',
-    border:       '1px solid rgba(255,255,255,0.2)',
-    background:   'rgba(255,255,255,0.07)',
-    color:        'rgba(241,245,249,0.75)',
-    fontSize:     '0.75rem',
-    cursor:       'pointer',
-};
