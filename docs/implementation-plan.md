@@ -432,3 +432,8 @@ When a player hovers over an enemy-occupied reachable hex and more than one appr
 ### 14.5 Performance profiling
 - Identify and fix rendering bottlenecks (e.g. unnecessary re-renders of all 61 HexTile components)
 - Measure minimax bot response time at each difficulty level; adjust depth limits if needed
+
+### 14.6 Component tests
+- Write React Testing Library tests for all UI components
+- Cover rendering, user interactions, and prop variations
+- Focus on components with non-trivial logic (e.g. `Board`, `ActionPanel`, `CombatOverlay`, `HexTile`)
