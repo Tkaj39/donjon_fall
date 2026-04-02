@@ -94,6 +94,9 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
     /** Whether the rules modal is open. */
     const [showRules, setShowRules] = useState(false);
 
+    /** Whether the Phase 14.1 debug overlay is visible (toggled by Ctrl+D). */
+    const [debugMode, setDebugMode] = useState(false);
+
     /**
      * Planned movement trajectory as an ordered array of hexKeys, starting at
      * `selectedHex` and ending at the chosen destination.  Empty array = no
@@ -158,6 +161,11 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
          * @returns {void}
          */
         function handleKeyDown(e) {
+            if (e.key === "d" && e.ctrlKey) {
+                e.preventDefault();
+                setDebugMode(prev => !prev);
+                return;
+            }
             if (e.key !== "Escape") return;
             setTrajectoryPath((prev) => {
                 if (prev.length > 0) return []; // cancel trajectory only
@@ -566,7 +574,19 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
                 >
                     ?
                 </button>
+                {debugMode && (
+                    <span className="text-[0.75rem] font-mono bg-yellow-400 text-black rounded px-2 py-[0.1rem] select-none">
+                        DEBUG
+                    </span>
+                )}
             </div>
+
+            {/* ── Debug state summary (Phase 14.1) ────────────────── */}
+            {debugMode && (
+                <div className="font-mono text-[0.72rem] bg-black/60 border border-yellow-400/40 rounded px-3 py-1 text-yellow-200 w-full text-center">
+                    {`player: ${state.currentPlayer}  |  phase: ${state.phase}  |  actionTaken: ${state.actionTaken}`}
+                </div>
+            )}
 
             {/* ── Status bar ──────────────────────────────────────── */}
             <div className="flex gap-3 items-center flex-wrap justify-center">
@@ -581,6 +601,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
                     selectedHex={selectedHex}
                     highlightedHexes={highlightedHexes}
                     pendingMove={pendingMove}
+                    debugMode={debugMode}
                     pickerData={pickerEnemyKey ? {
                         enemyKey:           pickerEnemyKey,
                         approachDirs:       pickerApproachDirs,

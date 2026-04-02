@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { BOARD_HEXES, BOARD_FIELDS } from "../hex/boardConstants.js";
 import { hexCorners, hexFromKey, hexKey, hexToPixel } from "../hex/hexUtils.js";
+import { getAttackStrength } from "../game/gameState.js";
 import { Die } from "./Die.jsx";
 import { HexTile } from "./HexTile.jsx";
 
@@ -15,7 +16,7 @@ import { HexTile } from "./HexTile.jsx";
 // ---------------------------------------------------------------------------
 
 /** Circumradius in pixels for each hex tile. */
-const HEX_SIZE = 32;
+const HEX_SIZE = 48;
 
 /** Hex size passed to HexTile and MovingDie (HEX_SIZE minus stroke allowance). */
 const TILE_SIZE = HEX_SIZE - 1;
@@ -187,10 +188,11 @@ function MovingDie({ fromX, fromY, toX, toY, diceStack, hexSize, playerColors })
  * @param {{ fromKey: string, toKey: string } | null} [props.pendingMove]
  *   When non-null, suppresses dice at `fromKey` and renders an animated MovingDie
  *   flying from `fromKey` to `toKey` (Phase 12.6).
+ * @param {boolean} [props.debugMode] - When true, renders the Phase 14.1 debug overlay on every hex.
  * @param {function(string): void} [props.onHexClick] - Called with the hexKey when a hex is clicked.
  * @returns {JSX.Element}
  */
-export function Board({ state = null, selectedHex = null, highlightedHexes = {}, pickerData = null, pendingMove = null, onHexClick }) {
+export function Board({ state = null, selectedHex = null, highlightedHexes = {}, pickerData = null, pendingMove = null, debugMode = false, onHexClick }) {
     const dice        = state?.dice ?? {};
     const focalPoints = state?.focalPoints ?? {};
 
@@ -245,6 +247,17 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                 // Suppress dice at the source hex while the die is in-flight (12.6).
                 const diceStack = pendingMove?.fromKey === key ? [] : (dice[key] ?? []);
 
+                const debugInfo = debugMode ? (() => {
+                    const hasDice = (dice[key] ?? []).length > 0;
+                    const fp = focalPoints[key] ?? null;
+                    const fpProps = (FIELD_PROPS_BY_KEY[key] ?? []).find(p => p.type === "focalPoint");
+                    return {
+                        attackStrength: hasDice && state ? getAttackStrength(state, key) : null,
+                        focalGroup:     fpProps?.group ?? (fp ? fp.group : null),
+                        focalActive:    fp?.isActive ?? false,
+                    };
+                })() : null;
+
                 return (
                     <HexTile
                         key={key}
@@ -258,6 +271,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                         isSelected={selectedHex === key}
                         playerColors={playerColors}
                         isActiveFocalPoint={focalPoints[key]?.isActive ?? false}
+                        debugInfo={debugInfo}
                         directionPicker={pickerData?.enemyKey === key ? {
                             enemyHexKey:       key,
                             validApproachKeys: pickerData.approachDirs,
