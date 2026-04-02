@@ -15,7 +15,7 @@ import { HexTile } from "./HexTile.jsx";
 // ---------------------------------------------------------------------------
 
 /** Circumradius in pixels for each hex tile. */
-const HEX_SIZE = 36;
+const HEX_SIZE = 32;
 
 /** Hex size passed to HexTile and MovingDie (HEX_SIZE minus stroke allowance). */
 const TILE_SIZE = HEX_SIZE - 1;

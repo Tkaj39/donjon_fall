@@ -575,7 +575,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
             </div>
 
             {/* ── Board (with combat overlay) ─────────────────────── */}
-            <div className="relative">
+            <div className="relative w-full">
                 <Board
                     state={state}
                     selectedHex={selectedHex}
