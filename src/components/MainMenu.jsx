@@ -3,8 +3,8 @@
  * Phase 9.3
  */
 
-import { useState } from 'react';
-import { RulesViewer } from './RulesViewer.jsx';
+import { useState } from "react";
+import { RulesViewer } from "./RulesViewer.jsx";
 
 /**
  * @param {{ onPlay: () => void }} props

@@ -3,7 +3,7 @@
  * Phase 1 — Central source of truth for all geometry constants used across the codebase.
  */
 
-import { hexKey } from './hexUtils.js';
+import { hexKey } from "./hexUtils.js";
 
 /** Radius of the large-hexagon board; total hexes = 1 + 6 + 12 + 18 + 24 = 61. */
 const BOARD_RADIUS = 4;
@@ -13,9 +13,9 @@ const BOARD_RADIUS = 4;
  * All three hexes share the same group ID — they form one focal point group.
  */
 const FOCAL_POINT_PROPS = {
-    ['-2,0,2']: { type: 'focalPoint', active: false, group: 'main' },
-    ['0,0,0']:  { type: 'focalPoint', active: true,  group: 'main' },
-    ['2,0,-2']: { type: 'focalPoint', active: false, group: 'main' },
+    ["-2,0,2"]: { type: "focalPoint", active: false, group: "main" },
+    ["0,0,0"]:  { type: "focalPoint", active: true,  group: "main" },
+    ["2,0,-2"]: { type: "focalPoint", active: false, group: "main" },
 };
 
 // ---------------------------------------------------------------------------
@@ -106,8 +106,8 @@ export const BOARD_FIELDS = BOARD_HEXES.map(coords => {
     const properties = [];
     const key = hexKey(coords);
 
-    if (coords.r === -BOARD_RADIUS) properties.push({ type: 'startingField', owner: 'red' });
-    if (coords.r === BOARD_RADIUS)  properties.push({ type: 'startingField', owner: 'blue' });
+    if (coords.r === -BOARD_RADIUS) properties.push({ type: "startingField", owner: "red" });
+    if (coords.r === BOARD_RADIUS)  properties.push({ type: "startingField", owner: "blue" });
     if (FOCAL_POINT_PROPS[key])     properties.push(FOCAL_POINT_PROPS[key]);
 
     return { coords, properties };

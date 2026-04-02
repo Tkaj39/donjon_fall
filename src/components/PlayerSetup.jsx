@@ -6,11 +6,11 @@
  * Color is derived from the owner ID and cannot be changed.
  */
 
-import { useState } from 'react';
+import { useState } from "react";
 
 /**
  * @typedef {Object} PlayerConfig
- * @property {string} id         - Player ID matching the startingField owner (e.g. 'red', 'blue').
+ * @property {string} id         - Player ID matching the startingField owner (e.g. "red", "blue").
  * @property {string} name       - Display name entered by the player.
  * @property {string} coatOfArms - Selected coat of arms key.
  */
@@ -20,12 +20,12 @@ import { useState } from 'react';
 // ---------------------------------------------------------------------------
 
 const COATS_OF_ARMS = [
-    { id: 'tower',  label: 'Tower'  },
-    { id: 'eagle',  label: 'Eagle'  },
-    { id: 'lion',   label: 'Lion'   },
-    { id: 'shield', label: 'Shield' },
-    { id: 'star',   label: 'Star'   },
-    { id: 'cross',  label: 'Cross'  },
+    { id: "tower",  label: "Tower"  },
+    { id: "eagle",  label: "Eagle"  },
+    { id: "lion",   label: "Lion"   },
+    { id: "shield", label: "Shield" },
+    { id: "star",   label: "Star"   },
+    { id: "cross",  label: "Cross"  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -33,8 +33,8 @@ const COATS_OF_ARMS = [
 // ---------------------------------------------------------------------------
 
 const PLAYER_COLOR = {
-    red:  { bg: 'bg-red-700',  label: 'Red'  },
-    blue: { bg: 'bg-blue-700', label: 'Blue' },
+    red:  { bg: "bg-red-700",  label: "Red"  },
+    blue: { bg: "bg-blue-700", label: "Blue" },
 };
 
 // ---------------------------------------------------------------------------
@@ -52,11 +52,11 @@ function CoatOfArmsTile({ id, label, selected, onSelect }) {
         <button
             onClick={onSelect}
             className={[
-                'w-14 h-14 rounded-lg border-2 flex items-center justify-center text-xs font-semibold transition-colors',
+                "w-14 h-14 rounded-lg border-2 flex items-center justify-center text-xs font-semibold transition-colors",
                 selected
-                    ? 'border-white bg-stone-500 text-white'
-                    : 'border-stone-600 bg-stone-800 text-stone-400 hover:border-stone-400',
-            ].join(' ')}
+                    ? "border-white bg-stone-500 text-white"
+                    : "border-stone-600 bg-stone-800 text-stone-400 hover:border-stone-400",
+            ].join(" ")}
             aria-label={label}
             aria-pressed={selected}
         >
@@ -73,7 +73,7 @@ function CoatOfArmsTile({ id, label, selected, onSelect }) {
  * @returns {JSX.Element}
  */
 function PlayerSlot({ playerId, config, onChange }) {
-    const color = PLAYER_COLOR[playerId] ?? { bg: 'bg-stone-600', label: playerId };
+    const color = PLAYER_COLOR[playerId] ?? { bg: "bg-stone-600", label: playerId };
 
     return (
         <div className="bg-stone-800 border border-stone-600 rounded-xl p-5">
@@ -118,9 +118,9 @@ function PlayerSlot({ playerId, config, onChange }) {
 // ---------------------------------------------------------------------------
 
 /**
- * Derives the ordered list of distinct player IDs from the map's startingField owners.
+ * Derives the ordered list of distinct player IDs from the map"s startingField owners.
  *
- * @param {import('../game/boardDefinition.js').BoardDefinition} map
+ * @param {import("../game/boardDefinition.js").BoardDefinition} map
  * @returns {string[]}
  */
 function derivePlayerIds(map) {
@@ -128,7 +128,7 @@ function derivePlayerIds(map) {
     const ids = [];
     for (const field of map.fields) {
         for (const prop of field.properties) {
-            if (prop.type === 'startingField' && !seen.has(prop.owner)) {
+            if (prop.type === "startingField" && !seen.has(prop.owner)) {
                 seen.add(prop.owner);
                 ids.push(prop.owner);
             }
@@ -139,7 +139,7 @@ function derivePlayerIds(map) {
 
 /**
  * @param {{
- *   map: import('../game/boardDefinition.js').BoardDefinition,
+ *   map: import("../game/boardDefinition.js").BoardDefinition,
  *   onConfirm: (players: PlayerConfig[]) => void,
  *   onBack: () => void,
  * }} props
@@ -150,7 +150,7 @@ export function PlayerSetup({ map, onConfirm, onBack }) {
 
     const [configs, setConfigs] = useState(
         /** @type {PlayerConfig[]} */ (
-            playerIds.map(id => ({ id, name: '', coatOfArms: COATS_OF_ARMS[0].id }))
+            playerIds.map(id => ({ id, name: "', coatOfArms: COATS_OF_ARMS[0].id }))
         ),
     );
 

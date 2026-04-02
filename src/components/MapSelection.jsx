@@ -3,7 +3,7 @@
  * Phase 9.4
  */
 
-import { ALL_MAPS } from '../game/boardDefinition.js';
+import { ALL_MAPS } from "../game/boardDefinition.js";
 
 /**
  * Placeholder thumbnail shown until a real preview asset is available.
@@ -20,7 +20,7 @@ function MapThumbnail() {
 
 /**
  * @param {Object}  props
- * @param {import('../game/boardDefinition.js').BoardDefinition} props.map
+ * @param {import("../game/boardDefinition.js").BoardDefinition} props.map
  * @param {() => void} props.onSelect
  * @returns {JSX.Element}
  */
@@ -44,7 +44,7 @@ function MapCard({ map, onSelect }) {
 }
 
 /**
- * @param {{ onSelect: (map: import('../game/boardDefinition.js').BoardDefinition) => void, onBack: () => void }} props
+ * @param {{ onSelect: (map: import("../game/boardDefinition.js").BoardDefinition) => void, onBack: () => void }} props
  * @returns {JSX.Element}
  */
 export function MapSelection({ onSelect, onBack }) {

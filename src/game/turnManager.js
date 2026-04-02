@@ -6,8 +6,8 @@
  * by callers so these functions remain deterministic and testable.
  */
 
-import { getController } from './gameState.js';
-import { updateFocalHolders } from './focal.js';
+import { getController } from "./gameState.js";
+import { updateFocalHolders } from "./focal.js";
 
 /** Victory-point threshold required to win. */
 export const VICTORY_POINTS = 5;
@@ -17,49 +17,49 @@ export const VICTORY_POINTS = 5;
 // ---------------------------------------------------------------------------
 
 /**
- * Advances the game to the next phase following the rules' phase order:
+ * Advances the game to the next phase following the rules" phase order:
  *
  * ```
  * focal → action
  * action → combat  (when combat is pending in state.combat)
  *        → victory (when current player reached VICTORY_POINTS)
- *        → focal   (next player's turn, via endTurn)
+ *        → focal   (next player"s turn, via endTurn)
  * combat → victory (when current player reached VICTORY_POINTS)
- *        → focal   (next player's turn, via endTurn)
+ *        → focal   (next player"s turn, via endTurn)
  * victory → (no-op, game is over)
  * ```
  *
- * Called by the game reducer after the current phase's work is complete.
+ * Called by the game reducer after the current phase"s work is complete.
  * For the `action → combat` case, combat state has already been set by
  * `applyMoveAction` / `applyMoveTowerAction`; `advancePhase` simply
  * formalises the transition.
  *
- * @param {import('./gameState.js').GameState} state
- * @returns {import('./gameState.js').GameState}
+ * @param {import("./gameState.js").GameState} state
+ * @returns {import("./gameState.js").GameState}
  */
 export function advancePhase(state) {
     switch (state.phase) {
-        case 'focal':
-            return { ...state, phase: 'action' };
+        case "focal":
+            return { ...state, phase: "action" };
 
-        case 'action': {
+        case "action": {
             if (state.combat !== null) {
-                return { ...state, phase: 'combat' };
+                return { ...state, phase: "combat" };
             }
             if ((state.scores[state.currentPlayer] ?? 0) >= VICTORY_POINTS) {
-                return { ...state, phase: 'victory' };
+                return { ...state, phase: "victory" };
             }
             return endTurn(state);
         }
 
-        case 'combat': {
+        case "combat": {
             if ((state.scores[state.currentPlayer] ?? 0) >= VICTORY_POINTS) {
-                return { ...state, phase: 'victory' };
+                return { ...state, phase: "victory" };
             }
             return endTurn(state);
         }
 
-        case 'victory':
+        case "victory":
             return state; // game over — no further transitions
 
         default:
@@ -72,14 +72,14 @@ export function advancePhase(state) {
 // ---------------------------------------------------------------------------
 
 /**
- * Ends the current player's turn:
+ * Ends the current player"s turn:
  *  1. Snapshots active focal-point holders via `updateFocalHolders`.
  *  2. Advances `currentPlayer` to the next player in `state.players` (wrap around).
  *  3. Resets all per-turn flags: `actionTaken`, `combat`, `selectedHex`, `highlightedHexes`.
- *  4. Sets `phase` to `'focal'` so the next player starts with the focal phase.
+ *  4. Sets `phase` to `"focal"` so the next player starts with the focal phase.
  *
- * @param {import('./gameState.js').GameState} state
- * @returns {import('./gameState.js').GameState}
+ * @param {import("./gameState.js").GameState} state
+ * @returns {import("./gameState.js").GameState}
  */
 export function endTurn(state) {
     const afterSnapshot = updateFocalHolders(state);
@@ -90,7 +90,7 @@ export function endTurn(state) {
     return {
         ...afterSnapshot,
         currentPlayer: nextPlayer,
-        phase: 'focal',
+        phase: "focal",
         actionTaken: false,
         combat: null,
         selectedHex: null,
@@ -110,10 +110,10 @@ export function endTurn(state) {
  * (standalone or as the top die of a tower) — because the **Reroll** action is
  * always available to any controlled die, regardless of position.
  *
- * If every one of the current player's dice is buried beneath an enemy die in a
+ * If every one of the current player"s dice is buried beneath an enemy die in a
  * mixed tower, they control no field and have no legal actions.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @returns {boolean}
  */
 export function hasLegalMoves(state) {

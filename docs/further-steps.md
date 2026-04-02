@@ -70,7 +70,7 @@ BoardDefinition {
 BoardCreatorState {
   board: BoardDefinition
   selectedHex: HexKey | null
-  tool: 'place' | 'delete' | 'assignProperty' | 'removeProperty'
+  tool: "place" | "delete" | "assignProperty" | "removeProperty"
   activeTool PropertyType | null   // which property to assign/remove
 }
 ```

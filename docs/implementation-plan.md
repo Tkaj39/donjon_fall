@@ -26,12 +26,12 @@ HexField {
 }
 
 HexProperty =
-  | { type: 'startingField', owner: string }
-  | { type: 'focalPoint', active: boolean, group: string }
+  | { type: "startingField", owner: string }
+  | { type: "focalPoint", active: boolean, group: string }
 ```
 
-- **`startingField`** — marks a field as belonging to a player's base; `owner` is a player ID string (e.g. `'red'`, `'blue'`, or any future player ID). One base per player.
-- **`focalPoint`** — marks a field as a focal point; `active` is its initial state (true = active at game start, false = passive); `group` is a string identifier (e.g. `'left'`, `'center'`, `'right'`) — each group represents one logical focal point position that can migrate between fields sharing the same group. The board definition fully controls the number of focal points, their groups, and which start active.
+- **`startingField`** — marks a field as belonging to a player's base; `owner` is a player ID string (e.g. `"red"`, `"blue"`, or any future player ID). One base per player.
+- **`focalPoint`** — marks a field as a focal point; `active` is its initial state (true = active at game start, false = passive); `group` is a string identifier (e.g. `"left"`, `"center"`, `"right"`) — each group represents one logical focal point position that can migrate between fields sharing the same group. The board definition fully controls the number of focal points, their groups, and which start active.
 
 Helpers:
 - `getProperty(field, type)` — returns the property object or null
@@ -40,8 +40,8 @@ Helpers:
 ### 1.3 Board shape definition
 - Define the 61-field large hexagon as a set of valid cube coordinates
 - Map center at (0,0,0); radius 4 (standard hex grid: 1+6+12+18+24 = 61 fields)
-- Assign `startingField` property to each player's base row; `owner` = player ID (default map: `'red'` top row, `'blue'` bottom row)
-- Assign `focalPoint` property to the 3 middle-row fields; all three share the same group ID (e.g. `'main'`), meaning they form one focal point group where the D6 roll picks which passive hex activates next; center starts `active: true`, left and right start `active: false`
+- Assign `startingField` property to each player's base row; `owner` = player ID (default map: `"red"` top row, `"blue"` bottom row)
+- Assign `focalPoint` property to the 3 middle-row fields; all three share the same group ID (e.g. `"main"`), meaning they form one focal point group where the D6 roll picks which passive hex activates next; center starts `active: true`, left and right start `active: false`
 - Export constants: `BOARD_HEXES`, `BASE_HEXES` (map `{ [playerId]: HexField[] }`), `FOCAL_POINT_HEXES`, `ACTIVE_FOCAL_HEXES`, `PASSIVE_FOCAL_HEXES`
 
 ### 1.5 Hex rendering component
@@ -64,9 +64,9 @@ Define the canonical shape of game state as plain JS objects (no classes):
 
 ```
 GameState {
-  players: string[]            // ordered list of player IDs, e.g. ['red', 'blue']
+  players: string[]            // ordered list of player IDs, e.g. ["red", "blue"]
   currentPlayer: string        // player ID of the active player
-  phase: 'focal' | 'action' | 'combat' | 'victory'
+  phase: "focal" | "action" | "combat" | "victory"
   dice: {
     [hexKey]: Die[]            // hexKey = "q,r,s"
   }
@@ -95,7 +95,7 @@ FocalPointState {
 CombatState {
   attackerHex: hexKey
   defenderHex: hexKey
-  options: ('push' | 'occupy')[]
+  options: ("push" | "occupy")[]
 }
 ```
 
@@ -129,7 +129,7 @@ Pure functions that compute derived data from state:
 - `applyMoveAction(state, fromHex, toHex)` — returns new state
   - Moves die from source to destination
   - If destination occupied by own die: stack (if canEnterTower)
-  - If destination occupied by enemy: set phase to 'combat', record CombatState
+  - If destination occupied by enemy: set phase to "combat", record CombatState
   - If more than one approach direction is available, wait for player to confirm direction before committing (see section 12.4); `CombatState` includes `approachDirection`
 
 ### 3.3 Tower jump
@@ -161,7 +161,7 @@ Presentation-layer React components tied to the game logic implemented in Phases
 ### 4.1 Board rendering
 - `<HexTile coords, diceStack, fieldProperties, highlight, isSelected, onClick>` — renders one hex field
   - Background style reflects field type (`focalPoint` active/inactive, `startingField`)
-  - `highlight` prop: `null | 'reachable' | 'selected' | 'trajectory' | 'enemy-reachable'`
+  - `highlight` prop: `null | "reachable" | "selected" | "trajectory" | "enemy-reachable"`
   - Renders `<Die>` components for each die in the stack (with tower offset)
   - Forwards click to parent via `onClick(hexKey)`
 - `<Board state, selectedHex, highlightedHexes, onHexClick>` — renders all 61 `<HexTile>` components
@@ -189,7 +189,7 @@ Presentation-layer React components tied to the game logic implemented in Phases
 
 ### 5.1 Combat eligibility
 - `canAttack(state, attackerHex, defenderHex)` — attacker strength > defender strength
-- `getAvailableCombatOptions(state)` — ['push', 'occupy'] or just ['push'] for tower-vs-tower move
+- `getAvailableCombatOptions(state)` — ["push", "occupy"] or just ["push"] for tower-vs-tower move
 
 ### 5.2 Push resolution
 - `getPushDirection(attackerHex, defenderHex)` — cube direction vector

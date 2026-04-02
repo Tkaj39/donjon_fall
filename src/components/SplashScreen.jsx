@@ -3,7 +3,7 @@
  * Phase 9.2
  */
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 /** Duration in milliseconds before auto-advancing to the main menu. */
 const SPLASH_DURATION_MS = 2000;

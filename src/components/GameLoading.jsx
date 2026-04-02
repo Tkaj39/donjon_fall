@@ -2,27 +2,27 @@
  * GameLoading component — brief summary screen before the game starts.
  * Phase 9.6
  *
- * Shows each player's name, color, and coat of arms while createInitialState
+ * Shows each player"s name, color, and coat of arms while createInitialState
  * runs and assets are prepared, then calls onDone.
  */
 
-import { useEffect } from 'react';
-import { createInitialState } from '../game/gameState.js';
+import { useEffect } from "react";
+import { createInitialState } from "../game/gameState.js";
 
 /** How long to show the loading screen before entering the game. */
 const LOADING_DURATION_MS = 1800;
 
 /** Color display config per player ID — matches PlayerSetup. */
 const PLAYER_COLOR = {
-    red:  { bg: 'bg-red-700',  label: 'Red'  },
-    blue: { bg: 'bg-blue-700', label: 'Blue' },
+    red:  { bg: "bg-red-700",  label: "Red"  },
+    blue: { bg: "bg-blue-700", label: "Blue" },
 };
 
 /**
  * @param {Object}  props
- * @param {import('./PlayerSetup.jsx').PlayerConfig[]} props.playerConfigs
- * @param {import('../game/boardDefinition.js').BoardDefinition} props.map
- * @param {(players: string[], boardFields: import('../hex/fieldProperties.js').HexField[]) => void} props.onDone
+ * @param {import("./PlayerSetup.jsx").PlayerConfig[]} props.playerConfigs
+ * @param {import("../game/boardDefinition.js").BoardDefinition} props.map
+ * @param {(players: string[], boardFields: import("../hex/fieldProperties.js").HexField[]) => void} props.onDone
  * @returns {JSX.Element}
  */
 export function GameLoading({ playerConfigs, map, onDone }) {
@@ -41,7 +41,7 @@ export function GameLoading({ playerConfigs, map, onDone }) {
 
             <div className="flex flex-col gap-6 w-full max-w-xs">
                 {playerConfigs.map(config => {
-                    const color = PLAYER_COLOR[config.id] ?? { bg: 'bg-stone-600', label: config.id };
+                    const color = PLAYER_COLOR[config.id] ?? { bg: "bg-stone-600", label: config.id };
                     return (
                         <div key={config.id} className="flex items-center gap-4">
                             {/* Color + coat of arms placeholder */}

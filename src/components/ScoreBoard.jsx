@@ -4,10 +4,10 @@
  * Phase 12.6 — Score-pop animation when a player gains a point.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from "react";
 
 /**
- * Returns the CSS variable for a player's label colour, falling back to the
+ * Returns the CSS variable for a player"s label colour, falling back to the
  * generic player-fallback variable for unknown IDs.
  *
  * @param {string} playerId
@@ -24,7 +24,7 @@ function playerLabelColor(playerId) {
 /**
  * Panel showing the victory point total for each player.
  * Plays a brief scale-pop animation (Phase 12.6) on the VP number when a
- * player's score increases.
+ * player"s score increases.
  *
  * @param {Object}                 props
  * @param {string[]}               props.players - Ordered list of player IDs.
@@ -58,14 +58,14 @@ export function ScoreBoard({ players, scores }) {
             role="region"
             aria-label="Score board"
             style={{
-                display:       'flex',
-                gap:           '1rem',
-                background:    'var(--color-panel-bg, #1e293b)',
-                border:        '2px solid var(--color-panel-border, #475569)',
-                borderRadius:  '0.75rem',
-                padding:       '0.6rem 1rem',
-                color:         'var(--color-panel-text, #f1f5f9)',
-                boxShadow:     '0 4px 16px rgba(0,0,0,0.4)',
+                display:       "flex",
+                gap:           "1rem",
+                background:    "var(--color-panel-bg, #1e293b)",
+                border:        "2px solid var(--color-panel-border, #475569)",
+                borderRadius:  "0.75rem",
+                padding:       "0.6rem 1rem",
+                color:         "var(--color-panel-text, #f1f5f9)",
+                boxShadow:     "0 4px 16px rgba(0,0,0,0.4)",
             }}
         >
             {players.map((playerId) => (
@@ -73,18 +73,18 @@ export function ScoreBoard({ players, scores }) {
                     key={playerId}
                     data-testid={`score-${playerId}`}
                     style={{
-                        display:    'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        minWidth:   '3.5rem',
+                        display:    "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        minWidth:   "3.5rem",
                     }}
                 >
                     <span
                         style={{
-                            fontSize:    '0.7rem',
+                            fontSize:    "0.7rem",
                             fontWeight:  600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
                             color:       playerLabelColor(playerId),
                         }}
                     >
@@ -94,18 +94,18 @@ export function ScoreBoard({ players, scores }) {
                         key={`${playerId}-${scores[playerId] ?? 0}`}
                         data-testid={`score-value-${playerId}`}
                         style={{
-                            fontSize:  '1.8rem',
+                            fontSize:  "1.8rem",
                             fontWeight: 700,
                             lineHeight: 1.1,
-                            display:   'inline-block',
+                            display:   "inline-block",
                             animation: animatedSet.has(playerId)
-                                ? 'score-pop 0.45s ease-out'
-                                : 'none',
+                                ? "score-pop 0.45s ease-out"
+                                : "none",
                         }}
                     >
                         {scores[playerId] ?? 0}
                     </span>
-                    <span style={{ fontSize: '0.65rem', opacity: 0.5 }}>VP</span>
+                    <span style={{ fontSize: "0.65rem", opacity: 0.5 }}>VP</span>
                 </div>
             ))}
         </div>

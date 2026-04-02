@@ -8,9 +8,9 @@
  * hexKey format: "q,r,s" (produced by hexUtils.hexKey)
  */
 
-import { hexKey, hexFromKey, getNeighbors, hexesDistance } from '../hex/hexUtils.js';
-import { isOnBoard } from '../hex/boardUtils.js';
-import { getDiceAt, getTopDie, getController, canEnterTower, getAttackStrength } from './gameState.js';
+import { hexKey, hexFromKey, getNeighbors, hexesDistance } from "../hex/hexUtils.js";
+import { isOnBoard } from "../hex/boardUtils.js";
+import { getDiceAt, getTopDie, getController, canEnterTower, getAttackStrength } from "./gameState.js";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -19,12 +19,12 @@ import { getDiceAt, getTopDie, getController, canEnterTower, getAttackStrength }
 /**
  * Returns true if the mover can TRAVERSE (pass through) an intermediate hex.
  * - Empty hex: always yes.
- * - Own hex: only if mover's attack strength (as if placed there) exceeds the
- *   current top die's attack strength (canEnterTower).
+ * - Own hex: only if mover"s attack strength (as if placed there) exceeds the
+ *   current top die"s attack strength (canEnterTower).
  * - Enemy hex: never (blocks the path).
  *
- * @param {import('./gameState.js').GameState} state
- * @param {import('./gameState.js').Die} moverDie
+ * @param {import("./gameState.js").GameState} state
+ * @param {import("./gameState.js").Die} moverDie
  * @param {string} neighborKey
  * @returns {boolean}
  */
@@ -45,14 +45,14 @@ function canTraverseThrough(state, moverDie, neighborKey) {
  * Movement rules applied:
  * - Range = die face value (number of steps).
  * - Cannot pass through enemy dice (but can land on them).
- * - Can pass through own dice only if mover's attack strength exceeds the top
- *   die's attack strength at that intermediate hex.
+ * - Can pass through own dice only if mover"s attack strength exceeds the top
+ *   die"s attack strength at that intermediate hex.
  * - Cannot return to the starting hex.
  *
  * Uses BFS tracking the minimum steps needed to reach each hex. A hex already
  * reached with fewer or equal steps is not re-queued, so the search terminates.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey  - hexKey of the die to move
  * @returns {Set<string>}   - set of reachable destination hexKeys
  */
@@ -115,7 +115,7 @@ export function getReachableHexes(state, fromKey) {
  *
  * Returns an empty array if `toKey` is unreachable or the origin has no die.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey
  * @param {string} toKey
  * @returns {string[][]}  - each element is an ordered array of hexKeys
@@ -178,21 +178,21 @@ export function getPathsToHex(state, fromKey, toKey) {
  *
  * Uses BFS with a parent-pointer map so only one pass is needed.
  * Traversal rules depend on `actionType`:
- *   - `'move-die'`  : same rules as getReachableHexes — own/empty traversable if
+ *   - `"move-die"`  : same rules as getReachableHexes — own/empty traversable if
  *                     canTraverseThrough; enemies are valid destinations only.
- *   - `'move-tower'`: whole tower moves — only empty hexes are traversable; enemy
+ *   - `"move-tower"`: whole tower moves — only empty hexes are traversable; enemy
  *                     hexes are valid destinations only.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey
  * @param {string} toKey
- * @param {'move-die'|'move-tower'} [actionType='move-die']
+ * @param {"move-die"|"move-tower"} [actionType="move-die"]
  * @returns {string[]}  Ordered array [fromKey, …, toKey], or [] if unreachable.
  */
-export function getShortestPathToHex(state, fromKey, toKey, actionType = 'move-die') {
+export function getShortestPathToHex(state, fromKey, toKey, actionType = "move-die") {
     if (fromKey === toKey) return [];
 
-    const isTower = actionType === 'move-tower';
+    const isTower = actionType === "move-tower";
     let moverDie = null;
     let moverOwner = null;
     let maxSteps = 0;
@@ -271,7 +271,7 @@ export function getShortestPathToHex(state, fromKey, toKey, actionType = 'move-d
  *
  * Returns an empty set if `toKey` is unreachable.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey
  * @param {string} toKey
  * @returns {Set<string>}  - set of hexKeys (last-step neighbors of toKey)
@@ -296,10 +296,10 @@ export function getApproachDirections(state, fromKey, toKey) {
  * Does NOT validate legality — callers must check before invoking.
  * Sets `actionTaken: true`.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey
  * @param {string} toKey
- * @returns {import('./gameState.js').GameState}
+ * @returns {import("./gameState.js").GameState}
  */
 function moveTopDie(state, fromKey, toKey) {
     const fromStack = getDiceAt(state, fromKey);
@@ -328,20 +328,20 @@ function moveTopDie(state, fromKey, toKey) {
  * Outcomes:
  * - **Empty destination** — die is placed there; action phase ends.
  * - **Own die at destination** — die is stacked if `canEnterTower`; illegal otherwise (returns state unchanged).
- * - **Enemy at destination** — the attacker's die stays at `fromKey` and combat is
+ * - **Enemy at destination** — the attacker"s die stays at `fromKey` and combat is
  *   set up via `CombatState`. The die only physically moves when combat is resolved
  *   (`applyPush` / `applyOccupy`).
  *   - If exactly one approach direction exists it is recorded automatically.
  *   - If multiple directions exist and none is passed, `approachDirection` is `null`
  *     (UI must confirm before resolving combat — see section 11.4).
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey
  * @param {string} toKey
  * @param {string|null} [approachDirection]  - hexKey of the last-step neighbor used
  *                                             to arrive at `toKey` (needed for push direction).
  *                                             Pass `null` to auto-resolve when unambiguous.
- * @returns {import('./gameState.js').GameState}
+ * @returns {import("./gameState.js").GameState}
  */
 export function applyMoveAction(state, fromKey, toKey, approachDirection = null) {
     const moverDie = getTopDie(state, fromKey);
@@ -351,13 +351,13 @@ export function applyMoveAction(state, fromKey, toKey, approachDirection = null)
 
     // --- Empty destination ---
     if (controller === null) {
-        return { ...moveTopDie(state, fromKey, toKey), phase: 'action' };
+        return { ...moveTopDie(state, fromKey, toKey), phase: "action" };
     }
 
     // --- Own die: form a tower (if legal) ---
     if (controller === moverDie.owner) {
         if (!canEnterTower(state, moverDie, toKey)) return state;
-        return { ...moveTopDie(state, fromKey, toKey), phase: 'action' };
+        return { ...moveTopDie(state, fromKey, toKey), phase: "action" };
     }
 
     // --- Enemy die: set up combat (die does NOT move yet) ---
@@ -369,13 +369,13 @@ export function applyMoveAction(state, fromKey, toKey, approachDirection = null)
 
     return {
         ...state,
-        phase: 'combat',
+        phase: "combat",
         actionTaken: true,
         combat: {
             attackerHex: fromKey,
             defenderHex: toKey,
             approachDirection: resolvedDirection,
-            options: ['push', 'occupy'],
+            options: ["push", "occupy"],
         },
     };
 }
@@ -388,7 +388,7 @@ export function applyMoveAction(state, fromKey, toKey, approachDirection = null)
  * Returns the jump range for the top die at `towerKey`.
  * Formula: own dice − enemy dice in the tower, minimum 1.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} towerKey
  * @returns {number}
  */
@@ -412,7 +412,7 @@ export function getJumpRange(state, towerKey) {
  *   (i.e. its face value + 1 own − 0 enemy > top die strength there).
  * - Cannot land back on the source tower.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} towerKey
  * @returns {Set<string>}
  */
@@ -466,11 +466,11 @@ export function getJumpReachableHexes(state, towerKey) {
  * Returns state unchanged if the move is illegal (no die, only 1 die in tower,
  * target not reachable, or own target where canEnterTower is false).
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} towerKey
  * @param {string} targetKey
  * @param {string|null} [approachDirection]
- * @returns {import('./gameState.js').GameState}
+ * @returns {import("./gameState.js").GameState}
  */
 export function applyJumpAction(state, towerKey, targetKey, approachDirection = null) {
     const stack = getDiceAt(state, towerKey);
@@ -485,7 +485,7 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
     // Empty or own — physically move the die
     if (ctrl === null || ctrl === jumper.owner) {
         if (ctrl === jumper.owner && !canEnterTower(state, jumper, targetKey)) return state;
-        return { ...moveTopDie(state, towerKey, targetKey), phase: 'action' };
+        return { ...moveTopDie(state, towerKey, targetKey), phase: "action" };
     }
 
     // Enemy — set up combat (jump variant: face value only)
@@ -505,14 +505,14 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
 
     return {
         ...state,
-        phase: 'combat',
+        phase: "combat",
         actionTaken: true,
         combat: {
             attackerHex: towerKey,
             defenderHex: targetKey,
             approachDirection: resolvedDirection,
             attackStrengthOverride: jumperStrength, // face value only
-            options: ['push', 'occupy'],
+            options: ["push", "occupy"],
         },
     };
 }
@@ -526,7 +526,7 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
  * Formula: own dice − enemy dice, minimum 1.
  * Returns 0 if the hex is empty or has only one die (no tower to move).
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} towerKey
  * @returns {number}
  */
@@ -548,7 +548,7 @@ export function getTowerMoveRange(state, towerKey) {
  * - Can land on enemy hex (triggers combat — push only).
  * - Cannot return to the source hex.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} towerKey
  * @returns {Set<string>}
  */
@@ -596,7 +596,7 @@ export function getTowerReachableHexes(state, towerKey) {
  * Applies the Move Whole Tower action: moves all dice from `fromKey` to `toKey`.
  *
  * Outcomes:
- * - **Empty destination** — entire stack is moved; actionTaken true, phase 'action'.
+ * - **Empty destination** — entire stack is moved; actionTaken true, phase "action".
  * - **Enemy at destination** — combat is set up with push only (occupy not available).
  *   Stack stays at fromKey until combat resolves.
  *
@@ -604,11 +604,11 @@ export function getTowerReachableHexes(state, towerKey) {
  * - The hex has fewer than 2 dice.
  * - `toKey` is not in getTowerReachableHexes.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey
  * @param {string} toKey
  * @param {string|null} [approachDirection]
- * @returns {import('./gameState.js').GameState}
+ * @returns {import("./gameState.js").GameState}
  */
 export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = null) {
     const stack = getDiceAt(state, fromKey);
@@ -624,7 +624,7 @@ export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = 
         const newDice = { ...state.dice };
         delete newDice[fromKey];
         newDice[toKey] = [...stack];
-        return { ...state, dice: newDice, actionTaken: true, phase: 'action' };
+        return { ...state, dice: newDice, actionTaken: true, phase: "action" };
     }
 
     // Enemy destination — combat, push only
@@ -638,13 +638,13 @@ export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = 
 
     return {
         ...state,
-        phase: 'combat',
+        phase: "combat",
         actionTaken: true,
         combat: {
             attackerHex: fromKey,
             defenderHex: toKey,
             approachDirection: resolvedDirection,
-            options: ['push'], // occupy not available for whole-tower moves
+            options: ["push"], // occupy not available for whole-tower moves
         },
     };
 }
@@ -658,9 +658,9 @@ export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = 
  *
  * Conditions:
  * - Tower has 3 or more dice.
- * - The current player's die is on top.
+ * - The current player"s die is on top.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} hex
  * @returns {boolean}
  */
@@ -678,9 +678,9 @@ export function canCollapse(state, hex) {
  * - Sets `actionTaken: true`.
  * - Returns state unchanged if `canCollapse` is false.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} hex
- * @returns {import('./gameState.js').GameState}
+ * @returns {import("./gameState.js").GameState}
  */
 export function applyCollapseAction(state, hex) {
     if (!canCollapse(state, hex)) return state;
@@ -707,16 +707,16 @@ export function applyCollapseAction(state, hex) {
  * Applies the Reroll action on the top die at `hex`.
  *
  * Rules:
- * - The die's new value = max(newValue, originalValue) — value can only stay or increase.
+ * - The die"s new value = max(newValue, originalValue) — value can only stay or increase.
  * - Die must belong to the current player (standalone or tower top).
  * - Sets `actionTaken: true`.
  * - Returns state unchanged if there is no die at `hex` or the top die does not
  *   belong to the current player.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {string} hex
  * @param {number} newValue  - the raw roll result (1–6); caller is responsible for randomness
- * @returns {import('./gameState.js').GameState}
+ * @returns {import("./gameState.js').GameState}
  */
 export function applyRerollAction(state, hex, newValue) {
     const stack = getDiceAt(state, hex);

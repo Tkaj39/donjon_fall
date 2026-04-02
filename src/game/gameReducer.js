@@ -16,18 +16,18 @@
  *   COLLAPSE             { hex: string }
  *   REROLL               { hex: string, newValue: number }
  *     — Perform the chosen action and mark actionTaken: true.
- *       Moves that end on an enemy automatically enter the 'combat' phase.
+ *       Moves that end on an enemy automatically enter the "combat" phase.
  *
- *   CHOOSE_COMBAT_OPTION { option: 'push'|'occupy', rerollValue?: number }
+ *   CHOOSE_COMBAT_OPTION { option: "push"|"occupy", rerollValue?: number }
  *     — Resolves pending combat, then advances phase.
- *       rerollValue is required when option === 'push'.
+ *       rerollValue is required when option === "push".
  *
  *   CONFIRM_ACTION       {}
  *     — Advances the current phase after a non-combat action:
  *       action → victory (if player has ≥ 5 VP) or → endTurn → focal (next player).
  *
  *   END_TURN             {}
- *     — Directly ends the current player's turn and starts the next player's
+ *     — Directly ends the current player"s turn and starts the next player"s
  *       focal phase (convenience escape hatch; CONFIRM_ACTION is preferred).
  */
 
@@ -37,10 +37,10 @@ import {
     applyJumpAction,
     applyCollapseAction,
     applyRerollAction,
-} from './movement.js';
-import { applyPush, applyOccupy } from './combat.js';
-import { applyFocalPhase } from './focal.js';
-import { advancePhase, endTurn } from './turnManager.js';
+} from "./movement.js";
+import { applyPush, applyOccupy } from "./combat.js";
+import { applyFocalPhase } from "./focal.js";
+import { advancePhase, endTurn } from "./turnManager.js";
 
 // ---------------------------------------------------------------------------
 // 11.1 — gameReducer
@@ -49,17 +49,17 @@ import { advancePhase, endTurn } from './turnManager.js';
 /**
  * Central game reducer.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {{ type: string, [key: string]: any }} action
- * @returns {import('./gameState.js').GameState}
+ * @returns {import("./gameState.js").GameState}
  */
 export function gameReducer(state, action) {
     switch (action.type) {
 
         // ------------------------------------------------------------------
-        // Focal phase — runs at the start of each player's turn.
+        // Focal phase — runs at the start of each player"s turn.
         // ------------------------------------------------------------------
-        case 'ADVANCE_FOCAL_PHASE': {
+        case "ADVANCE_FOCAL_PHASE": {
             const afterFocal = applyFocalPhase(
                 state,
                 action.dieNewValue,
@@ -69,9 +69,9 @@ export function gameReducer(state, action) {
         }
 
         // ------------------------------------------------------------------
-        // Movement actions — the player's one action per turn.
+        // Movement actions — the player"s one action per turn.
         // ------------------------------------------------------------------
-        case 'MOVE_DIE': {
+        case "MOVE_DIE": {
             const next = applyMoveAction(
                 state,
                 action.fromHex,
@@ -81,7 +81,7 @@ export function gameReducer(state, action) {
             return { ...next, actionTaken: true };
         }
 
-        case 'MOVE_TOWER': {
+        case "MOVE_TOWER": {
             const next = applyMoveTowerAction(
                 state,
                 action.fromHex,
@@ -91,7 +91,7 @@ export function gameReducer(state, action) {
             return { ...next, actionTaken: true };
         }
 
-        case 'JUMP': {
+        case "JUMP": {
             const next = applyJumpAction(
                 state,
                 action.towerHex,
@@ -101,12 +101,12 @@ export function gameReducer(state, action) {
             return { ...next, actionTaken: true };
         }
 
-        case 'COLLAPSE': {
+        case "COLLAPSE": {
             const next = applyCollapseAction(state, action.hex);
             return { ...next, actionTaken: true };
         }
 
-        case 'REROLL': {
+        case "REROLL": {
             const next = applyRerollAction(state, action.hex, action.newValue);
             return { ...next, actionTaken: true };
         }
@@ -114,12 +114,12 @@ export function gameReducer(state, action) {
         // ------------------------------------------------------------------
         // Combat resolution — player chooses push or occupy.
         // ------------------------------------------------------------------
-        case 'CHOOSE_COMBAT_OPTION': {
-            if (action.option === 'push') {
+        case "CHOOSE_COMBAT_OPTION": {
+            if (action.option === "push") {
                 const afterPush = applyPush(state, action.rerollValue);
                 return advancePhase(afterPush);
             }
-            if (action.option === 'occupy') {
+            if (action.option === "occupy") {
                 const afterOccupy = applyOccupy(state);
                 return advancePhase(afterOccupy);
             }
@@ -129,10 +129,10 @@ export function gameReducer(state, action) {
         // ------------------------------------------------------------------
         // Phase / turn advancement.
         // ------------------------------------------------------------------
-        case 'CONFIRM_ACTION':
+        case "CONFIRM_ACTION":
             return advancePhase(state);
 
-        case 'END_TURN':
+        case "END_TURN":
             return endTurn(state);
 
         default:

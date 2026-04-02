@@ -7,12 +7,12 @@
 
 /** CSS colour for each known player ID. Fallback used for unknown IDs. */
 const PLAYER_COLORS = {
-    red:  '#ef4444',
-    blue: '#3b82f6',
+    red:  "#ef4444",
+    blue: "#3b82f6",
 };
 
 /** Fallback colour for player IDs not in PLAYER_COLORS. */
-const FALLBACK_COLOR = '#94a3b8';
+const FALLBACK_COLOR = "#94a3b8";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -35,15 +35,15 @@ export function VictoryScreen({ winner, onNewGame }) {
             aria-modal="true"
             aria-label="Victory screen"
             style={{
-                position:       'fixed',
+                position:       "fixed",
                 inset:          0,
-                display:        'flex',
-                flexDirection:  'column',
-                alignItems:     'center',
-                justifyContent: 'center',
-                background:     'rgba(0,0,0,0.82)',
+                display:        "flex",
+                flexDirection:  "column",
+                alignItems:     "center",
+                justifyContent: "center",
+                background:     "rgba(0,0,0,0.82)",
                 zIndex:         200,
-                gap:            '1.5rem',
+                gap:            "1.5rem",
             }}
         >
             {/* Trophy / crown icon (SVG, no external asset needed) */}
@@ -67,10 +67,10 @@ export function VictoryScreen({ winner, onNewGame }) {
             <h1
                 style={{
                     margin:     0,
-                    fontSize:   '2.2rem',
+                    fontSize:   "2.2rem",
                     fontWeight: 800,
-                    color:      '#f1f5f9',
-                    textAlign:  'center',
+                    color:      "#f1f5f9",
+                    textAlign:  "center",
                     lineHeight: 1.1,
                 }}
             >
@@ -81,11 +81,11 @@ export function VictoryScreen({ winner, onNewGame }) {
                 data-testid="winner-label"
                 style={{
                     margin:        0,
-                    fontSize:      '1.2rem',
+                    fontSize:      "1.2rem",
                     fontWeight:    600,
                     color,
-                    textTransform: 'capitalize',
-                    textAlign:     'center',
+                    textTransform: "capitalize",
+                    textAlign:     "center",
                 }}
             >
                 {winner} wins
@@ -95,20 +95,20 @@ export function VictoryScreen({ winner, onNewGame }) {
                 data-testid="new-game-btn"
                 onClick={onNewGame}
                 style={{
-                    marginTop:    '0.5rem',
-                    padding:      '0.65rem 2rem',
-                    borderRadius: '0.6rem',
-                    border:       'none',
+                    marginTop:    "0.5rem",
+                    padding:      "0.65rem 2rem",
+                    borderRadius: "0.6rem",
+                    border:       "none",
                     background:   color,
-                    color:        '#fff',
+                    color:        "#fff",
                     fontWeight:   700,
-                    fontSize:     '1rem',
-                    cursor:       'pointer',
+                    fontSize:     "1rem",
+                    cursor:       "pointer",
                     boxShadow:    `0 4px 20px ${color}55`,
-                    transition:   'opacity 0.15s',
+                    transition:   "opacity 0.15s",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
                 New game
             </button>

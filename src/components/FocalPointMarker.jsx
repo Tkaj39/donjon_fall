@@ -32,7 +32,7 @@ function starPoints(cx, cy, outerR, innerR) {
         const r = i % 2 === 0 ? outerR : innerR;
         pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
     }
-    return pts.join(' ');
+    return pts.join(" ");
 }
 
 /**

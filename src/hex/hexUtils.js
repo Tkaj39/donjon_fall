@@ -128,7 +128,7 @@ export function hexKey({q, r, s}) {
  * @returns {{q: number, r: number, s: number}}
  */
 export function hexFromKey(key) {
-    const [q, r, s] = key.split(',').map(Number);
+    const [q, r, s] = key.split(",").map(Number);
     return {q, r, s};
 }
 

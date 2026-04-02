@@ -9,11 +9,11 @@
  *
  * Event strategy:
  *  - A transparent <polygon> covering the full hex catches mousemove.
- *  - Pie segment <path> elements are visual-only (pointerEvents: 'none') so
- *    they do not interfere with click events bubbling to HexTile's <g>.
+ *  - Pie segment <path> elements are visual-only (pointerEvents: "none") so
+ *    they do not interfere with click events bubbling to HexTile"s <g>.
  */
 
-import { hexCorners, hexFromKey } from '../hex/hexUtils.js';
+import { hexCorners, hexFromKey } from "../hex/hexUtils.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -32,12 +32,12 @@ import { hexCorners, hexFromKey } from '../hex/hexUtils.js';
  * @type {Object.<string, number>}
  */
 const DIR_ANGLES = {
-    '1,-1,0':   -60,
-    '1,0,-1':     0,
-    '0,1,-1':    60,
-    '-1,1,0':   120,
-    '-1,0,1':   180,
-    '0,-1,1':  -120,
+    "1,-1,0":   -60,
+    "1,0,-1":     0,
+    "0,1,-1":    60,
+    "-1,1,0":   120,
+    "-1,0,1":   180,
+    "0,-1,1":  -120,
 };
 
 /** Each of the 6 segments spans 60°; this is the half-width. */
@@ -100,7 +100,7 @@ function segmentPath(cx, cy, R, centralAngle) {
  * Returns the cube-direction key `"dq,dr,ds"` pointing from the enemy hex
  * toward the given approach hex.
  *
- * @param {string} enemyHexKey    - hexKey of the defender's hex.
+ * @param {string} enemyHexKey    - hexKey of the defender"s hex.
  * @param {string} approachHexKey - hexKey of the approach (penultimate) hex.
  * @returns {string}
  */
@@ -153,7 +153,7 @@ export function DirectionPickerOverlay({
 
     // Transparent polygon covering the full hex to catch mousemove events.
     const corners    = hexCorners(cx, cy, size);
-    const hexPoints  = corners.map(({ x, y }) => `${x},${y}`).join(' ');
+    const hexPoints  = corners.map(({ x, y }) => `${x},${y}`).join(" ");
 
     /**
      * On mouse movement, finds the valid approach direction whose segment
@@ -205,11 +205,11 @@ export function DirectionPickerOverlay({
                         key={approachKey}
                         d={segmentPath(cx, cy, R, angle)}
                         fill={isSelected
-                            ? 'var(--color-dir-selected, rgba(251,191,36,0.65))'
-                            : 'var(--color-dir-available, rgba(251,191,36,0.18))'}
+                            ? "var(--color-dir-selected, rgba(251,191,36,0.65))"
+                            : "var(--color-dir-available, rgba(251,191,36,0.18))"}
                         stroke="var(--color-dir-stroke, rgba(251,191,36,0.75))"
                         strokeWidth={1}
-                        style={{ pointerEvents: 'none' }}
+                        style={{ pointerEvents: "none" }}
                     />
                 );
             })}
