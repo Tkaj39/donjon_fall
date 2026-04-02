@@ -40,6 +40,7 @@ import { CombatOverlay } from "./CombatOverlay.jsx";
 import { PhaseIndicator } from "./PhaseIndicator.jsx";
 import { RulesViewer } from "./RulesViewer.jsx";
 import { ScoreBoard } from "./ScoreBoard.jsx";
+import { StateInspector } from "./StateInspector.jsx";
 import { VictoryScreen } from "./VictoryScreen.jsx";
 import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER } from "../styles/themes/default.js";
 
@@ -619,6 +620,9 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                     {`player: ${state.currentPlayer}  |  phase: ${state.phase}  |  actionTaken: ${state.actionTaken}`}
                 </div>
             )}
+
+            {/* ── State inspector (Phase 14.2) ─────────────────────── */}
+            {debugMode && <StateInspector state={state} />}
 
             {/* ── Status bar ──────────────────────────────────────── */}
             <div className="flex gap-3 items-center flex-wrap justify-center">
