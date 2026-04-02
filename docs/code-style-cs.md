@@ -18,11 +18,11 @@ Vždy uváděj příponu `.js` v cestách importů:
 
 ```js
 // ✅ správně
-import { hexKey } from '../hex/hexUtils.js';
-import { getDiceAt } from './gameState.js';
+import { hexKey } from "../hex/hexUtils.js";
+import { getDiceAt } from "./gameState.js";
 
 // ❌ špatně — chybí .js
-import { hexKey } from '../hex/hexUtils';
+import { hexKey } from "../hex/hexUtils";
 ```
 
 > **Poznámka:** Některé starší soubory v `src/hex/` příponu stále vynechávají — oprav je při editaci.
@@ -35,9 +35,9 @@ import { hexKey } from '../hex/hexUtils';
 2. Interní importy — nejprve hlubší cesty (`../hex/…`), poté stejná složka (`./…`), abecedně uvnitř každé skupiny.
 
 ```js
-import { hexKey, hexFromKey, getNeighbors, hexesDistance } from '../hex/hexUtils.js';
-import { isOnBoard } from '../hex/boardUtils.js';
-import { getDiceAt, getTopDie, getController } from './gameState.js';
+import { hexKey, hexFromKey, getNeighbors, hexesDistance } from "../hex/hexUtils.js";
+import { isOnBoard } from "../hex/boardUtils.js";
+import { getDiceAt, getTopDie, getController } from "./gameState.js";
 ```
 
 ---
@@ -105,7 +105,7 @@ export function canCollapse(state, hex) { … }
 ```
 
 - Používej `{GameState}`, `{Die}`, `{string}`, `{number}`, `{boolean}`, `{Set<string>}`, `{string[][]}` atd.
-- V souborech, které typedef přímo neimportují, odkazuj přes `{import('./gameState.js').GameState}`.
+- V souborech, které typedef přímo neimportují, odkazuj přes `{import("./gameState.js").GameState}`.
 
 ---
 
@@ -156,10 +156,42 @@ Pro zásobníky kostek: používej `slice()` a spread pro nová pole. Nikdy `pus
 
 ---
 
+## Uvozovky
+
+Používej **dvojité uvozovky** pro řetězce. Jednoduché uvozovky používej pouze tehdy, když řetězec sám obsahuje dvojitou uvozovku.
+
+```js
+// ✅ správně
+import { hexKey } from "../hex/hexUtils.js";
+const label = "Game Over";
+const msg = 'He said "hello"';
+
+// ❌ špatně
+const label = 'Game Over';
+```
+
+---
+
 ## Žádná magická čísla
 
 Opakovaně používané geometrické konstanty vkládej do `boardConstants.js`. Číselné prahy pojmenuj pomocí `const`.
 
 ---
 
-*Zavedeno ve fázích 1–3. Aktualizuj při zavedení nových vzorů.*
+## Stylování (React komponenty)
+
+- **Preferuj Tailwind utility třídy** místo inline `style` propů pro všechny statické hodnoty.
+- `style` propsy používej pouze pro **dynamické hodnoty**, které Tailwind nedokáže vyjádřit (např. vypočtené pixelové pozice, SVG transformace, interpolované barvy).
+
+```jsx
+// ✅ správně — statický vzhled přes Tailwind
+<div className="bg-red-500 rounded-full w-6 h-6" />
+
+// ✅ správně — dynamická hodnota, kterou Tailwind neumí
+<div style={{ transform: `translate(${x}px, ${y}px)` }} />
+
+// ❌ špatně — statická hodnota jako inline styl
+<div style={{ backgroundColor: "red", borderRadius: "9999px" }} />
+```
+
+---

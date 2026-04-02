@@ -6,16 +6,16 @@
  *   splash → mainMenu → mapSelection → playerSetup → gameLoading → game
  */
 
-import { useState } from 'react';
-import { Game } from './components/Game.jsx';
-import { SplashScreen } from './components/SplashScreen.jsx';
-import { MainMenu } from './components/MainMenu.jsx';
-import { MapSelection } from './components/MapSelection.jsx';
-import { PlayerSetup } from './components/PlayerSetup.jsx';
-import { GameLoading } from './components/GameLoading.jsx';
+import { useState } from "react";
+import { Game } from "./components/Game.jsx";
+import { SplashScreen } from "./components/SplashScreen.jsx";
+import { MainMenu } from "./components/MainMenu.jsx";
+import { MapSelection } from "./components/MapSelection.jsx";
+import { PlayerSetup } from "./components/PlayerSetup.jsx";
+import { GameLoading } from "./components/GameLoading.jsx";
 
 /**
- * @typedef {'splash'|'mainMenu'|'mapSelection'|'playerSetup'|'gameLoading'|'game'} Screen
+ * @typedef {"splash"|"mainMenu"|"mapSelection"|"playerSetup"|"gameLoading"|"game"} Screen
  */
 
 /**
@@ -25,51 +25,57 @@ import { GameLoading } from './components/GameLoading.jsx';
  */
 export function App() {
     /** @type {[Screen, Function]} */
-    const [screen, setScreen] = useState('splash');
+    const [screen, setScreen] = useState("splash");
 
-    /** @type {[import('./game/boardDefinition.js').BoardDefinition|null, Function]} */
+    /** @type {[import("./game/boardDefinition.js").BoardDefinition|null, Function]} */
     const [selectedMap, setSelectedMap] = useState(null);
 
-    /** @type {[import('./components/PlayerSetup.jsx').PlayerConfig[]|null, Function]} */
+    /** @type {[import("./components/PlayerSetup.jsx").PlayerConfig[]|null, Function]} */
     const [playerConfigs, setPlayerConfigs] = useState(null);
 
-    /** @type {[{ players: string[], boardFields: import('./hex/fieldProperties.js').HexField[] }|null, Function]} */
+    /** @type {[{ players: string[], boardFields: import("./hex/fieldProperties.js").HexField[] }|null, Function]} */
     const [gameSetup, setGameSetup] = useState(null);
 
-    const navigate = (/** @type {Screen} */ target) => setScreen(target);
+    /**
+     * Transitions the app to the given screen.
+     *
+     * @param {Screen} target - Screen identifier to navigate to.
+     * @returns {void}
+     */
+    const navigate = (target) => setScreen(target);
 
     switch (screen) {
-        case 'splash':
-            return <SplashScreen onDone={() => navigate('mainMenu')} />;
-        case 'mainMenu':
-            return <MainMenu onPlay={() => navigate('mapSelection')} />;
-        case 'mapSelection':
+        case "splash":
+            return <SplashScreen onDone={() => navigate("mainMenu")} />;
+        case "mainMenu":
+            return <MainMenu onPlay={() => navigate("mapSelection")} />;
+        case "mapSelection":
             return (
                 <MapSelection
-                    onSelect={(map) => { setSelectedMap(map); navigate('playerSetup'); }}
-                    onBack={() => navigate('mainMenu')}
+                    onSelect={(map) => { setSelectedMap(map); navigate("playerSetup"); }}
+                    onBack={() => navigate("mainMenu")}
                 />
             );
-        case 'playerSetup':
+        case "playerSetup":
             return (
                 <PlayerSetup
                     map={selectedMap}
-                    onConfirm={(configs) => { setPlayerConfigs(configs); navigate('gameLoading'); }}
-                    onBack={() => navigate('mapSelection')}
+                    onConfirm={(configs) => { setPlayerConfigs(configs); navigate("gameLoading"); }}
+                    onBack={() => navigate("mapSelection")}
                 />
             );
-        case 'gameLoading':
+        case "gameLoading":
             return (
                 <GameLoading
                     playerConfigs={playerConfigs}
                     map={selectedMap}
                     onDone={(players, boardFields) => {
                         setGameSetup({ players, boardFields });
-                        navigate('game');
+                        navigate("game");
                     }}
                 />
             );
-        case 'game':
+        case "game":
             return gameSetup
                 ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} />
                 : <Game />;

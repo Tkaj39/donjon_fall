@@ -2,19 +2,19 @@
  * Focal Point Logic (Phase 6)
  *
  * Implements the focal-point scoring phase that runs at the start of each
- * player's turn, and the end-of-action snapshot that records which active
+ * player"s turn, and the end-of-action snapshot that records which active
  * focal points each player currently holds.
  */
 
-import { getDiceAt, getController, isFocalPointActive } from './gameState.js';
+import { getDiceAt, getController, isFocalPointActive } from "./gameState.js";
 
 // ---------------------------------------------------------------------------
 // 6.1 — applyFocalPhase
 // ---------------------------------------------------------------------------
 
 /**
- * Processes the focal-point scoring phase at the start of the current player's
- * turn ('focal' phase).
+ * Processes the focal-point scoring phase at the start of the current player"s
+ * turn ("focal" phase).
  *
  * If the current player held an active focal point at the end of their previous
  * turn (recorded in `state.activeFocalHolders`):
@@ -33,12 +33,12 @@ import { getDiceAt, getController, isFocalPointActive } from './gameState.js';
  * Pure function — rolls are passed in as parameters so logic is deterministic
  * and trivially testable.
  *
- * @param {import('./gameState.js').GameState} state
+ * @param {import("./gameState.js").GameState} state
  * @param {number} dieNewValue   - D6 result (1–6) for rerolling the held die;
  *                                 effective new value = max(1, min(dieNewValue, original − 1))
  * @param {number} extraDieRoll  - D6 result (1–6) that selects the next active focal point
  *                                 within the same group (extraDieRoll % N, N = passive count)
- * @returns {import('./gameState.js').GameState}
+ * @returns {import("./gameState.js").GameState}
  */
 export function applyFocalPhase(state, dieNewValue, extraDieRoll) {
     const player = state.currentPlayer;
@@ -105,8 +105,8 @@ export function applyFocalPhase(state, dieNewValue, extraDieRoll) {
  * practice this edge case should not arise with well-formed board definitions
  * where only one hex per group is active at a time.
  *
- * @param {import('./gameState.js').GameState} state
- * @returns {import('./gameState.js').GameState}
+ * @param {import("./gameState.js").GameState} state
+ * @returns {import("./gameState.js").GameState}
  */
 export function updateFocalHolders(state) {
     const newHolders = {};

@@ -4,11 +4,11 @@
  * Phase 12.6 — Die movement animation (MovingDie) and combat flash overlays.
  */
 
-import { useEffect, useState } from 'react';
-import { BOARD_HEXES, BOARD_FIELDS } from '../hex/boardConstants.js';
-import { hexCorners, hexFromKey, hexKey, hexToPixel } from '../hex/hexUtils.js';
-import { Die } from './Die.jsx';
-import { HexTile } from './HexTile.jsx';
+import { useEffect, useState } from "react";
+import { BOARD_HEXES, BOARD_FIELDS } from "../hex/boardConstants.js";
+import { hexCorners, hexFromKey, hexKey, hexToPixel } from "../hex/hexUtils.js";
+import { Die } from "./Die.jsx";
+import { HexTile } from "./HexTile.jsx";
 
 // ---------------------------------------------------------------------------
 // Layout constants
@@ -29,12 +29,12 @@ const PADDING_RATIO = 1.2;
  * `primary` — die body colour; `tint` — base-hex background tint.
  */
 const PLAYER_PALETTE = [
-    { primary: '#dc2626', tint: '#fca5a5' }, // red
-    { primary: '#2563eb', tint: '#93c5fd' }, // blue
-    { primary: '#16a34a', tint: '#86efac' }, // green
-    { primary: '#d97706', tint: '#fcd34d' }, // amber
-    { primary: '#9333ea', tint: '#d8b4fe' }, // purple
-    { primary: '#0891b2', tint: '#67e8f9' }, // cyan
+    { primary: "#dc2626", tint: "#fca5a5" }, // red
+    { primary: "#2563eb", tint: "#93c5fd" }, // blue
+    { primary: "#16a34a", tint: "#86efac" }, // green
+    { primary: "#d97706", tint: "#fcd34d" }, // amber
+    { primary: "#9333ea", tint: "#d8b4fe" }, // purple
+    { primary: "#0891b2", tint: "#67e8f9" }, // cyan
 ];
 
 /**
@@ -45,7 +45,7 @@ const DEFAULT_PLAYER_COLORS = (() => {
     const owners = [];
     for (const field of BOARD_FIELDS) {
         for (const prop of field.properties) {
-            if (prop.type === 'startingField' && !owners.includes(prop.owner)) {
+            if (prop.type === "startingField" && !owners.includes(prop.owner)) {
                 owners.push(prop.owner);
             }
         }
@@ -108,7 +108,7 @@ const STACK_OFFSET_RATIO = 0.22;
  * @param {number}   props.fromY       - Source hex centre y in SVG user units.
  * @param {number}   props.toX         - Destination hex centre x in SVG user units.
  * @param {number}   props.toY         - Destination hex centre y in SVG user units.
- * @param {import('../game/gameState.js').Die[]} props.diceStack
+ * @param {import("../game/gameState.js").Die[]} props.diceStack
  *   Dice to render in-flight (bottom → top order).
  * @param {number}   props.hexSize     - Circumradius in pixels for die rendering.
  * @param {Object.<string,{primary:string,tint:string}>} props.playerColors
@@ -149,7 +149,7 @@ function MovingDie({ fromX, fromY, toX, toY, diceStack, hexSize, playerColors })
             {diceStack.map((die, index) => {
                 const isTop       = index === diceStack.length - 1;
                 const stackOffset = (diceStack.length - 1 - index) * (hexSize * STACK_OFFSET_RATIO);
-                const color       = playerColors[die.owner]?.primary ?? 'var(--color-die-default)';
+                const color       = playerColors[die.owner]?.primary ?? "var(--color-die-default)";
                 return (
                     <Die
                         key={index}
@@ -173,9 +173,9 @@ function MovingDie({ fromX, fromY, toX, toY, diceStack, hexSize, playerColors })
 /**
  * Renders all 61 board hexes inside an SVG element.
  *
- * @param {import('../game/gameState.js').GameState|null} props.state - Current game state; null renders an empty board.
+ * @param {import("../game/gameState.js").GameState|null} props.state - Current game state; null renders an empty board.
  * @param {string|null}    props.selectedHex     - hexKey of the currently selected hex, or null.
- * @param {Object.<string,'reachable'|'selected'|'trajectory'|'enemy-reachable'>} props.highlightedHexes
+ * @param {Object.<string,"reachable"|"selected"|"trajectory"|"enemy-reachable">} props.highlightedHexes
  *   Map of hexKey → highlight type for all hexes that should be visually marked.
  * @param {{
  *   enemyKey: string,
@@ -222,12 +222,12 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
 
     /**
      * Attacker/defender flash entries rendered as pulsing polygons on top of the
-     * board while state.phase === 'combat'.
+     * board while state.phase === "combat".
      */
-    const combatFlashEntries = state?.phase === 'combat' && state.combat
+    const combatFlashEntries = state?.phase === "combat" && state.combat
         ? [
-            { hk: state.combat.attackerHex, fill: 'rgba(239,68,68,0.4)',    delay: '0s'   },
-            { hk: state.combat.defenderHex, fill: 'rgba(251,191,36,0.35)', delay: '0.4s' },
+            { hk: state.combat.attackerHex, fill: "rgba(239,68,68,0.4)",    delay: "0s"   },
+            { hk: state.combat.defenderHex, fill: "rgba(251,191,36,0.35)", delay: "0.4s" },
         ]
         : [];
 
@@ -235,7 +235,8 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
         <svg
             width="100%"
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-            style={{ display: 'block', margin: '0 auto', maxWidth: SVG_WIDTH, height: 'auto' }}
+            className="block mx-auto h-auto"
+            style={{ maxWidth: SVG_WIDTH }}
         >
             {BOARD_HEXES.map(hex => {
                 const key = hexKey(hex);
@@ -285,7 +286,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
             {combatFlashEntries.map(({ hk, fill, delay }) => {
                 const { x, y } = hexToPixel(hexFromKey(hk), HEX_SIZE);
                 const corners  = hexCorners(x + OFFSET_X, y + OFFSET_Y, TILE_SIZE);
-                const points   = corners.map(({ x: cx, y: cy }) => `${cx},${cy}`).join(' ');
+                const points   = corners.map(({ x: cx, y: cy }) => `${cx},${cy}`).join(" ");
                 return (
                     <polygon
                         key={hk}
@@ -294,7 +295,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                         stroke="none"
                         style={{
                             animation:     `combat-flash 0.8s ease-in-out ${delay} infinite`,
-                            pointerEvents: 'none',
+                            pointerEvents: "none",
                         }}
                     />
                 );

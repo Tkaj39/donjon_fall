@@ -5,11 +5,11 @@
  * hexKey format: "q,r,s"
  */
 
-import { hexKey as toHexKey } from '../hex/hexUtils.js';
+import { hexKey as toHexKey } from "../hex/hexUtils.js";
 
 /**
  * @typedef {Object} Die
- * @property {string} owner   - Player ID (e.g. 'red', 'blue')
+ * @property {string} owner   - Player ID (e.g. "red", "blue")
  * @property {1|2|3|4|5|6} value
  */
 
@@ -26,14 +26,14 @@ import { hexKey as toHexKey } from '../hex/hexUtils.js';
  * @typedef {Object} CombatState
  * @property {string}   attackerHex
  * @property {string}   defenderHex
- * @property {Array<'push'|'occupy'>} options
+ * @property {Array<"push"|"occupy">} options
  */
 
 /**
  * @typedef {Object} GameState
  * @property {string[]}                          players            - Ordered list of player IDs
  * @property {string}                            currentPlayer      - Active player ID
- * @property {'focal'|'action'|'combat'|'victory'} phase            - Current turn phase
+ * @property {"focal"|"action"|"combat"|"victory"} phase            - Current turn phase
  * @property {Object.<string, Die[]>}            dice               - hexKey → Die[]
  * @property {Object.<string, FocalPointState>}  focalPoints        - hexKey → FocalPointState
  * @property {Object.<string, number>}           scores             - playerId → VP count
@@ -96,7 +96,7 @@ export function getTowerSize(state, hexKey) {
  * @param {GameState} state
  * @param {string} hexKey
  * @param {{ jumped?: boolean }} [opts]  - pass `{ jumped: true }` for a tower-jump attack;
- *                                         in that case only the top die's face value is used
+ *                                         in that case only the top die"s face value is used
  *                                         (no own/enemy tower bonus).
  * @returns {number}
  */
@@ -113,7 +113,7 @@ export function getAttackStrength(state, hexKey, { jumped = false } = {}) {
 /**
  * Returns true if `moverDie` can be placed on top of the formation at `targetHexKey`.
  * A die can enter a tower only if its attack strength (computed as if already on the target hex)
- * strictly exceeds the current top die's attack strength at the target.
+ * strictly exceeds the current top die"s attack strength at the target.
  * @param {GameState} state
  * @param {Die} moverDie
  * @param {string} targetHexKey
@@ -123,10 +123,10 @@ export function canEnterTower(state, moverDie, targetHexKey) {
     const stack = getDiceAt(state, targetHexKey);
     if (stack.length === 0) return true; // empty hex — always fine
 
-    // Top die's attack strength at the target (current state, before mover arrives)
+    // Top die"s attack strength at the target (current state, before mover arrives)
     const topStrength = getAttackStrength(state, targetHexKey);
 
-    // Mover's standalone attack strength (solo die: own=1, enemy=0)
+    // Mover"s standalone attack strength (solo die: own=1, enemy=0)
     const moverStrength = moverDie.value + 1;
 
     return moverStrength > topStrength;
@@ -164,7 +164,7 @@ const DEFAULT_DIE_VALUE = 3;
 /**
  * Builds the canonical starting GameState for a new game.
  *
- * @param {string[]} players        - Ordered list of player IDs (e.g. ['red', 'blue']).
+ * @param {string[]} players        - Ordered list of player IDs (e.g. ["red", "blue"]).
  *                                    The first player takes the first turn.
  * @param {Array<{coords:{q,r,s}, properties:Array}>} boardFields
  *                                  - Full list of HexField objects describing the board.
@@ -185,10 +185,10 @@ export function createInitialState(players, boardFields) {
     }
 
     // Place starting dice
-    // Each player's `startingField` hexes in boardFields define where their dice begin.
+    // Each player"s `startingField` hexes in boardFields define where their dice begin.
     // All starting dice have value DEFAULT_DIE_VALUE.
     for (const field of boardFields) {
-        const startProp = field.properties.find(p => p.type === 'startingField');
+        const startProp = field.properties.find(p => p.type === "startingField");
         if (startProp && players.includes(startProp.owner)) {
             const key = toHexKey(field.coords);
             dice[key] = [{ owner: startProp.owner, value: DEFAULT_DIE_VALUE }];
@@ -197,7 +197,7 @@ export function createInitialState(players, boardFields) {
 
     // Build focal point state from board definition
     for (const field of boardFields) {
-        const fpProp = field.properties.find(p => p.type === 'focalPoint');
+        const fpProp = field.properties.find(p => p.type === "focalPoint");
         if (fpProp) {
             const key = toHexKey(field.coords);
             focalPoints[key] = { isActive: fpProp.active, group: fpProp.group };
@@ -207,7 +207,7 @@ export function createInitialState(players, boardFields) {
     return {
         players: [...players],
         currentPlayer: players[0],
-        phase: 'focal',
+        phase: "focal",
         dice,
         focalPoints,
         scores,

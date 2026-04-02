@@ -6,8 +6,8 @@
  *   { coords: {q, r, s}, properties: HexProperty[] }
  *
  * HexProperty is one of:
- *   { type: 'startingField', owner: 'red' | 'blue' }
- *   { type: 'focalPoint', active: boolean, group: 'left' | 'center' | 'right' }
+ *   { type: "startingField", owner: "red" | "blue" }
+ *   { type: "focalPoint", active: boolean, group: "left" | "center" | "right" }
  */
 
 /**

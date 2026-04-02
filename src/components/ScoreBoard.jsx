@@ -4,10 +4,10 @@
  * Phase 12.6 — Score-pop animation when a player gains a point.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from "react";
 
 /**
- * Returns the CSS variable for a player's label colour, falling back to the
+ * Returns the CSS variable for a player"s label colour, falling back to the
  * generic player-fallback variable for unknown IDs.
  *
  * @param {string} playerId
@@ -24,7 +24,7 @@ function playerLabelColor(playerId) {
 /**
  * Panel showing the victory point total for each player.
  * Plays a brief scale-pop animation (Phase 12.6) on the VP number when a
- * player's score increases.
+ * player"s score increases.
  *
  * @param {Object}                 props
  * @param {string[]}               props.players - Ordered list of player IDs.
@@ -57,55 +57,29 @@ export function ScoreBoard({ players, scores }) {
         <div
             role="region"
             aria-label="Score board"
-            style={{
-                display:       'flex',
-                gap:           '1rem',
-                background:    'var(--color-panel-bg, #1e293b)',
-                border:        '2px solid var(--color-panel-border, #475569)',
-                borderRadius:  '0.75rem',
-                padding:       '0.6rem 1rem',
-                color:         'var(--color-panel-text, #f1f5f9)',
-                boxShadow:     '0 4px 16px rgba(0,0,0,0.4)',
-            }}
+            className="flex gap-4 bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-xl py-[0.6rem] px-4 text-[var(--color-panel-text,#f1f5f9)] shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
         >
             {players.map((playerId) => (
                 <div
                     key={playerId}
                     data-testid={`score-${playerId}`}
-                    style={{
-                        display:    'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        minWidth:   '3.5rem',
-                    }}
+                    className="flex flex-col items-center min-w-14"
                 >
                     <span
-                        style={{
-                            fontSize:    '0.7rem',
-                            fontWeight:  600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            color:       playerLabelColor(playerId),
-                        }}
+                        className="text-[0.7rem] font-semibold uppercase tracking-[0.05em]"
+                        style={{ color: playerLabelColor(playerId) }}
                     >
                         {playerId}
                     </span>
                     <span
                         key={`${playerId}-${scores[playerId] ?? 0}`}
                         data-testid={`score-value-${playerId}`}
-                        style={{
-                            fontSize:  '1.8rem',
-                            fontWeight: 700,
-                            lineHeight: 1.1,
-                            display:   'inline-block',
-                            animation: animatedSet.has(playerId)
-                                ? 'score-pop 0.45s ease-out'
-                                : 'none',
-                        }}
+                        className="text-[1.8rem] font-bold leading-[1.1] inline-block"
+                        style={{ animation: animatedSet.has(playerId) ? "score-pop 0.45s ease-out" : "none" }}
                     >
                         {scores[playerId] ?? 0}
                     </span>
-                    <span style={{ fontSize: '0.65rem', opacity: 0.5 }}>VP</span>
+                    <span className="text-[0.65rem] opacity-50">VP</span>
                 </div>
             ))}
         </div>

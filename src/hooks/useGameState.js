@@ -2,9 +2,9 @@
  * Phase 2 — React hook for managing game state and exposing bound selectors.
  */
 
-import { useReducer, useCallback } from 'react';
-import { gameReducer } from '../game/gameReducer.js';
-import { createInitialState } from '../game/gameState.js';
+import { useReducer, useCallback } from "react";
+import { gameReducer } from "../game/gameReducer.js";
+import { createInitialState } from "../game/gameState.js";
 import {
   getDiceAt,
   getTopDie,
@@ -14,7 +14,7 @@ import {
   canEnterTower,
   isFocalPointActive,
   getActiveFocalPoints,
-} from '../game/gameState.js';
+} from "../game/gameState.js";
 import {
   getReachableHexes,
   getJumpReachableHexes,
@@ -23,17 +23,17 @@ import {
   getTowerMoveRange,
   canCollapse,
   getApproachDirections,
-} from '../game/movement.js';
-import { canAttack, getAvailableCombatOptions, canPush } from '../game/combat.js';
-import { hasLegalMoves } from '../game/turnManager.js';
+} from "../game/movement.js";
+import { canAttack, getAvailableCombatOptions, canPush } from "../game/combat.js";
+import { hasLegalMoves } from "../game/turnManager.js";
 
 /**
  * React hook that holds the full game state and exposes dispatch + convenience selectors.
  *
- * @param {string[]} players - Ordered list of player IDs, e.g. ['red', 'blue']
- * @param {import('../hex/fieldProperties.js').HexField[]} boardFields - Board field definitions
+ * @param {string[]} players - Ordered list of player IDs, e.g. ["red", "blue"]
+ * @param {import("../hex/fieldProperties.js").HexField[]} boardFields - Board field definitions
  * @returns {{
- *   state: import('../game/gameState.js').GameState,
+ *   state: import("../game/gameState.js").GameState,
  *   dispatch: Function,
  *   getDiceAt: Function,
  *   getTopDie: Function,

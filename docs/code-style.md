@@ -18,11 +18,11 @@ Always include the `.js` extension in import paths:
 
 ```js
 // ✅ correct
-import { hexKey } from '../hex/hexUtils.js';
-import { getDiceAt } from './gameState.js';
+import { hexKey } from "../hex/hexUtils.js";
+import { getDiceAt } from "./gameState.js";
 
 // ❌ wrong — missing .js
-import { hexKey } from '../hex/hexUtils';
+import { hexKey } from "../hex/hexUtils";
 ```
 
 > **Note:** Some older files under `src/hex/` still omit the extension — fix them when touched.
@@ -35,9 +35,9 @@ import { hexKey } from '../hex/hexUtils';
 2. Internal imports — deeper paths first (`../hex/…`), then same-directory (`./…`), alphabetical within each group.
 
 ```js
-import { hexKey, hexFromKey, getNeighbors, hexesDistance } from '../hex/hexUtils.js';
-import { isOnBoard } from '../hex/boardUtils.js';
-import { getDiceAt, getTopDie, getController } from './gameState.js';
+import { hexKey, hexFromKey, getNeighbors, hexesDistance } from "../hex/hexUtils.js";
+import { isOnBoard } from "../hex/boardUtils.js";
+import { getDiceAt, getTopDie, getController } from "./gameState.js";
 ```
 
 ---
@@ -105,7 +105,7 @@ export function canCollapse(state, hex) { … }
 ```
 
 - Use `{GameState}`, `{Die}`, `{string}`, `{number}`, `{boolean}`, `{Set<string>}`, `{string[][]}`, etc.
-- In files that don't import the typedef directly, cross-reference with `{import('./gameState.js').GameState}`.
+- In files that don't import the typedef directly, cross-reference with `{import("./gameState.js").GameState}`.
 
 ---
 
@@ -156,10 +156,40 @@ For dice stacks: use `slice()` and spread to create new arrays. Never `push` / `
 
 ---
 
+## Quotes
+
+Use **double quotes** for strings. Use single quotes only when the string itself contains a double quote.
+
+```js
+// ✅ correct
+import { hexKey } from "../hex/hexUtils.js";
+const label = "Game Over";
+const msg = 'He said "hello"';
+
+// ❌ wrong
+const label = 'Game Over';
+```
+
+---
+
 ## No Magic Numbers
 
 Extract repeated geometry constants into `boardConstants.js`. Give numeric thresholds a named `const`.
 
 ---
 
-*Established in Phases 1–3. Update when new patterns are introduced.*
+## Styling (React Components)
+
+- **Prefer Tailwind utility classes** over inline `style` props for all static values.
+- Use `style` props only for **dynamic values** that Tailwind cannot express (e.g. computed pixel positions, SVG transform values, interpolated colors).
+
+```jsx
+// ✅ correct — static appearance via Tailwind
+<div className="bg-red-500 rounded-full w-6 h-6" />
+
+// ✅ correct — dynamic value that Tailwind cannot do
+<div style={{ transform: `translate(${x}px, ${y}px)` }} />
+
+// ❌ wrong — static value as inline style
+<div style={{ backgroundColor: "red", borderRadius: "9999px" }} />
+```

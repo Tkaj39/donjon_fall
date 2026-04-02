@@ -18,9 +18,9 @@
  * Victory is detected and shown via VictoryScreen.
  */
 
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { getAvailableCombatOptions } from '../game/combat.js';
-import { getController, getTopDie, getTowerSize, canEnterTower } from '../game/gameState.js';
+import { useState, useMemo, useEffect, useRef } from "react";
+import { getAvailableCombatOptions } from "../game/combat.js";
+import { getController, getTopDie, getTowerSize, canEnterTower } from "../game/gameState.js";
 import {
     getReachableHexes,
     getTowerReachableHexes,
@@ -28,26 +28,26 @@ import {
     canCollapse,
     getShortestPathToHex,
     getApproachDirections,
-} from '../game/movement.js';
-import { hasLegalMoves } from '../game/turnManager.js';
-import { BOARD_FIELDS } from '../hex/boardConstants.js';
-import { hexFromKey, hexesDistance } from '../hex/hexUtils.js';
-import { useGameState } from '../hooks/useGameState.js';
-import { ActionPanel } from './ActionPanel.jsx';
-import { ACTION_ORDER } from './actionConstants.js';
-import { Board, MOVE_ANIMATION_MS } from './Board.jsx';
-import { CombatOverlay } from './CombatOverlay.jsx';
-import { PhaseIndicator } from './PhaseIndicator.jsx';
-import { RulesViewer } from './RulesViewer.jsx';
-import { ScoreBoard } from './ScoreBoard.jsx';
-import { VictoryScreen } from './VictoryScreen.jsx';
+} from "../game/movement.js";
+import { hasLegalMoves } from "../game/turnManager.js";
+import { BOARD_FIELDS } from "../hex/boardConstants.js";
+import { hexFromKey, hexesDistance } from "../hex/hexUtils.js";
+import { useGameState } from "../hooks/useGameState.js";
+import { ActionPanel } from "./ActionPanel.jsx";
+import { ACTION_ORDER } from "./actionConstants.js";
+import { Board, MOVE_ANIMATION_MS } from "./Board.jsx";
+import { CombatOverlay } from "./CombatOverlay.jsx";
+import { PhaseIndicator } from "./PhaseIndicator.jsx";
+import { RulesViewer } from "./RulesViewer.jsx";
+import { ScoreBoard } from "./ScoreBoard.jsx";
+import { VictoryScreen } from "./VictoryScreen.jsx";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 /** Fallback player list used when Game is launched without setup flow. */
-const DEFAULT_PLAYERS = ['red', 'blue'];
+const DEFAULT_PLAYERS = ["red", "blue"];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -71,7 +71,7 @@ function rollD6() {
  *
  * @param {{
  *   players?: string[],
- *   boardFields?: import('../hex/fieldProperties.js').HexField[],
+ *   boardFields?: import("../hex/fieldProperties.js").HexField[],
  * }} props
  * @returns {JSX.Element}
  */
@@ -86,7 +86,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
     const [selectedHex, setSelectedHex] = useState(null);
 
     /**
-     * Active action key: 'move-die' | 'move-tower' | 'reroll' | 'collapse' | null.
+     * Active action key: "move-die" | "move-tower" | "reroll" | "collapse" | null.
      * Auto-set to the first applicable action when a hex is selected.
      */
     const [activeAction, setActiveAction] = useState(null);
@@ -133,14 +133,14 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
     const focalFiredRef = useRef(false);
 
     useEffect(() => {
-        if (state.phase !== 'focal') {
+        if (state.phase !== "focal") {
             focalFiredRef.current = false;
             return;
         }
         if (focalFiredRef.current) return;
         focalFiredRef.current = true;
         dispatch({
-            type:        'ADVANCE_FOCAL_PHASE',
+            type:        "ADVANCE_FOCAL_PHASE",
             dieNewValue: rollD6(),
             extraDieRoll: rollD6(),
         });
@@ -158,7 +158,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
          * @returns {void}
          */
         function handleKeyDown(e) {
-            if (e.key !== 'Escape') return;
+            if (e.key !== "Escape") return;
             setTrajectoryPath((prev) => {
                 if (prev.length > 0) return []; // cancel trajectory only
                 // No trajectory — deselect piece
@@ -167,8 +167,8 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
                 return [];
             });
         }
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
     }, []); // setters are stable; no external values read
 
     // -----------------------------------------------------------------------
@@ -190,7 +190,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
     }, [pendingMove, dispatch]);
 
     // -----------------------------------------------------------------------
-    // 12.2 — Wrap ActionPanel's onActionSelect to clear trajectory on switch
+    // 12.2 — Wrap ActionPanel"s onActionSelect to clear trajectory on switch
     // -----------------------------------------------------------------------
 
     /**
@@ -198,7 +198,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
      * Clears any planned trajectory so stale path highlights are removed when
      * the player switches to a different action.
      *
-     * @param {string} action - The action key chosen (e.g. 'move-die', 'reroll').
+     * @param {string} action - The action key chosen (e.g. "move-die", "reroll").
      * @returns {void}
      */
     function handleActionSelect(action) {
@@ -212,10 +212,10 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
 
     /**
      * List of action keys that are legal for the currently selected hex.
-     * Excludes 'move-tower' if the selected piece is not a tower.
+     * Excludes "move-tower" if the selected piece is not a tower.
      */
     const availableActions = useMemo(() => {
-        if (state.phase !== 'action' || !selectedHex || state.actionTaken) return [];
+        if (state.phase !== "action" || !selectedHex || state.actionTaken) return [];
         if (getController(state, selectedHex) !== state.currentPlayer) return [];
 
         const actions = [];
@@ -224,17 +224,17 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
             getTowerSize(state, selectedHex) > 1 &&
             getTowerReachableHexes(state, selectedHex).size > 0
         ) {
-            actions.push('move-tower');
+            actions.push("move-tower");
         }
 
         if (getReachableHexes(state, selectedHex).size > 0) {
-            actions.push('move-die');
+            actions.push("move-die");
         }
 
-        actions.push('reroll');
+        actions.push("reroll");
 
         if (canCollapse(state, selectedHex)) {
-            actions.push('collapse');
+            actions.push("collapse");
         }
 
         return actions;
@@ -264,8 +264,8 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
      * Empty when the action is not a movement action or nothing is selected.
      */
     const reachableKeys = useMemo(() => {
-        if (!selectedHex || state.phase !== 'action' || state.actionTaken) return new Set();
-        if (activeAction === 'move-die') {
+        if (!selectedHex || state.phase !== "action" || state.actionTaken) return new Set();
+        if (activeAction === "move-die") {
             // getReachableHexes includes own-die hexes as potential landing spots,
             // but the UI should only treat them as destinations when tower entry
             // is legal (mover value strictly exceeds top die value).
@@ -279,7 +279,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
             }
             return filtered;
         }
-        if (activeAction === 'move-tower') return getTowerReachableHexes(state, selectedHex);
+        if (activeAction === "move-tower") return getTowerReachableHexes(state, selectedHex);
         return new Set();
     }, [state, selectedHex, activeAction]);
 
@@ -328,7 +328,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
      *
      * When a trajectory is planned:
      *  - All reachable hexes are shown first (reachable / enemy-reachable).
-     *  - Trajectory path hexes (excluding selectedHex) are overlaid as 'trajectory',
+     *  - Trajectory path hexes (excluding selectedHex) are overlaid as "trajectory",
      *    making the planned path clearly distinct.
      */
     const highlightedHexes = useMemo(() => {
@@ -339,13 +339,13 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
         for (const key of reachableKeys) {
             const ctrl = getController(state, key);
             map[key] = ctrl !== null && ctrl !== state.currentPlayer
-                ? 'enemy-reachable'
-                : 'reachable';
+                ? "enemy-reachable"
+                : "reachable";
         }
 
         // Overlay — planned trajectory path (takes visual priority over base layer)
         for (const key of trajectoryPath.slice(1)) {
-            map[key] = 'trajectory';
+            map[key] = "trajectory";
         }
 
         return map;
@@ -358,14 +358,14 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
     /**
      * Player ID of the winner, or null if the game is still ongoing.
      * Victory conditions:
-     *  - `phase === 'victory'`: current player just scored the winning point.
-     *  - `phase === 'action'` with no action taken and no legal moves: sudden
+     *  - `phase === "victory"`: current player just scored the winning point.
+     *  - `phase === "action"` with no action taken and no legal moves: sudden
      *    death; the other player wins.
      */
     const winner = useMemo(() => {
-        if (state.phase === 'victory') return state.currentPlayer;
+        if (state.phase === "victory") return state.currentPlayer;
         if (
-            state.phase === 'action' &&
+            state.phase === "action" &&
             !state.actionTaken &&
             !hasLegalMoves(state)
         ) {
@@ -413,7 +413,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
      * @returns {void}
      */
     function handleHexClick(clickedKey) {
-        if (state.phase !== 'action' || winner || pendingMove) return;
+        if (state.phase !== "action" || winner || pendingMove) return;
 
         const ctrl  = getController(state, clickedKey);
         const isOwn = ctrl === state.currentPlayer;
@@ -430,11 +430,11 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
                 // Cancel trajectory but keep piece selected
                 setTrajectoryPath([]);
                 setPickerApproachKey(null);
-            } else if (activeAction === 'reroll') {
-                dispatch({ type: 'REROLL', hex: clickedKey, newValue: rollD6() });
+            } else if (activeAction === "reroll") {
+                dispatch({ type: "REROLL", hex: clickedKey, newValue: rollD6() });
                 deselect();
-            } else if (activeAction === 'collapse') {
-                dispatch({ type: 'COLLAPSE', hex: clickedKey });
+            } else if (activeAction === "collapse") {
+                dispatch({ type: "COLLAPSE", hex: clickedKey });
                 deselect();
             } else {
                 deselect();
@@ -444,7 +444,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
 
         // ── Movement actions — two-step trajectory flow ───────────────────
         if (
-            (activeAction === 'move-die' || activeAction === 'move-tower') &&
+            (activeAction === "move-die" || activeAction === "move-tower") &&
             !state.actionTaken &&
             reachableKeys.has(clickedKey)
         ) {
@@ -456,7 +456,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
                 // ── Step 2: second click on planned destination — commit ───
                 // Queue as a pending animation (Phase 12.6); the reducer fires
                 // after MOVE_ANIMATION_MS once the die reaches its destination.
-                const actionType = activeAction === 'move-die' ? 'MOVE_DIE' : 'MOVE_TOWER';
+                const actionType = activeAction === "move-die" ? "MOVE_DIE" : "MOVE_TOWER";
                 setPendingMove({
                     fromKey:          selectedHex,
                     toKey:            clickedKey,
@@ -470,7 +470,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
                     ? trajectoryPath[trajectoryPath.length - 1]
                     : null;
 
-                const moveRange = activeAction === 'move-tower'
+                const moveRange = activeAction === "move-tower"
                     ? getTowerMoveRange(state, selectedHex)
                     : (getTopDie(state, selectedHex)?.value ?? 0);
                 const stepsUsed      = trajectoryPath.length > 0 ? trajectoryPath.length - 1 : 0;
@@ -512,20 +512,20 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
     /**
      * Handles a combat option chosen in CombatOverlay.
      *
-     * @param {'push'|'occupy'} option - The chosen combat action.
+     * @param {"push"|"occupy"} option - The chosen combat action.
      * @returns {void}
      */
     function handleCombatChoose(option) {
-        dispatch({ type: 'CHOOSE_COMBAT_OPTION', option, rerollValue: rollD6() });
+        dispatch({ type: "CHOOSE_COMBAT_OPTION", option, rerollValue: rollD6() });
     }
 
     /**
-     * Ends the current player's turn after their action is complete.
+     * Ends the current player"s turn after their action is complete.
      *
      * @returns {void}
      */
     function handleEndTurn() {
-        dispatch({ type: 'END_TURN' });
+        dispatch({ type: "END_TURN" });
         deselect();
     }
 
@@ -542,9 +542,9 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
     // Render helpers
     // -----------------------------------------------------------------------
 
-    const combatOptions    = state.phase === 'combat' ? getAvailableCombatOptions(state) : [];
-    const canEndTurn       = state.phase === 'action' && state.actionTaken;
-    const showActionPanel  = state.phase === 'action' && selectedHex !== null && !state.actionTaken;
+    const combatOptions    = state.phase === "combat" ? getAvailableCombatOptions(state) : [];
+    const canEndTurn       = state.phase === "action" && state.actionTaken;
+    const showActionPanel  = state.phase === "action" && selectedHex !== null && !state.actionTaken;
 
     // -----------------------------------------------------------------------
     // Render
@@ -552,72 +552,30 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
 
     return (
         <div
-            style={{
-                position:      'relative',
-                minHeight:     '100vh',
-                display:       'flex',
-                flexDirection: 'column',
-                alignItems:    'center',
-                padding:       '1.5rem 1rem',
-                gap:           '0.75rem',
-                background:    'var(--color-bg, #0f172a)',
-                color:         'var(--color-text, #f1f5f9)',
-                boxSizing:     'border-box',
-            }}
+            className="relative min-h-screen flex flex-col items-center py-6 px-4 gap-3 bg-[var(--color-bg,#0f172a)] text-[var(--color-text,#f1f5f9)] box-border"
         >
             {/* ── Header ──────────────────────────────────────────── */}
-            <div
-                style={{
-                    display:        'flex',
-                    alignItems:     'center',
-                    gap:            '0.75rem',
-                    width:          '100%',
-                    justifyContent: 'center',
-                }}
-            >
-                <h1
-                    style={{
-                        fontSize:   '1.75rem',
-                        fontWeight: 700,
-                        margin:     0,
-                        color:      'var(--color-title, #f8fafc)',
-                    }}
-                >
+            <div className="flex items-center gap-3 w-full justify-center">
+                <h1 className="text-[1.75rem] font-bold m-0 text-[var(--color-title,#f8fafc)]">
                     Donjon Fall
                 </h1>
                 <button
                     aria-label="Open rules"
                     onClick={() => setShowRules(true)}
-                    style={{
-                        background:   'transparent',
-                        border:       '1px solid var(--color-panel-border, #475569)',
-                        borderRadius: '999px',
-                        color:        'var(--color-panel-text, #f1f5f9)',
-                        cursor:       'pointer',
-                        fontSize:     '0.85rem',
-                        padding:      '0.2rem 0.6rem',
-                    }}
+                    className="bg-transparent border border-[var(--color-panel-border,#475569)] rounded-full text-[var(--color-panel-text,#f1f5f9)] cursor-pointer text-[0.85rem] py-[0.2rem] px-[0.6rem]"
                 >
                     ?
                 </button>
             </div>
 
             {/* ── Status bar ──────────────────────────────────────── */}
-            <div
-                style={{
-                    display:        'flex',
-                    gap:            '0.75rem',
-                    alignItems:     'center',
-                    flexWrap:       'wrap',
-                    justifyContent: 'center',
-                }}
-            >
+            <div className="flex gap-3 items-center flex-wrap justify-center">
                 <ScoreBoard players={state.players} scores={state.scores} />
                 <PhaseIndicator phase={state.phase} currentPlayer={state.currentPlayer} />
             </div>
 
             {/* ── Board (with combat overlay) ─────────────────────── */}
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
                 <Board
                     state={state}
                     selectedHex={selectedHex}
@@ -632,7 +590,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
                     onHexClick={handleHexClick}
                 />
 
-                {state.phase === 'combat' && (
+                {state.phase === "combat" && (
                     <CombatOverlay
                         state={state}
                         options={combatOptions}
@@ -655,16 +613,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
             {canEndTurn && (
                 <button
                     onClick={handleEndTurn}
-                    style={{
-                        background:   'var(--color-panel-bg, #1e293b)',
-                        border:       '2px solid var(--color-panel-border, #475569)',
-                        borderRadius: '0.5rem',
-                        color:        'var(--color-panel-text, #f1f5f9)',
-                        cursor:       'pointer',
-                        fontSize:     '1rem',
-                        fontWeight:   600,
-                        padding:      '0.6rem 1.5rem',
-                    }}
+                    className="bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-lg text-[var(--color-panel-text,#f1f5f9)] cursor-pointer text-base font-semibold py-[0.6rem] px-6"
                 >
                     End Turn
                 </button>
