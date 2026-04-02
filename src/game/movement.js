@@ -128,7 +128,16 @@ export function getPathsToHex(state, fromKey, toKey) {
     const maxSteps = moverDie.value;
     const paths = [];
 
-    // DFS — `visited` prevents cycles within the current path
+    /**
+     * Depth-first search that builds all valid paths from `currentKey` to `toKey`.
+     * `visited` prevents cycles within the current path.
+     *
+     * @param {string}   currentKey   - Hex key of the current position.
+     * @param {number}   stepsLeft    - Remaining movement steps.
+     * @param {string[]} currentPath  - Ordered hex keys visited so far (start-inclusive).
+     * @param {Set<string>} visited   - Set of hex keys already in the current path.
+     * @returns {void}
+     */
     function dfs(currentKey, stepsLeft, currentPath, visited) {
         if (currentKey === toKey) {
             paths.push([...currentPath]);

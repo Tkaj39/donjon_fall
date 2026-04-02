@@ -154,6 +154,13 @@ export function PlayerSetup({ map, onConfirm, onBack }) {
         ),
     );
 
+    /**
+     * Applies a partial update to the player config at the given index.
+     *
+     * @param {number} index - Index in the configs array to update.
+     * @param {Partial<PlayerConfig>} patch - Fields to merge into the existing config.
+     * @returns {void}
+     */
     function updateConfig(index, patch) {
         setConfigs(prev => prev.map((c, i) => (i === index ? { ...c, ...patch } : c)));
     }

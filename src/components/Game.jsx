@@ -151,6 +151,12 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
     // -----------------------------------------------------------------------
 
     useEffect(() => {
+        /**
+         * Handles keydown events; cancels trajectory or deselects piece on Escape.
+         *
+         * @param {KeyboardEvent} e
+         * @returns {void}
+         */
         function handleKeyDown(e) {
             if (e.key !== 'Escape') return;
             setTrajectoryPath((prev) => {

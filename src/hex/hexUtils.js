@@ -1,6 +1,9 @@
-// Cube coordinate utilities for hex grid
+/**
+ * Cube coordinate utilities for the hex grid.
+ * Phase 1 — Hex geometry helpers used across the entire codebase.
+ */
 
-// The 6 cube directions
+/** The 6 cube directions for a hex grid. */
 const CUBE_DIRECTIONS = [
     {q: 1, r: -1, s: 0},
     {q: 1, r: 0, s: -1},
@@ -9,6 +12,42 @@ const CUBE_DIRECTIONS = [
     {q: -1, r: 0, s: 1},
     {q: 0, r: -1, s: 1},
 ];
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Rounds floating-point cube coordinates to the nearest valid hex.
+ * getPath produces fractional cube coords by linearly interpolating between two
+ * integer hex coords at evenly-spaced t values. For example, interpolating from
+ * {q:0,r:0,s:0} to {q:3,r:-1,s:-2} at t=1/3 yields {q:1.0,r:-0.33,s:-0.67} —
+ * not a real hex, but geometrically on the straight-line path between the two.
+ * cubeRound snaps each such point to the nearest integer hex while preserving
+ * the q+r+s=0 constraint, giving the hexes that make up the path.
+ * @param {{q: number, r: number, s: number}} hex - fractional cube coordinates
+ * @returns {{q: number, r: number, s: number}}
+ */
+function cubeRound({q, r, s}) {
+    let roundedQ = Math.round(q);
+    let roundedR = Math.round(r);
+    let roundedS = Math.round(s);
+    const errorQ = Math.abs(roundedQ - q);
+    const errorR = Math.abs(roundedR - r);
+    const errorS = Math.abs(roundedS - s);
+    if (errorQ > errorR && errorQ > errorS) {
+        roundedQ = -roundedR - roundedS;
+    } else if (errorR > errorS) {
+        roundedR = -roundedQ - roundedS;
+    } else {
+        roundedS = -roundedQ - roundedR;
+    }
+    return {q: roundedQ, r: roundedR, s: roundedS};
+}
+
+// ---------------------------------------------------------------------------
+// Exported functions
+// ---------------------------------------------------------------------------
 
 /**
  * Returns the distance in steps between two hexes in cube coordinates. Has no board awareness.
@@ -70,34 +109,6 @@ export function getPath(from, to) {
         }));
     }
     return results;
-}
-
-/**
- * Rounds floating-point cube coordinates to the nearest valid hex.
- * getPath produces fractional cube coords by linearly interpolating between two
- * integer hex coords at evenly-spaced t values. For example, interpolating from
- * {q:0,r:0,s:0} to {q:3,r:-1,s:-2} at t=1/3 yields {q:1.0,r:-0.33,s:-0.67} —
- * not a real hex, but geometrically on the straight-line path between the two.
- * cubeRound snaps each such point to the nearest integer hex while preserving
- * the q+r+s=0 constraint, giving the hexes that make up the path.
- * @param {{q: number, r: number, s: number}} hex - fractional cube coordinates
- * @returns {{q: number, r: number, s: number}}
- */
-function cubeRound({q, r, s}) {
-    let roundedQ = Math.round(q);
-    let roundedR = Math.round(r);
-    let roundedS = Math.round(s);
-    const errorQ = Math.abs(roundedQ - q);
-    const errorR = Math.abs(roundedR - r);
-    const errorS = Math.abs(roundedS - s);
-    if (errorQ > errorR && errorQ > errorS) {
-        roundedQ = -roundedR - roundedS;
-    } else if (errorR > errorS) {
-        roundedR = -roundedQ - roundedS;
-    } else {
-        roundedS = -roundedQ - roundedR;
-    }
-    return {q: roundedQ, r: roundedR, s: roundedS};
 }
 
 /**

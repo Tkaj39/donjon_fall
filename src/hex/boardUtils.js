@@ -1,3 +1,8 @@
+/**
+ * Board membership utilities.
+ * Phase 1 — Provides isOnBoard() for validating hex coordinates against the 61-hex board.
+ */
+
 import { hexKey } from './hexUtils.js';
 import { BOARD_HEX_SET } from './boardConstants.js';
 
