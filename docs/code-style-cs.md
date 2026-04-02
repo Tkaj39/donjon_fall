@@ -156,9 +156,43 @@ Pro zásobníky kostek: používej `slice()` a spread pro nová pole. Nikdy `pus
 
 ---
 
+## Uvozovky
+
+Používej **dvojité uvozovky** pro řetězce. Jednoduché uvozovky používej pouze tehdy, když řetězec sám obsahuje dvojitou uvozovku.
+
+```js
+// ✅ správně
+import { hexKey } from "../hex/hexUtils.js";
+const label = "Game Over";
+const msg = 'He said "hello"';
+
+// ❌ špatně
+const label = 'Game Over';
+```
+
+---
+
 ## Žádná magická čísla
 
 Opakovaně používané geometrické konstanty vkládej do `boardConstants.js`. Číselné prahy pojmenuj pomocí `const`.
+
+---
+
+## Stylování (React komponenty)
+
+- **Preferuj Tailwind utility třídy** místo inline `style` propů pro všechny statické hodnoty.
+- `style` propsy používej pouze pro **dynamické hodnoty**, které Tailwind nedokáže vyjádřit (např. vypočtené pixelové pozice, SVG transformace, interpolované barvy).
+
+```jsx
+// ✅ správně — statický vzhled přes Tailwind
+<div className="bg-red-500 rounded-full w-6 h-6" />
+
+// ✅ správně — dynamická hodnota, kterou Tailwind neumí
+<div style={{ transform: `translate(${x}px, ${y}px)` }} />
+
+// ❌ špatně — statická hodnota jako inline styl
+<div style={{ backgroundColor: 'red', borderRadius: '9999px' }} />
+```
 
 ---
 
