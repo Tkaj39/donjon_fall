@@ -3,11 +3,15 @@
  * Phase 11.3 — Wires useGameState to the board, action panel, combat overlay,
  * victory screen, score board, phase indicator, and rules viewer.
  *
- * Click flow (action phase):
- *   1. Click own die              → select it; reachable hexes highlighted.
- *   2. Click reachable destination → dispatch move action; deselect.
- *   3. Click selected die again   → execute in-place action (reroll / collapse)
- *                                   or deselect if no in-place action is active.
+ * Click flow (action phase) — Phase 12.2 two-step trajectory:
+ *   1. Click own die                   → select it; reachable hexes highlighted.
+ *   2. Click reachable destination         → auto-path trajectory planned; NOT committed.
+ *   2a. Click hex adjacent to traj. end   → extend trajectory by one step (manual path).
+ *   2b. Click non-adjacent reachable hex  → re-plan auto-path trajectory.
+ *   3. Click trajectory destination again → commit move action; deselect.
+ *   3b. Click selected die / Escape       → cancel trajectory (keep selection).
+ *   (single-click) Click selected die  → execute in-place action (reroll / collapse)
+ *                                        or deselect if no in-place action active.
  *
  * Focal phase is auto-advanced with fresh random rolls (no user interaction).
  * Combat phase is handled by CombatOverlay.
@@ -15,23 +19,28 @@
  */
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useGameState } from '../hooks/useGameState.js';
+import { getAvailableCombatOptions } from '../game/combat.js';
 import { getController, getTopDie, getTowerSize, canEnterTower } from '../game/gameState.js';
 import {
     getReachableHexes,
     getTowerReachableHexes,
+    getTowerMoveRange,
     canCollapse,
+    getShortestPathToHex,
+    getApproachDirections,
 } from '../game/movement.js';
-import { getAvailableCombatOptions } from '../game/combat.js';
 import { hasLegalMoves } from '../game/turnManager.js';
 import { BOARD_FIELDS } from '../hex/boardConstants.js';
-import { Board } from './Board.jsx';
+import { hexFromKey, hexesDistance } from '../hex/hexUtils.js';
+import { useGameState } from '../hooks/useGameState.js';
 import { ActionPanel } from './ActionPanel.jsx';
+import { ACTION_ORDER } from './actionConstants.js';
+import { Board, MOVE_ANIMATION_MS } from './Board.jsx';
 import { CombatOverlay } from './CombatOverlay.jsx';
-import { VictoryScreen } from './VictoryScreen.jsx';
-import { ScoreBoard } from './ScoreBoard.jsx';
 import { PhaseIndicator } from './PhaseIndicator.jsx';
 import { RulesViewer } from './RulesViewer.jsx';
+import { ScoreBoard } from './ScoreBoard.jsx';
+import { VictoryScreen } from './VictoryScreen.jsx';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -39,12 +48,6 @@ import { RulesViewer } from './RulesViewer.jsx';
 
 /** Default player list for a two-player game. */
 const PLAYERS = ['red', 'blue'];
-
-/**
- * Preferred action selection order (matches ActionPanel's display order).
- * 'collapse' is appended at the end — disambiguation handled in Phase 12.3.
- */
-const ACTION_ORDER = ['move-tower', 'move-die', 'reroll', 'collapse'];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -89,6 +92,34 @@ export function Game() {
     /** Whether the rules modal is open. */
     const [showRules, setShowRules] = useState(false);
 
+    /**
+     * Planned movement trajectory as an ordered array of hexKeys, starting at
+     * `selectedHex` and ending at the chosen destination.  Empty array = no
+     * trajectory planned yet.  The move is NOT committed until the player
+     * confirms by clicking the destination a second time (Phase 12.2).
+     */
+    const [trajectoryPath, setTrajectoryPath] = useState([]);
+
+    /**
+     * Approach direction hexKey chosen via the Phase 12.4 direction picker, or
+     * null if the player has not yet hovered a segment.  When null the fallback
+     * is the penultimate hex of `trajectoryPath`.
+     *
+     * Reset to null whenever the trajectory changes so that a fresh hover
+     * always overrides the auto-path default.
+     */
+    const [pickerApproachKey, setPickerApproachKey] = useState(null);
+
+    /**
+     * Move that has been queued for animation but not yet committed to the
+     * reducer (Phase 12.6).  While non-null the die is shown in-flight on the
+     * board and hex clicks are blocked.  The MOVE_DIE / MOVE_TOWER action is
+     * dispatched after MOVE_ANIMATION_MS.
+     *
+     * @type {{ fromKey: string, toKey: string, actionType: string, approachDirection: string|null } | null}
+     */
+    const [pendingMove, setPendingMove] = useState(null);
+
     // -----------------------------------------------------------------------
     // Focal phase: auto-advance with fresh random dice values
     // -----------------------------------------------------------------------
@@ -112,6 +143,60 @@ export function Game() {
             extraDieRoll: rollD6(),
         });
     }, [state.phase, state.currentPlayer, dispatch]);
+
+    // -----------------------------------------------------------------------
+    // 12.1 — Escape key: cancel trajectory (keep selection) or deselect
+    // -----------------------------------------------------------------------
+
+    useEffect(() => {
+        function handleKeyDown(e) {
+            if (e.key !== 'Escape') return;
+            setTrajectoryPath((prev) => {
+                if (prev.length > 0) return []; // cancel trajectory only
+                // No trajectory — deselect piece
+                setSelectedHex(null);
+                setActiveAction(null);
+                return [];
+            });
+        }
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []); // setters are stable; no external values read
+
+    // -----------------------------------------------------------------------
+    // 12.6 — Dispatch queued movement action after animation completes
+    // -----------------------------------------------------------------------
+
+    useEffect(() => {
+        if (!pendingMove) return;
+        const id = setTimeout(() => {
+            dispatch({
+                type:              pendingMove.actionType,
+                fromHex:           pendingMove.fromKey,
+                toHex:             pendingMove.toKey,
+                approachDirection: pendingMove.approachDirection,
+            });
+            setPendingMove(null);
+        }, MOVE_ANIMATION_MS);
+        return () => clearTimeout(id);
+    }, [pendingMove, dispatch]);
+
+    // -----------------------------------------------------------------------
+    // 12.2 — Wrap ActionPanel's onActionSelect to clear trajectory on switch
+    // -----------------------------------------------------------------------
+
+    /**
+     * Handles an action selection from ActionPanel.
+     * Clears any planned trajectory so stale path highlights are removed when
+     * the player switches to a different action.
+     *
+     * @param {string} action - The action key chosen (e.g. 'move-die', 'reroll').
+     * @returns {void}
+     */
+    function handleActionSelect(action) {
+        setActiveAction(action);
+        setTrajectoryPath([]);
+    }
 
     // -----------------------------------------------------------------------
     // Derived: available actions for the selected hex
@@ -191,23 +276,72 @@ export function Game() {
     }, [state, selectedHex, activeAction]);
 
     // -----------------------------------------------------------------------
+    // Derived: Phase 12.4 direction picker data
+    // -----------------------------------------------------------------------
+
+    /**
+     * The hexKey of the trajectory destination if it is:
+     *  - enemy-occupied, AND
+     *  - reachable from more than one approach direction.
+     * Null otherwise (picker is not shown).
+     */
+    const pickerEnemyKey = useMemo(() => {
+        if (!selectedHex || trajectoryPath.length === 0) return null;
+        const dest = trajectoryPath[trajectoryPath.length - 1];
+        const ctrl = getController(state, dest);
+        if (ctrl === null || ctrl === state.currentPlayer) return null;
+        const dirs = getApproachDirections(state, selectedHex, dest);
+        return dirs.size > 1 ? dest : null;
+    }, [selectedHex, trajectoryPath, state]);
+
+    /**
+     * Set of valid approach hexKeys for the picker enemy hex.
+     * Empty when the picker is not active.
+     */
+    const pickerApproachDirs = useMemo(() => {
+        if (!pickerEnemyKey || !selectedHex) return new Set();
+        return getApproachDirections(state, selectedHex, pickerEnemyKey);
+    }, [pickerEnemyKey, selectedHex, state]);
+
+    /**
+     * The effective approach direction for the current trajectory:
+     *  - Picker hover selection takes priority.
+     *  - Falls back to the penultimate hex of the trajectory path (auto-path direction).
+     */
+    const effectiveApproachKey = pickerApproachKey ??
+        (trajectoryPath.length >= 2 ? trajectoryPath[trajectoryPath.length - 2] : null);
+
+    // -----------------------------------------------------------------------
     // Derived: highlighted hexes map passed to Board
     // -----------------------------------------------------------------------
 
-    /** Map of hexKey → highlight type consumed by Board → HexTile. */
+    /**
+     * Map of hexKey → highlight type consumed by Board → HexTile.
+     *
+     * When a trajectory is planned:
+     *  - All reachable hexes are shown first (reachable / enemy-reachable).
+     *  - Trajectory path hexes (excluding selectedHex) are overlaid as 'trajectory',
+     *    making the planned path clearly distinct.
+     */
     const highlightedHexes = useMemo(() => {
         /** @type {{ [hexKey: string]: string }} */
         const map = {};
+
+        // Base layer — all reachable destinations
         for (const key of reachableKeys) {
             const ctrl = getController(state, key);
             map[key] = ctrl !== null && ctrl !== state.currentPlayer
                 ? 'enemy-reachable'
                 : 'reachable';
         }
-        // 'selected' highlight is handled by Board's isSelected prop → HexTile fill;
-        // it is intentionally excluded here so data-highlight is not set for it.
+
+        // Overlay — planned trajectory path (takes visual priority over base layer)
+        for (const key of trajectoryPath.slice(1)) {
+            map[key] = 'trajectory';
+        }
+
         return map;
-    }, [reachableKeys, state]);
+    }, [reachableKeys, state, trajectoryPath]);
 
     // -----------------------------------------------------------------------
     // Derived: winner
@@ -245,6 +379,8 @@ export function Game() {
     function deselect() {
         setSelectedHex(null);
         setActiveAction(null);
+        setTrajectoryPath([]);
+        setPickerApproachKey(null);
     }
 
     // -----------------------------------------------------------------------
@@ -253,30 +389,44 @@ export function Game() {
 
     /**
      * Handles a hex click event delegated from Board.
-     * Enforces the select → target → dispatch flow.
      *
-     * @param {string} hexKey - Cube-coordinate key of the clicked hex.
+     * Phase 12.2 — two-step trajectory flow for movement actions:
+     *   Step 1 (no trajectory): click any reachable hex → auto-path trajectory set.
+     *   Step 1 (manual extend): click a hex adjacent to the trajectory end that has
+     *     remaining steps available → trajectory extended by one step.
+     *   Step 1 (re-plan):       click a non-adjacent reachable hex → auto-path replanned.
+     *   Step 2 (commit):        click the current trajectory destination again → move dispatched.
+     *   Step 2 (attack chain):  click an enemy adjacent to trajectory end → extend to enemy,
+     *     then confirm on that enemy; approach direction = former trajectory end.
+     *
+     * In-place actions (reroll / collapse) remain single-click.
+     *
+     * @param {string} clickedKey - Cube-coordinate key of the clicked hex.
      * @returns {void}
      */
-    function handleHexClick(hexKey) {
-        if (state.phase !== 'action' || winner) return;
+    function handleHexClick(clickedKey) {
+        if (state.phase !== 'action' || winner || pendingMove) return;
 
-        const ctrl  = getController(state, hexKey);
+        const ctrl  = getController(state, clickedKey);
         const isOwn = ctrl === state.currentPlayer;
 
-        // Nothing selected — try to select an own die
+        // ── Nothing selected — try to select an own die ───────────────────
         if (!selectedHex) {
-            if (isOwn && !state.actionTaken) setSelectedHex(hexKey);
+            if (isOwn && !state.actionTaken) setSelectedHex(clickedKey);
             return;
         }
 
-        // Click the currently selected die → execute in-place action or deselect
-        if (hexKey === selectedHex) {
-            if (activeAction === 'reroll') {
-                dispatch({ type: 'REROLL', hex: hexKey, newValue: rollD6() });
+        // ── Click the currently selected die ─────────────────────────────
+        if (clickedKey === selectedHex) {
+            if (trajectoryPath.length > 0) {
+                // Cancel trajectory but keep piece selected
+                setTrajectoryPath([]);
+                setPickerApproachKey(null);
+            } else if (activeAction === 'reroll') {
+                dispatch({ type: 'REROLL', hex: clickedKey, newValue: rollD6() });
                 deselect();
             } else if (activeAction === 'collapse') {
-                dispatch({ type: 'COLLAPSE', hex: hexKey });
+                dispatch({ type: 'COLLAPSE', hex: clickedKey });
                 deselect();
             } else {
                 deselect();
@@ -284,20 +434,67 @@ export function Game() {
             return;
         }
 
-        // Click a reachable hex — dispatch the appropriate movement action
-        if (reachableKeys.has(hexKey)) {
-            if (activeAction === 'move-die') {
-                dispatch({ type: 'MOVE_DIE', fromHex: selectedHex, toHex: hexKey });
-            } else if (activeAction === 'move-tower') {
-                dispatch({ type: 'MOVE_TOWER', fromHex: selectedHex, toHex: hexKey });
+        // ── Movement actions — two-step trajectory flow ───────────────────
+        if (
+            (activeAction === 'move-die' || activeAction === 'move-tower') &&
+            !state.actionTaken &&
+            reachableKeys.has(clickedKey)
+        ) {
+            const trajectoryDest = trajectoryPath.length > 0
+                ? trajectoryPath[trajectoryPath.length - 1]
+                : null;
+
+            if (clickedKey === trajectoryDest) {
+                // ── Step 2: second click on planned destination — commit ───
+                // Queue as a pending animation (Phase 12.6); the reducer fires
+                // after MOVE_ANIMATION_MS once the die reaches its destination.
+                const actionType = activeAction === 'move-die' ? 'MOVE_DIE' : 'MOVE_TOWER';
+                setPendingMove({
+                    fromKey:          selectedHex,
+                    toKey:            clickedKey,
+                    actionType,
+                    approachDirection: effectiveApproachKey,
+                });
+                deselect();
+            } else {
+                // ── Step 1: plan or extend trajectory ────────────────────
+                const trajectoryEnd = trajectoryPath.length > 0
+                    ? trajectoryPath[trajectoryPath.length - 1]
+                    : null;
+
+                const moveRange = activeAction === 'move-tower'
+                    ? getTowerMoveRange(state, selectedHex)
+                    : (getTopDie(state, selectedHex)?.value ?? 0);
+                const stepsUsed      = trajectoryPath.length > 0 ? trajectoryPath.length - 1 : 0;
+                const remainingSteps = moveRange - stepsUsed;
+
+                const isAdjacentToEnd = trajectoryEnd !== null &&
+                    hexesDistance(hexFromKey(trajectoryEnd), hexFromKey(clickedKey)) === 1;
+                const notInPath = !trajectoryPath.includes(clickedKey);
+
+                if (isAdjacentToEnd && remainingSteps > 0 && notInPath) {
+                    // Manual one-step extension — covers both the ordinary extend
+                    // case and the "click enemy adjacent to destination" case from
+                    // the spec (the extended enemy becomes the new trajectory dest).
+                    setTrajectoryPath([...trajectoryPath, clickedKey]);
+                    setPickerApproachKey(null);
+                } else {
+                    // Auto-path re-plan to a non-adjacent (or first) destination
+                    const path = getShortestPathToHex(state, selectedHex, clickedKey, activeAction);
+                    if (path.length > 0) {
+                        setTrajectoryPath(path);
+                        setPickerApproachKey(null);
+                    }
+                }
             }
-            deselect();
             return;
         }
 
-        // Click another own die — switch selection
+        // ── Click another own die — switch selection ──────────────────────
         if (isOwn && !state.actionTaken) {
-            setSelectedHex(hexKey);
+            setSelectedHex(clickedKey);
+            setTrajectoryPath([]);
+            setPickerApproachKey(null);
             return;
         }
 
@@ -417,6 +614,13 @@ export function Game() {
                     state={state}
                     selectedHex={selectedHex}
                     highlightedHexes={highlightedHexes}
+                    pendingMove={pendingMove}
+                    pickerData={pickerEnemyKey ? {
+                        enemyKey:           pickerEnemyKey,
+                        approachDirs:       pickerApproachDirs,
+                        selectedApproachKey: effectiveApproachKey,
+                        onApproachHover:    setPickerApproachKey,
+                    } : null}
                     onHexClick={handleHexClick}
                 />
 
@@ -435,7 +639,7 @@ export function Game() {
                     currentPlayer={state.currentPlayer}
                     availableActions={availableActions}
                     activeAction={activeAction}
-                    onActionSelect={setActiveAction}
+                    onActionSelect={handleActionSelect}
                 />
             )}
 

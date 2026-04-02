@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+/* ── Phase 12.6 — Animations ──────────────────────────────────────────────── */
+
+/**
+ * Pulsing overlay used on attacker/defender hexes during the combat phase.
+ * Applied as an infinite loop while the CombatOverlay is visible.
+ */
+@keyframes combat-flash {
+    0%, 100% { opacity: 0.2; }
+    50%       { opacity: 0.65; }
+}
+
+/**
+ * Score-pop used on the VP number in ScoreBoard when a player gains a point.
+ * Briefly scales up and returns to normal size.
+ */
+@keyframes score-pop {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.55); }
+    100% { transform: scale(1); }
+}
+
 :root {
     /* Hex fill colours */
     --color-hex-default:        #e8e677;
@@ -22,8 +43,12 @@
     /* Die colours — per-player colours are defined in PLAYER_PALETTE (Board.jsx) */
     --color-die-default:        #6b7280;
 
+    /* Player label colours (used in ScoreBoard and similar UI) */
+    --color-player-red:         #ef4444;
+    --color-player-blue:        #3b82f6;
+    --color-player-fallback:    #94a3b8;
+
     /* App background & title */
     --color-bg:                 #1c1917;
     --color-title:              #991b1b;
 }
-

@@ -7,22 +7,7 @@
  * Disabled when the action is not in availableActions or actionTaken is true.
  */
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-/**
- * Canonical ordered action list.
- * 'move-tower' is filtered out when the selected piece is not a tower.
- */
-const ACTION_ORDER = ['move-tower', 'move-die', 'reroll'];
-
-/** Human-readable labels for each action key. */
-const ACTION_LABELS = {
-    'move-tower': 'Move tower',
-    'move-die':   'Move die',
-    'reroll':     'Reroll',
-};
+import { ACTION_ORDER, ACTION_LABELS } from './actionConstants.js';
 
 // ---------------------------------------------------------------------------
 // Component
@@ -49,7 +34,8 @@ export function ActionPanel({ currentPlayer, availableActions, activeAction, onA
 
     // Show move-tower only when it is available (i.e. selected piece is a tower)
     const visibleActions = ACTION_ORDER.filter(
-        (a) => a !== 'move-tower' || available.has('move-tower'),
+        (a) => (a !== 'move-tower' || available.has('move-tower')) &&
+               (a !== 'collapse'   || available.has('collapse')),
     );
 
     return (
