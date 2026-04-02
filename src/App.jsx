@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { Game } from './components/Game.jsx';
 import { SplashScreen } from './components/SplashScreen.jsx';
+import { MainMenu } from './components/MainMenu.jsx';
 
 /**
  * @typedef {'splash'|'mainMenu'|'mapSelection'|'playerSetup'|'gameLoading'|'game'} Screen
@@ -28,6 +29,8 @@ export function App() {
     switch (screen) {
         case 'splash':
             return <SplashScreen onDone={() => navigate('mainMenu')} />;
+        case 'mainMenu':
+            return <MainMenu onPlay={() => navigate('mapSelection')} />;
         case 'game':
             return <Game />;
         default:
