@@ -11,6 +11,7 @@ import { Game } from './components/Game.jsx';
 import { SplashScreen } from './components/SplashScreen.jsx';
 import { MainMenu } from './components/MainMenu.jsx';
 import { MapSelection } from './components/MapSelection.jsx';
+import { PlayerSetup } from './components/PlayerSetup.jsx';
 
 /**
  * @typedef {'splash'|'mainMenu'|'mapSelection'|'playerSetup'|'gameLoading'|'game'} Screen
@@ -28,6 +29,9 @@ export function App() {
     /** @type {[import('./game/boardDefinition.js').BoardDefinition|null, Function]} */
     const [selectedMap, setSelectedMap] = useState(null);
 
+    /** @type {[import('./components/PlayerSetup.jsx').PlayerConfig[]|null, Function]} */
+    const [playerConfigs, setPlayerConfigs] = useState(null);
+
     const navigate = (/** @type {Screen} */ target) => setScreen(target);
 
     switch (screen) {
@@ -40,6 +44,14 @@ export function App() {
                 <MapSelection
                     onSelect={(map) => { setSelectedMap(map); navigate('playerSetup'); }}
                     onBack={() => navigate('mainMenu')}
+                />
+            );
+        case 'playerSetup':
+            return (
+                <PlayerSetup
+                    map={selectedMap}
+                    onConfirm={(configs) => { setPlayerConfigs(configs); navigate('gameLoading'); }}
+                    onBack={() => navigate('mapSelection')}
                 />
             );
         case 'game':
