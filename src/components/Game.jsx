@@ -552,72 +552,30 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
 
     return (
         <div
-            style={{
-                position:      "relative",
-                minHeight:     "100vh",
-                display:       "flex",
-                flexDirection: "column",
-                alignItems:    "center",
-                padding:       "1.5rem 1rem",
-                gap:           "0.75rem",
-                background:    "var(--color-bg, #0f172a)",
-                color:         "var(--color-text, #f1f5f9)",
-                boxSizing:     "border-box",
-            }}
+            className="relative min-h-screen flex flex-col items-center py-6 px-4 gap-3 bg-[var(--color-bg,#0f172a)] text-[var(--color-text,#f1f5f9)] box-border"
         >
             {/* ── Header ──────────────────────────────────────────── */}
-            <div
-                style={{
-                    display:        "flex",
-                    alignItems:     "center",
-                    gap:            "0.75rem",
-                    width:          "100%",
-                    justifyContent: "center",
-                }}
-            >
-                <h1
-                    style={{
-                        fontSize:   "1.75rem",
-                        fontWeight: 700,
-                        margin:     0,
-                        color:      "var(--color-title, #f8fafc)"
-                    }}
-                >
+            <div className="flex items-center gap-3 w-full justify-center">
+                <h1 className="text-[1.75rem] font-bold m-0 text-[var(--color-title,#f8fafc)]">
                     Donjon Fall
                 </h1>
                 <button
                     aria-label="Open rules"
                     onClick={() => setShowRules(true)}
-                    style={{
-                        background:   "transparent",
-                        border:       "1px solid var(--color-panel-border, #475569)",
-                        borderRadius: "999px",
-                        color:        "var(--color-panel-text, #f1f5f9)",
-                        cursor:       "pointer",
-                        fontSize:     "0.85rem",
-                        padding:      "0.2rem 0.6rem",
-                    }}
+                    className="bg-transparent border border-[var(--color-panel-border,#475569)] rounded-full text-[var(--color-panel-text,#f1f5f9)] cursor-pointer text-[0.85rem] py-[0.2rem] px-[0.6rem]"
                 >
                     ?
                 </button>
             </div>
 
             {/* ── Status bar ──────────────────────────────────────── */}
-            <div
-                style={{
-                    display:        "flex",
-                    gap:            "0.75rem",
-                    alignItems:     "center",
-                    flexWrap:       "wrap",
-                    justifyContent: "center",
-                }}
-            >
+            <div className="flex gap-3 items-center flex-wrap justify-center">
                 <ScoreBoard players={state.players} scores={state.scores} />
                 <PhaseIndicator phase={state.phase} currentPlayer={state.currentPlayer} />
             </div>
 
             {/* ── Board (with combat overlay) ─────────────────────── */}
-            <div style={{ position: "relative" }}>
+            <div className="relative">
                 <Board
                     state={state}
                     selectedHex={selectedHex}
@@ -655,16 +613,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
             {canEndTurn && (
                 <button
                     onClick={handleEndTurn}
-                    style={{
-                        background:   "var(--color-panel-bg, #1e293b)",
-                        border:       "2px solid var(--color-panel-border, #475569)",
-                        borderRadius: "0.5rem",
-                        color:        "var(--color-panel-text, #f1f5f9)",
-                        cursor:       "pointer",
-                        fontSize:     "1rem",
-                        fontWeight:   600,
-                        padding:      "0.6rem 1.5rem",
-                    }}
+                    className="bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-lg text-[var(--color-panel-text,#f1f5f9)] cursor-pointer text-base font-semibold py-[0.6rem] px-6"
                 >
                     End Turn
                 </button>

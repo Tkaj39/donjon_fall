@@ -235,7 +235,8 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
         <svg
             width="100%"
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-            style={{ display: "block", margin: "0 auto", maxWidth: SVG_WIDTH, height: "auto" }}
+            className="block mx-auto h-auto"
+            style={{ maxWidth: SVG_WIDTH }}
         >
             {BOARD_HEXES.map(hex => {
                 const key = hexKey(hex);

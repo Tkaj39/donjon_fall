@@ -10,20 +10,6 @@
 import { useState } from "react";
 
 // ---------------------------------------------------------------------------
-// Shared style helpers
-// ---------------------------------------------------------------------------
-
-const smallBtnStyle = {
-    padding:      "0.25rem 0.65rem",
-    borderRadius: "0.4rem",
-    border:       "1px solid rgba(255,255,255,0.2)",
-    background:   "rgba(255,255,255,0.07)",
-    color:        "rgba(241,245,249,0.75)",
-    fontSize:     "0.75rem",
-    cursor:       "pointer",
-};
-
-// ---------------------------------------------------------------------------
 // Rules data
 // ---------------------------------------------------------------------------
 
@@ -117,42 +103,19 @@ const SECTIONS = [
  */
 function RulesSection({ id, title, items, isOpen, onToggle }) {
     return (
-        <div
-            style={{
-                borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}
-        >
+        <div className="border-b border-white/[0.08]">
             <button
                 id={`rules-heading-${id}`}
                 aria-expanded={isOpen}
                 aria-controls={`rules-panel-${id}`}
                 onClick={onToggle}
-                style={{
-                    width:          "100%",
-                    display:        "flex",
-                    justifyContent: "space-between",
-                    alignItems:     "center",
-                    padding:        "0.75rem 0",
-                    background:     "none",
-                    border:         "none",
-                    cursor:         "pointer",
-                    color:          "#f1f5f9",
-                    fontWeight:     600,
-                    fontSize:       "0.95rem",
-                    textAlign:      "left",
-                }}
+                className="w-full flex justify-between items-center py-3 bg-transparent border-0 cursor-pointer text-[#f1f5f9] font-semibold text-[0.95rem] text-left"
             >
                 {title}
                 <span
                     aria-hidden="true"
-                    style={{
-                        transition: "transform 0.2s",
-                        transform:  isOpen ? "rotate(180deg)" : "rotate(0deg)",
-                        opacity:    0.6,
-                        fontSize:   "0.75rem",
-                        flexShrink: 0,
-                        marginLeft: "0.5rem",
-                    }}
+                    className="transition-transform duration-200 opacity-60 text-[0.75rem] shrink-0 ml-2"
+                    style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
                 >
                     ▼
                 </span>
@@ -163,16 +126,10 @@ function RulesSection({ id, title, items, isOpen, onToggle }) {
                     id={`rules-panel-${id}`}
                     role="region"
                     aria-labelledby={`rules-heading-${id}`}
-                    style={{
-                        margin:     "0 0 0.75rem 0",
-                        padding:    "0 0 0 1.1rem",
-                        color:      "rgba(241,245,249,0.82)",
-                        fontSize:   "0.85rem",
-                        lineHeight: 1.65,
-                    }}
+                    className="m-0 mb-3 p-0 pl-[1.1rem] text-[rgba(241,245,249,0.82)] text-[0.85rem] leading-[1.65]"
                 >
                     {items.map((text, i) => (
-                        <li key={i} style={{ marginBottom: "0.35rem" }}>
+                        <li key={i} className="mb-[0.35rem]">
                             {text}
                         </li>
                     ))}
@@ -239,70 +196,32 @@ export function RulesViewer({ onClose }) {
             role="dialog"
             aria-modal="true"
             aria-label="Rules viewer"
-            style={{
-                position:       "fixed",
-                inset:          0,
-                display:        "flex",
-                alignItems:     "center",
-                justifyContent: "center",
-                background:     "rgba(0,0,0,0.75)",
-                zIndex:         300,
-                padding:        "1rem",
-            }}
+            className="fixed inset-0 flex items-center justify-center bg-[rgba(0,0,0,0.75)] z-[300] p-4"
             onClick={(e) => {
                 // Close when clicking the backdrop (not the panel)
                 if (e.target === e.currentTarget) onClose();
             }}
         >
             {/* Panel */}
-            <div
-                style={{
-                    background:   "var(--color-panel-bg, #1e293b)",
-                    border:       "2px solid var(--color-panel-border, #475569)",
-                    borderRadius: "1rem",
-                    width:        "100%",
-                    maxWidth:     "36rem",
-                    maxHeight:    "85vh",
-                    display:      "flex",
-                    flexDirection:"column",
-                    boxShadow:    "0 16px 48px rgba(0,0,0,0.6)",
-                    overflow:     "hidden",
-                }}
-            >
+            <div className="bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-2xl w-full max-w-[36rem] max-h-[85vh] flex flex-col shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden">
                 {/* Header */}
-                <div
-                    style={{
-                        display:        "flex",
-                        justifyContent: "space-between",
-                        alignItems:     "center",
-                        padding:        "1rem 1.25rem 0.75rem",
-                        borderBottom:   "1px solid rgba(255,255,255,0.1)",
-                        flexShrink:     0,
-                    }}
-                >
-                    <h2
-                        style={{
-                            margin:     0,
-                            fontSize:   "1.15rem",
-                            fontWeight: 700,
-                            color:      "#f1f5f9",
-                        }}
-                    >
+                <div className="flex justify-between items-center pt-4 pb-3 px-5 border-b border-white/10 shrink-0">
+                    <h2 className="m-0 text-[1.15rem] font-bold text-[#f1f5f9]">
                         Game Rules
                     </h2>
 
-                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <div className="flex gap-2 items-center">
                         <button
                             data-testid="expand-all-btn"
                             onClick={expandAll}
-                            style={smallBtnStyle}
+                            className="py-1 px-[0.65rem] rounded-[0.4rem] border border-white/20 bg-white/[0.07] text-[rgba(241,245,249,0.75)] text-xs cursor-pointer"
                         >
                             Expand all
                         </button>
                         <button
                             data-testid="collapse-all-btn"
                             onClick={collapseAll}
-                            style={smallBtnStyle}
+                            className="py-1 px-[0.65rem] rounded-[0.4rem] border border-white/20 bg-white/[0.07] text-[rgba(241,245,249,0.75)] text-xs cursor-pointer"
                         >
                             Collapse all
                         </button>
@@ -310,12 +229,7 @@ export function RulesViewer({ onClose }) {
                             data-testid="close-btn"
                             aria-label="Close rules viewer"
                             onClick={onClose}
-                            style={{
-                                ...smallBtnStyle,
-                                fontWeight: 700,
-                                fontSize:   "1.1rem",
-                                padding:    "0.2rem 0.55rem",
-                            }}
+                            className="py-[0.2rem] px-[0.55rem] rounded-[0.4rem] border border-white/20 bg-white/[0.07] text-[rgba(241,245,249,0.75)] text-[1.1rem] font-bold cursor-pointer"
                         >
                             ✕
                         </button>
@@ -323,13 +237,7 @@ export function RulesViewer({ onClose }) {
                 </div>
 
                 {/* Scrollable body */}
-                <div
-                    style={{
-                        overflowY: "auto",
-                        padding:   "0 1.25rem",
-                        flexGrow:  1,
-                    }}
-                >
+                <div className="overflow-y-auto px-5 grow">
                     {SECTIONS.map((section) => (
                         <RulesSection
                             key={section.id}

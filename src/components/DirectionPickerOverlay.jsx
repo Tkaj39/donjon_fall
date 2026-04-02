@@ -209,7 +209,7 @@ export function DirectionPickerOverlay({
                             : "var(--color-dir-available, rgba(251,191,36,0.18))"}
                         stroke="var(--color-dir-stroke, rgba(251,191,36,0.75))"
                         strokeWidth={1}
-                        style={{ pointerEvents: "none" }}
+                        className="pointer-events-none"
                     />
                 );
             })}

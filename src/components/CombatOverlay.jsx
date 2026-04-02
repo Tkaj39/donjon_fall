@@ -35,62 +35,40 @@ export function CombatOverlay({ state, options, onChoose }) {
         <div
             role="dialog"
             aria-label="Combat resolution"
-            style={{
-                position:        "absolute",
-                top:             "50%",
-                left:            "50%",
-                transform:       "translate(-50%, -50%)",
-                background:      "var(--color-panel-bg, #1e293b)",
-                border:          "2px solid var(--color-panel-border, #475569)",
-                borderRadius:    "0.75rem",
-                padding:         "1.25rem 1.5rem",
-                minWidth:        "14rem",
-                textAlign:       "center",
-                color:           "var(--color-panel-text, #f1f5f9)",
-                zIndex:          100,
-                boxShadow:       "0 8px 32px rgba(0,0,0,0.5)",
-            }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-xl py-5 px-6 min-w-56 text-center text-[var(--color-panel-text,#f1f5f9)] z-[100] shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
         >
-            <h2 style={{ margin: "0 0 0.75rem", fontSize: "1.1rem", fontWeight: 700 }}>
+            <h2 className="m-0 mb-3 text-[1.1rem] font-bold">
                 Combat
             </h2>
 
-            <div style={{ display: "flex", justifyContent: "space-around", marginBottom: "1rem" }}>
+            <div className="flex justify-around mb-4">
                 <div>
-                    <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>Attacker</div>
+                    <div className="text-xs opacity-70">Attacker</div>
                     <div
                         data-testid="attacker-strength"
-                        style={{ fontSize: "1.5rem", fontWeight: 700 }}
+                        className="text-2xl font-bold"
                     >
                         {attackerStrength}
                     </div>
                 </div>
-                <div style={{ alignSelf: "center", opacity: 0.5 }}>vs</div>
+                <div className="self-center opacity-50">vs</div>
                 <div>
-                    <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>Defender</div>
+                    <div className="text-xs opacity-70">Defender</div>
                     <div
                         data-testid="defender-strength"
-                        style={{ fontSize: "1.5rem", fontWeight: 700 }}
+                        className="text-2xl font-bold"
                     >
                         {defenderStrength}
                     </div>
                 </div>
             </div>
 
-            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
+            <div className="flex gap-3 justify-center">
                 {options.map(option => (
                     <button
                         key={option}
                         onClick={() => onChoose(option)}
-                        style={{
-                            padding:       "0.4rem 1rem",
-                            borderRadius:  "0.4rem",
-                            border:        "1px solid var(--color-panel-border, #475569)",
-                            background:    "var(--color-btn-bg, #334155)",
-                            color:         "inherit",
-                            cursor:        "pointer",
-                            fontWeight:    600,
-                        }}
+                        className="py-[0.4rem] px-4 rounded-[0.4rem] border border-[var(--color-panel-border,#475569)] bg-[var(--color-btn-bg,#334155)] text-inherit cursor-pointer font-semibold"
                     >
                         {OPTION_LABELS[option] ?? option}
                     </button>

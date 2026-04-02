@@ -42,16 +42,7 @@ export function ActionPanel({ currentPlayer, availableActions, activeAction, onA
         <div
             role="toolbar"
             aria-label="Action panel"
-            style={{
-                display:       "flex",
-                gap:           "0.5rem",
-                background:    "var(--color-panel-bg, #1e293b)",
-                border:        "2px solid var(--color-panel-border, #475569)",
-                borderRadius:  "0.75rem",
-                padding:       "0.6rem 0.8rem",
-                color:         "var(--color-panel-text, #f1f5f9)",
-                boxShadow:     "0 4px 16px rgba(0,0,0,0.4)",
-            }}
+            className="flex gap-2 bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-xl py-[0.6rem] px-[0.8rem] text-[var(--color-panel-text,#f1f5f9)] shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
         >
             {visibleActions.map((actionKey) => {
                 const isActive   = actionKey === activeAction;
