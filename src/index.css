@@ -57,4 +57,11 @@
     --color-debug-attack:        red;
     --color-debug-focal-active:  blue;
     --color-debug-focal-passive: olive;
+
+    /* State inspector (Phase 14.2) */
+    --color-inspector-bg:        #000000b3;
+    --color-inspector-border:    #facc1566;
+    --color-inspector-header-bg: #facc151a;
+    --color-inspector-header-text: #fde047;
+    --color-inspector-text:      #fefce8;
 }
