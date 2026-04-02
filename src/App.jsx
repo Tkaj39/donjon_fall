@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { Game } from './components/Game.jsx';
+import { SplashScreen } from './components/SplashScreen.jsx';
 
 /**
  * @typedef {'splash'|'mainMenu'|'mapSelection'|'playerSetup'|'gameLoading'|'game'} Screen
@@ -20,12 +21,13 @@ import { Game } from './components/Game.jsx';
  */
 export function App() {
     /** @type {[Screen, Function]} */
-    const [screen, setScreen] = useState('game');
+    const [screen, setScreen] = useState('splash');
 
-    // Shared navigation helpers passed down to screens
     const navigate = (/** @type {Screen} */ target) => setScreen(target);
 
     switch (screen) {
+        case 'splash':
+            return <SplashScreen onDone={() => navigate('mainMenu')} />;
         case 'game':
             return <Game />;
         default:
