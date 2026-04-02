@@ -716,7 +716,7 @@ export function applyCollapseAction(state, hex) {
  * @param {import("./gameState.js").GameState} state
  * @param {string} hex
  * @param {number} newValue  - the raw roll result (1–6); caller is responsible for randomness
- * @returns {import("./gameState.js').GameState}
+ * @returns {import("./gameState.js").GameState}
  */
 export function applyRerollAction(state, hex, newValue) {
     const stack = getDiceAt(state, hex);

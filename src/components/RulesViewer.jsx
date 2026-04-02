@@ -113,6 +113,7 @@ const SECTIONS = [
  * @param {string[]} props.items    - Array of rule text strings.
  * @param {boolean}  props.isOpen   - Whether this section is expanded.
  * @param {function} props.onToggle - Callback to toggle open/closed state.
+ * @returns {JSX.Element}
  */
 function RulesSection({ id, title, items, isOpen, onToggle }) {
     return (

@@ -36,7 +36,13 @@ export function App() {
     /** @type {[{ players: string[], boardFields: import("./hex/fieldProperties.js").HexField[] }|null, Function]} */
     const [gameSetup, setGameSetup] = useState(null);
 
-    const navigate = (/** @type {Screen} */ target) => setScreen(target);
+    /**
+     * Transitions the app to the given screen.
+     *
+     * @param {Screen} target - Screen identifier to navigate to.
+     * @returns {void}
+     */
+    const navigate = (target) => setScreen(target);
 
     switch (screen) {
         case "splash":

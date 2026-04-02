@@ -150,7 +150,7 @@ export function PlayerSetup({ map, onConfirm, onBack }) {
 
     const [configs, setConfigs] = useState(
         /** @type {PlayerConfig[]} */ (
-            playerIds.map(id => ({ id, name: "', coatOfArms: COATS_OF_ARMS[0].id }))
+            playerIds.map(id => ({ id, name: "", coatOfArms: COATS_OF_ARMS[0].id }))
         ),
     );
 
