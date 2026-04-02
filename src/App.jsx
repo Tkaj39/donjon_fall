@@ -12,6 +12,7 @@ import { SplashScreen } from './components/SplashScreen.jsx';
 import { MainMenu } from './components/MainMenu.jsx';
 import { MapSelection } from './components/MapSelection.jsx';
 import { PlayerSetup } from './components/PlayerSetup.jsx';
+import { GameLoading } from './components/GameLoading.jsx';
 
 /**
  * @typedef {'splash'|'mainMenu'|'mapSelection'|'playerSetup'|'gameLoading'|'game'} Screen
@@ -31,6 +32,9 @@ export function App() {
 
     /** @type {[import('./components/PlayerSetup.jsx').PlayerConfig[]|null, Function]} */
     const [playerConfigs, setPlayerConfigs] = useState(null);
+
+    /** @type {[{ players: string[], boardFields: import('./hex/fieldProperties.js').HexField[] }|null, Function]} */
+    const [gameSetup, setGameSetup] = useState(null);
 
     const navigate = (/** @type {Screen} */ target) => setScreen(target);
 
@@ -54,8 +58,21 @@ export function App() {
                     onBack={() => navigate('mapSelection')}
                 />
             );
+        case 'gameLoading':
+            return (
+                <GameLoading
+                    playerConfigs={playerConfigs}
+                    map={selectedMap}
+                    onDone={(players, boardFields) => {
+                        setGameSetup({ players, boardFields });
+                        navigate('game');
+                    }}
+                />
+            );
         case 'game':
-            return <Game />;
+            return gameSetup
+                ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} />
+                : <Game />;
         default:
             return <Game />;
     }
