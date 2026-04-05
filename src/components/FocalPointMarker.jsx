@@ -13,7 +13,7 @@ const STAR_OUTER_RATIO = 0.28;
 const STAR_INNER_RATIO = 0.12;
 
 /** Passive circle radius as a fraction of hex size. */
-const PASSIVE_RADIUS_RATIO = 0.14;
+const PASSIVE_RADIUS_RATIO = 0.18;
 
 /**
  * Computes the SVG polygon `points` string for a regular 5-pointed star.
@@ -66,7 +66,9 @@ export function FocalPointMarker({ cx, cy, hexSize, isActive }) {
             cy={cy}
             r={hexSize * PASSIVE_RADIUS_RATIO}
             fill="var(--color-focal-passive)"
-            opacity={0.5}
+            stroke="var(--color-focal-active-stroke)"
+            strokeWidth={1.5}
+            opacity={0.85}
         />
     );
 }
