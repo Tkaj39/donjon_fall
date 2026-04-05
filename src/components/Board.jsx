@@ -26,7 +26,6 @@ const PADDING_RATIO = 1.2;
 
 /**
  * Ordered colour palette for up to 6 players.
- * Player at index 0 in state.players gets palette[0], etc.
  * `primary` — die body colour; `tint` — base-hex background tint.
  */
 const PLAYER_PALETTE = [
@@ -37,6 +36,19 @@ const PLAYER_PALETTE = [
     { primary: "#9333ea", tint: "#d8b4fe" }, // purple
     { primary: "#0891b2", tint: "#67e8f9" }, // cyan
 ];
+
+/**
+ * Named colour overrides — player IDs whose names match a colour get that colour
+ * regardless of their position in the players array.
+ */
+const NAMED_PLAYER_COLORS = {
+    red:    PLAYER_PALETTE[0],
+    blue:   PLAYER_PALETTE[1],
+    green:  PLAYER_PALETTE[2],
+    amber:  PLAYER_PALETTE[3],
+    purple: PLAYER_PALETTE[4],
+    cyan:   PLAYER_PALETTE[5],
+};
 
 /**
  * Fallback playerColors derived from BOARD_FIELDS for empty-board dev rendering.
@@ -51,7 +63,9 @@ const DEFAULT_PLAYER_COLORS = (() => {
             }
         }
     }
-    return Object.fromEntries(owners.map((id, i) => [id, PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]));
+    return Object.fromEntries(
+        owners.map((id, i) => [id, NAMED_PLAYER_COLORS[id] ?? PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]),
+    );
 })();
 
 /** Pre-computed pixel centres of every hex. */
@@ -198,7 +212,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
 
     const players = state?.players ?? [];
     const playerColors = players.length > 0
-        ? Object.fromEntries(players.map((id, i) => [id, PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]))
+        ? Object.fromEntries(players.map((id, i) => [id, NAMED_PLAYER_COLORS[id] ?? PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]))
         : DEFAULT_PLAYER_COLORS;
 
     // ── Phase 12.6: pre-compute moving die pixel positions ──────────────────

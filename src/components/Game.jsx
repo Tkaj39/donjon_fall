@@ -40,6 +40,7 @@ import { CombatOverlay } from "./CombatOverlay.jsx";
 import { PhaseIndicator } from "./PhaseIndicator.jsx";
 import { RulesViewer } from "./RulesViewer.jsx";
 import { ScoreBoard } from "./ScoreBoard.jsx";
+import { ActionReplay } from "./ActionReplay.jsx";
 import { StateInspector } from "./StateInspector.jsx";
 import { VictoryScreen } from "./VictoryScreen.jsx";
 
@@ -77,7 +78,7 @@ function rollD6() {
  * @returns {JSX.Element}
  */
 export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) {
-    const { state, dispatch } = useGameState(players, boardFields);
+    const { state, dispatch, recordedActions, initialState } = useGameState(players, boardFields);
 
     // -----------------------------------------------------------------------
     // Local UI state
@@ -591,6 +592,14 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
 
             {/* ── State inspector (Phase 14.2) ─────────────────────── */}
             {debugMode && <StateInspector state={state} />}
+
+            {/* ── Action replay (Phase 14.3) ───────────────────────── */}
+            {debugMode && (
+                <ActionReplay
+                    actions={recordedActions}
+                    initialState={initialState}
+                />
+            )}
 
             {/* ── Status bar ──────────────────────────────────────── */}
             <div className="flex gap-3 items-center flex-wrap justify-center">
