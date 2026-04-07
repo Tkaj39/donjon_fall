@@ -19,7 +19,7 @@ export function SplashScreen({ onDone }) {
     }, [onDone]);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900 text-white">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60 text-white">
             {/* Placeholder logo — replace with actual asset */}
             <div className="w-32 h-32 rounded-full bg-stone-600 flex items-center justify-center mb-8 text-stone-400 text-sm">
                 LOGO

@@ -35,12 +35,13 @@ import { hexFromKey, hexesDistance } from "../hex/hexUtils.js";
 import { useGameState } from "../hooks/useGameState.js";
 import { ActionPanel } from "./ActionPanel.jsx";
 import { ACTION_ORDER } from "./actionConstants.js";
-import { Board, MOVE_ANIMATION_MS } from "./Board.jsx";
+import { Board, MOVE_ANIMATION_MS, SVG_WIDTH } from "./Board.jsx";
 import { CombatOverlay } from "./CombatOverlay.jsx";
 import { PhaseIndicator } from "./PhaseIndicator.jsx";
 import { RulesViewer } from "./RulesViewer.jsx";
 import { ScoreBoard } from "./ScoreBoard.jsx";
 import { VictoryScreen } from "./VictoryScreen.jsx";
+import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER } from "../styles/themes/default.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -48,6 +49,15 @@ import { VictoryScreen } from "./VictoryScreen.jsx";
 
 /** Fallback player list used when Game is launched without setup flow. */
 const DEFAULT_PLAYERS = ["red", "blue"];
+
+/** Subtle glow colour per player ID — used for the active-player edge indicator. */
+const PLAYER_GLOW = {
+    red:  "#3b82f6",
+    blue: "#ef4444",
+};
+
+/** Which edge to show the glow on per player index (0 = bottom/red, 1 = top/blue). */
+const PLAYER_GLOW_EDGE = ["bottom", "top"];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -75,7 +85,7 @@ function rollD6() {
  * }} props
  * @returns {JSX.Element}
  */
-export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) {
+export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [] }) {
     const { state, dispatch } = useGameState(players, boardFields);
 
     // -----------------------------------------------------------------------
@@ -552,31 +562,77 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
 
     return (
         <div
-            className="relative min-h-screen flex flex-col items-center py-6 px-4 gap-3 bg-[var(--color-bg,#0f172a)] text-[var(--color-text,#f1f5f9)] box-border"
+            className="relative h-dvh flex flex-col bg-stone-900/60 text-[var(--color-text,#f1f5f9)] box-border overflow-hidden"
         >
+            {/* ── Active player edge glow ─────────────────────── */}
+            {(() => {
+                const idx   = state.players.indexOf(state.currentPlayer);
+                const edge  = PLAYER_GLOW_EDGE[idx] ?? "bottom";
+                const color = PLAYER_GLOW[state.currentPlayer] ?? "#94a3b8";
+                const grad  = edge === "top"
+                    ? `linear-gradient(to bottom, ${color}, transparent)`
+                    : `linear-gradient(to top,    ${color}, transparent)`;
+                return (
+                    <div
+                        aria-hidden="true"
+                        className="pointer-events-none fixed left-0 right-0 transition-all duration-500"
+                        style={{
+                            [edge]: 0,
+                            height: 200,
+                            background: grad,
+                            opacity: 0.55,
+                            zIndex: -1,
+                        }}
+                    />
+                );
+            })()}
             {/* ── Header ──────────────────────────────────────────── */}
-            <div className="flex items-center gap-3 w-full justify-center">
-                <h1 className="text-[1.75rem] font-bold m-0 text-[var(--color-title,#f8fafc)]">
-                    Donjon Fall
+            <header className="flex items-center justify-between px-4 py-2 shrink-0">
+                <h1 className="text-base font-bold tracking-wide text-stone-100 m-0">
+                    Pád donjonu
                 </h1>
                 <button
                     aria-label="Open rules"
                     onClick={() => setShowRules(true)}
-                    className="bg-transparent border border-[var(--color-panel-border,#475569)] rounded-full text-[var(--color-panel-text,#f1f5f9)] cursor-pointer text-[0.85rem] py-[0.2rem] px-[0.6rem]"
+                    className="w-8 h-8 flex items-center justify-center rounded-full border border-stone-600 text-stone-300 hover:text-white hover:border-stone-400 transition-colors text-sm"
                 >
                     ?
                 </button>
-            </div>
+            </header>
 
-            {/* ── Status bar ──────────────────────────────────────── */}
-            <div className="flex gap-3 items-center flex-wrap justify-center">
-                <ScoreBoard players={state.players} scores={state.scores} />
-                <PhaseIndicator phase={state.phase} currentPlayer={state.currentPlayer} />
-            </div>
+            {/* ── Board area + side shields ────────────────────── */}
+            <div className="flex-1 min-h-0 flex items-center justify-center px-2 py-1">
 
-            {/* ── Board (with combat overlay) ─────────────────────── */}
-            <div className="relative">
-                <Board
+                {/* Three-column: left shield | board | right shield */}
+                <div className="flex items-center gap-2 h-full">
+
+                    {state.players.map((playerId, idx) => {
+                        const cfg        = playerConfigs.find(c => c.id === playerId);
+                        const score      = state.scores[playerId] ?? 0;
+                        const shieldHref = SHIELD_BY_PLAYER[playerId] ?? SHIELD_BY_PLAYER.blue;
+                        const animalHref = ANIMAL_OPTIONS.find(a => a.id === cfg?.coatOfArms)?.href ?? ANIMAL_OPTIONS[0].href;
+                        const isActive   = state.currentPlayer === playerId;
+
+                        const shield = (
+                            <div key={playerId} className="flex flex-col items-center gap-1 shrink-0">
+                                <div className="relative w-28 h-28">
+                                    <img src={shieldHref} alt="" className="w-full h-full object-contain" />
+                                    <img src={animalHref} alt={cfg?.coatOfArms ?? ""} className="absolute inset-0 w-full h-full object-contain p-1" />
+                                    <span className={[
+                                        "absolute -bottom-1 left-1/2 -translate-x-1/2 text-xs font-bold leading-none px-1.5 py-0.5 rounded-full",
+                                        isActive ? "bg-amber-400 text-stone-900" : "bg-stone-700 text-stone-200",
+                                    ].join(" ")}>
+                                        {score}
+                                    </span>
+                                </div>
+                                <p className="text-xs font-semibold text-stone-100 text-center leading-tight max-w-[7rem] truncate">
+                                    {cfg?.name || playerId}
+                                </p>
+                            </div>
+                        );
+
+                        if (idx === 0) return <>{shield}<div key="board" className="relative h-full" style={{ width: SVG_WIDTH }}>
+                    <Board
                     state={state}
                     selectedHex={selectedHex}
                     highlightedHexes={highlightedHexes}
@@ -589,7 +645,6 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
                     } : null}
                     onHexClick={handleHexClick}
                 />
-
                 {state.phase === "combat" && (
                     <CombatOverlay
                         state={state}
@@ -597,27 +652,33 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS }) 
                         onChoose={handleCombatChoose}
                     />
                 )}
+                </div></>;
+                        return shield;
+                    })}
+
+                </div>
+            </div>{/* end flex-1 scroll area */}
+
+            {/* ── Action panel + End turn ──────────────────────── */}
+            <div className="flex flex-col items-center gap-2 shrink-0 pb-4 px-4">
+                <div style={{ visibility: showActionPanel ? "visible" : "hidden" }}>
+                    <ActionPanel
+                        currentPlayer={state.currentPlayer}
+                        availableActions={availableActions}
+                        activeAction={activeAction}
+                        onActionSelect={handleActionSelect}
+                    />
+                </div>
+
+                <div style={{ visibility: canEndTurn ? "visible" : "hidden" }}>
+                    <button
+                        onClick={handleEndTurn}
+                        className="bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-lg text-[var(--color-panel-text,#f1f5f9)] cursor-pointer text-base font-semibold py-[0.6rem] px-6"
+                    >
+                        End Turn
+                    </button>
+                </div>
             </div>
-
-            {/* ── Action panel ────────────────────────────────────── */}
-            {showActionPanel && (
-                <ActionPanel
-                    currentPlayer={state.currentPlayer}
-                    availableActions={availableActions}
-                    activeAction={activeAction}
-                    onActionSelect={handleActionSelect}
-                />
-            )}
-
-            {/* ── End turn button ──────────────────────────────────── */}
-            {canEndTurn && (
-                <button
-                    onClick={handleEndTurn}
-                    className="bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-lg text-[var(--color-panel-text,#f1f5f9)] cursor-pointer text-base font-semibold py-[0.6rem] px-6"
-                >
-                    End Turn
-                </button>
-            )}
 
             {/* ── Victory screen ──────────────────────────────────── */}
             {winner && (

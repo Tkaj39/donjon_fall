@@ -49,6 +49,6 @@
     --color-player-fallback:    #94a3b8;
 
     /* App background & title */
-    --color-bg:                 #1c1917;
+    --color-bg:                 transparent;
     --color-title:              #991b1b;
 }

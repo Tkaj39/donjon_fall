@@ -77,7 +77,7 @@ export function App() {
             );
         case "game":
             return gameSetup
-                ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} />
+                ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} playerConfigs={playerConfigs ?? []} />
                 : <Game />;
         default:
             return <Game />;

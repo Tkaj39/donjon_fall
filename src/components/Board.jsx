@@ -9,6 +9,7 @@ import { BOARD_HEXES, BOARD_FIELDS } from "../hex/boardConstants.js";
 import { hexCorners, hexFromKey, hexKey, hexToPixel } from "../hex/hexUtils.js";
 import { Die } from "./Die.jsx";
 import { HexTile } from "./HexTile.jsx";
+import { resolveHexImage } from "../styles/themes/default.js";
 
 // ---------------------------------------------------------------------------
 // Layout constants
@@ -64,8 +65,8 @@ const maxY = Math.max(...PIXELS.map(p => p.y));
 /** Extra space around the board so edge hexes are never clipped by the SVG boundary. */
 const BOARD_PADDING = HEX_SIZE * PADDING_RATIO;
 
-/** Total SVG canvas width. */
-const SVG_WIDTH  = maxX - minX + BOARD_PADDING * 2;
+/** Total SVG canvas width. Exported so Game.jsx can align HUD to board edges. */
+export const SVG_WIDTH  = maxX - minX + BOARD_PADDING * 2;
 
 /** Total SVG canvas height. */
 const SVG_HEIGHT = maxY - minY + BOARD_PADDING * 2;
@@ -234,8 +235,9 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
     return (
         <svg
             width="100%"
+            height="100%"
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-            className="block mx-auto h-auto"
+            className="block mx-auto"
             style={{ maxWidth: SVG_WIDTH }}
         >
             {BOARD_HEXES.map(hex => {
@@ -244,6 +246,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
 
                 // Suppress dice at the source hex while the die is in-flight (12.6).
                 const diceStack = pendingMove?.fromKey === key ? [] : (dice[key] ?? []);
+                const fieldProps = FIELD_PROPS_BY_KEY[key] ?? [];
 
                 return (
                     <HexTile
@@ -252,8 +255,9 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                         centerX={x + OFFSET_X}
                         centerY={y + OFFSET_Y}
                         size={TILE_SIZE}
-                        fieldProperties={FIELD_PROPS_BY_KEY[key] ?? []}
+                        fieldProperties={fieldProps}
                         diceStack={diceStack}
+                        themeImageHref={resolveHexImage(fieldProps, playerColors)}
                         highlight={highlightedHexes[key] ?? null}
                         isSelected={selectedHex === key}
                         playerColors={playerColors}
