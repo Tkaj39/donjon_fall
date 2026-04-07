@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER } from "../styles/themes/default.js";
 
 /**
  * @typedef {Object} PlayerConfig
@@ -14,19 +15,6 @@ import { useState } from "react";
  * @property {string} name       - Display name entered by the player.
  * @property {string} coatOfArms - Selected coat of arms key.
  */
-
-// ---------------------------------------------------------------------------
-// Coat of arms options — placeholder labels; designer will replace with assets
-// ---------------------------------------------------------------------------
-
-const COATS_OF_ARMS = [
-    { id: "tower",  label: "Tower"  },
-    { id: "eagle",  label: "Eagle"  },
-    { id: "lion",   label: "Lion"   },
-    { id: "shield", label: "Shield" },
-    { id: "star",   label: "Star"   },
-    { id: "cross",  label: "Cross"  },
-];
 
 // ---------------------------------------------------------------------------
 // Color display config per player ID
@@ -42,26 +30,26 @@ const PLAYER_COLOR = {
 // ---------------------------------------------------------------------------
 
 /**
- * Placeholder coat of arms tile — replace inner content with actual asset.
+ * Coat of arms tile — shield image with animal symbol overlaid.
  *
- * @param {{ id: string, label: string, selected: boolean, onSelect: () => void }} props
+ * @param {{ id: string, label: string, animalHref: string, shieldHref: string, selected: boolean, onSelect: () => void }} props
  * @returns {JSX.Element}
  */
-function CoatOfArmsTile({ id, label, selected, onSelect }) {
+function CoatOfArmsTile({ id, label, animalHref, shieldHref, selected, onSelect }) {
     return (
         <button
             onClick={onSelect}
             className={[
-                "w-14 h-14 rounded-lg border-2 flex items-center justify-center text-xs font-semibold transition-colors",
+                "relative w-14 h-14 rounded-lg border-2 overflow-hidden transition-colors",
                 selected
-                    ? "border-white bg-stone-500 text-white"
-                    : "border-stone-600 bg-stone-800 text-stone-400 hover:border-stone-400",
+                    ? "border-white ring-2 ring-white"
+                    : "border-stone-600 hover:border-stone-400",
             ].join(" ")}
             aria-label={label}
             aria-pressed={selected}
         >
-            {/* Placeholder — replace with <img> once assets are ready */}
-            {label.slice(0, 2)}
+            <img src={shieldHref} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <img src={animalHref} alt={label} className="absolute inset-0 w-full h-full object-contain p-1" />
         </button>
     );
 }
@@ -74,6 +62,7 @@ function CoatOfArmsTile({ id, label, selected, onSelect }) {
  */
 function PlayerSlot({ playerId, config, onChange }) {
     const color = PLAYER_COLOR[playerId] ?? { bg: "bg-stone-600", label: playerId };
+    const shieldHref = SHIELD_BY_PLAYER[playerId] ?? SHIELD_BY_PLAYER.blue;
 
     return (
         <div className="bg-stone-800 border border-stone-600 rounded-xl p-5">
@@ -99,13 +88,15 @@ function PlayerSlot({ playerId, config, onChange }) {
             {/* Coat of arms picker */}
             <label className="block text-stone-400 text-xs mb-2">Coat of arms</label>
             <div className="flex flex-wrap gap-2">
-                {COATS_OF_ARMS.map(coa => (
+                {ANIMAL_OPTIONS.map(animal => (
                     <CoatOfArmsTile
-                        key={coa.id}
-                        id={coa.id}
-                        label={coa.label}
-                        selected={config.coatOfArms === coa.id}
-                        onSelect={() => onChange({ coatOfArms: coa.id })}
+                        key={animal.id}
+                        id={animal.id}
+                        label={animal.label}
+                        animalHref={animal.href}
+                        shieldHref={shieldHref}
+                        selected={config.coatOfArms === animal.id}
+                        onSelect={() => onChange({ coatOfArms: animal.id })}
                     />
                 ))}
             </div>
@@ -150,7 +141,7 @@ export function PlayerSetup({ map, onConfirm, onBack }) {
 
     const [configs, setConfigs] = useState(
         /** @type {PlayerConfig[]} */ (
-            playerIds.map(id => ({ id, name: "", coatOfArms: COATS_OF_ARMS[0].id }))
+            playerIds.map(id => ({ id, name: "", coatOfArms: ANIMAL_OPTIONS[0].id }))
         ),
     );
 
@@ -168,7 +159,7 @@ export function PlayerSetup({ map, onConfirm, onBack }) {
     const allNamed = configs.every(c => c.name.trim().length > 0);
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-stone-900 text-white p-8">
+        <div className="flex flex-col items-center min-h-screen bg-stone-900/60 text-white p-8">
             <div className="w-full max-w-lg">
                 <button
                     onClick={onBack}

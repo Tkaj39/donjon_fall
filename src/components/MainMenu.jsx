@@ -14,7 +14,7 @@ export function MainMenu({ onPlay }) {
     const [rulesOpen, setRulesOpen] = useState(false);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900 text-white">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60 text-white">
             {/* Placeholder logo */}
             <div className="w-24 h-24 rounded-full bg-stone-600 flex items-center justify-center mb-6 text-stone-400 text-sm">
                 LOGO

@@ -49,7 +49,7 @@ function MapCard({ map, onSelect }) {
  */
 export function MapSelection({ onSelect, onBack }) {
     return (
-        <div className="flex flex-col items-center min-h-screen bg-stone-900 text-white p-8">
+        <div className="flex flex-col items-center min-h-screen bg-stone-900/60 text-white p-8">
             <div className="w-full max-w-lg">
                 <button
                     onClick={onBack}

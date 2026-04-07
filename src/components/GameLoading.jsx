@@ -8,6 +8,7 @@
 
 import { useEffect } from "react";
 import { createInitialState } from "../game/gameState.js";
+import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER } from "../styles/themes/default.js";
 
 /** How long to show the loading screen before entering the game. */
 const LOADING_DURATION_MS = 1800;
@@ -36,7 +37,7 @@ export function GameLoading({ playerConfigs, map, onDone }) {
     }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900 text-white p-8">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60 text-white p-8">
             <p className="text-stone-400 text-sm uppercase tracking-widest mb-10">Get ready…</p>
 
             <div className="flex flex-col gap-6 w-full max-w-xs">
@@ -44,10 +45,18 @@ export function GameLoading({ playerConfigs, map, onDone }) {
                     const color = PLAYER_COLOR[config.id] ?? { bg: "bg-stone-600", label: config.id };
                     return (
                         <div key={config.id} className="flex items-center gap-4">
-                            {/* Color + coat of arms placeholder */}
-                            <div className={`w-14 h-14 rounded-xl ${color.bg} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
-                                {/* Placeholder — replace with coat of arms asset */}
-                                {config.coatOfArms.slice(0, 2).toUpperCase()}
+                            {/* Coat of arms: shield + animal */}
+                            <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
+                                <img
+                                    src={SHIELD_BY_PLAYER[config.id] ?? SHIELD_BY_PLAYER.blue}
+                                    alt=""
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                />
+                                <img
+                                    src={ANIMAL_OPTIONS.find(a => a.id === config.coatOfArms)?.href ?? ANIMAL_OPTIONS[0].href}
+                                    alt={config.coatOfArms}
+                                    className="absolute inset-0 w-full h-full object-contain p-1"
+                                />
                             </div>
                             <div>
                                 <p className="text-white font-semibold text-lg leading-tight">{config.name}</p>

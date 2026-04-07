@@ -43,21 +43,33 @@ const STACK_OFFSET_RATIO = 0.22;
  *   onApproachHover: function(string): void,
  * }|null} [props.directionPicker]
  *   When non-null, renders the Phase 12.4 approach-direction picker overlay on this hex.
+ * @param {string}  [props.themeImageHref]                - Image URL stretched to fill the hex tile from the active theme. Used when no other state-driven fill applies.
  * @param {function(): void} [props.onClick]               - Click handler; cursor becomes pointer when provided.
  * @returns {JSX.Element}
  */
-export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, directionPicker = null, onClick }) {
+export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, directionPicker = null, themeImageHref = null, onClick }) {
     const corners = hexCorners(centerX, centerY, size);
     const points = corners.map(({ x, y }) => `${x},${y}`).join(" ");
 
     const startingProp = fieldProperties.find(p => p.type === "startingField");
     const isFocalPoint = fieldProperties.some(p => p.type === "focalPoint");
 
+    // Use image texture whenever available; override with colour only for highlights/selected.
+    const hasTexture = themeImageHref && !highlight && !isSelected;
+
     let fill = "var(--color-hex-default)";
     if (startingProp) fill = playerColors[startingProp.owner]?.tint ?? "var(--color-hex-starting)";
     if (isFocalPoint) fill = "var(--color-hex-focal)";
     if (highlight)    fill = HIGHLIGHT_FILL[highlight] ?? fill;
     if (isSelected)   fill = "var(--color-hex-selected)";
+    // When texture is active, polygon serves only as stroke border.
+    const polygonFill = hasTexture ? "transparent" : fill;
+
+    const clipId = `hex-clip-${hexKey(coords)}`;
+    // Bounding box of the hex for the image placement.
+    const imgX = centerX - size;
+    const imgY = centerY - size;
+    const imgSize = size * 2;
 
     return (
         <g
@@ -66,12 +78,40 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
             style={{ cursor: onClick ? "pointer" : "default" }}
             onClick={onClick ? () => onClick(hexKey(coords)) : undefined}
         >
+            {hasTexture && (
+                <defs>
+                    <clipPath id={clipId}>
+                        <polygon points={points} />
+                    </clipPath>
+                </defs>
+            )}
             <polygon
                 points={points}
-                fill={fill}
+                fill={polygonFill}
                 stroke="var(--color-hex-stroke)"
                 strokeWidth={1.5}
             />
+            {hasTexture && (
+                <image
+                    href={themeImageHref}
+                    x={imgX}
+                    y={imgY}
+                    width={imgSize}
+                    height={imgSize}
+                    preserveAspectRatio="xMidYMid slice"
+                    clipPath={`url(#${clipId})`}
+                    style={{ pointerEvents: "none" }}
+                />
+            )}
+            {hasTexture && (
+                <polygon
+                    points={points}
+                    fill="none"
+                    stroke="var(--color-hex-stroke)"
+                    strokeWidth={1.5}
+                    style={{ pointerEvents: "none" }}
+                />
+            )}
             {isFocalPoint && (
                 <FocalPointMarker
                     cx={centerX}
