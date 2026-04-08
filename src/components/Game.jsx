@@ -54,12 +54,12 @@ const DEFAULT_PLAYERS = ["red", "blue"];
 
 /** Subtle glow colour per player ID — used for the active-player edge indicator. */
 const PLAYER_GLOW = {
-    red:  "#3b82f6",
-    blue: "#ef4444",
+    red:  "var(--color-player-red)",
+    blue: "var(--color-player-blue)",
 };
 
-/** Which edge to show the glow on per player index (0 = bottom/red, 1 = top/blue). */
-const PLAYER_GLOW_EDGE = ["bottom", "top"];
+/** Which edge to show the glow on per player index (0 = top/red, 1 = bottom/blue). */
+const PLAYER_GLOW_EDGE = ["top", "bottom"];
 
 // ---------------------------------------------------------------------------
 // Helpers
