@@ -21,6 +21,7 @@
 | BUG-004 | Board / FocalPointMarker | Active focal point indicator is hidden when a die occupies the focal point field — the active focal point marker should always be visible on top of any die | P2 | open | — |
 | BUG-005 | game / combat | After choosing Push, the attacking die does not advance to the field it attacked — the attacker should move onto the vacated field after pushing the enemy | P1 | open | — |
 | BUG-006 | hex / boardDefinition | Side focal points are placed too close to center — they should each be 2 fields away from the center focal point along the middle row | P2 | open | — |
+| BUG-007 | game / victory | Victory is checked only at end of turn — game should end immediately when any player reaches 5 points (e.g. mid-turn after scoring from destruction or focal points) | P1 | open | — |
 
 ---
 
