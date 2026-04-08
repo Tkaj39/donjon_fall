@@ -173,7 +173,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
          * @returns {void}
          */
         function handleKeyDown(e) {
-            if (e.key === "d" && e.ctrlKey) {
+            if (e.key === "F2") {
                 e.preventDefault();
                 setDebugMode(prev => !prev);
                 return;
