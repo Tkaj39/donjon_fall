@@ -20,7 +20,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { getAvailableCombatOptions } from "../game/combat.js";
-import { getController, getTopDie, getTowerSize, canEnterTower } from "../game/gameState.js";
+import { getController, getTopDie, getTowerSize, canEnterTower, getAttackStrength } from "../game/gameState.js";
 import {
     getReachableHexes,
     getTowerReachableHexes,
@@ -42,6 +42,7 @@ import { ActionReplay } from "./ActionReplay.jsx";
 import { StateInspector } from "./StateInspector.jsx";
 import { VictoryScreen } from "./VictoryScreen.jsx";
 import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER } from "../styles/themes/default.js";
+import { CombatPowerTooltip } from "./CombatPowerTooltip.jsx";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -106,6 +107,9 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
 
     /** Whether the Phase 14.1 debug overlay is visible (toggled by Ctrl+D). */
     const [debugMode, setDebugMode] = useState(false);
+
+    /** Hex key currently under the mouse pointer, or null. */
+    const [hoveredHex, setHoveredHex] = useState(null);
 
     /**
      * Planned movement trajectory as an ordered array of hexKeys, starting at
@@ -661,10 +665,13 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
             )}
 
             {/* ── Board area + side shields ────────────────────── */}
-            <div className="flex-1 min-h-0 flex items-center justify-center px-2 py-1">
+            <div className="flex-1 min-h-0 flex items-center px-2 py-1">
+
+                {/* Left spacer — balances right panel so board stays centred */}
+                <div className="flex-1" />
 
                 {/* Three-column: left shield | board | right shield */}
-                <div className="flex items-center gap-2 h-full">
+                <div className="flex items-start gap-2 h-full">
 
                     {state.players.map((playerId, idx) => {
                         const cfg        = playerConfigs.find(c => c.id === playerId);
@@ -706,6 +713,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                         onApproachHover:    setPickerApproachKey,
                     } : null}
                     onHexClick={handleHexClick}
+                    onHexHover={setHoveredHex}
                 />
                 {state.phase === "combat" && (
                     <CombatOverlay
@@ -718,6 +726,35 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                         return shield;
                     })}
 
+                </div>
+
+                {/* Right panel — hex element centred between board right edge and screen edge */}
+                <div className="flex-1 flex items-center">
+                    <div className="mx-auto ml-16">
+                        {(() => {
+                            const isReachableEnemy = hoveredHex &&
+                                selectedHex &&
+                                reachableKeys.has(hoveredHex) &&
+                                getController(state, hoveredHex) !== null &&
+                                getController(state, hoveredHex) !== state.currentPlayer;
+
+                            const versus = isReachableEnemy ? {
+                                attackerStrength: getAttackStrength(state, selectedHex),
+                                attackerColor:    PLAYER_GLOW[state.currentPlayer] ?? "rgba(255,255,255,0.9)",
+                                defenderStrength: getAttackStrength(state, hoveredHex),
+                                defenderColor:    PLAYER_GLOW[getController(state, hoveredHex)] ?? "rgba(255,255,255,0.9)",
+                            } : null;
+
+                            return (
+                                <CombatPowerTooltip
+                                    color={PLAYER_GLOW[state.currentPlayer]}
+                                    combatStrength={!versus && hoveredHex && getController(state, hoveredHex) !== null ? getAttackStrength(state, hoveredHex) : null}
+                                    hoveredPlayerColor={hoveredHex ? PLAYER_GLOW[getController(state, hoveredHex)] ?? null : null}
+                                    versus={versus}
+                                />
+                            );
+                        })()}
+                    </div>
                 </div>
             </div>{/* end flex-1 scroll area */}
 

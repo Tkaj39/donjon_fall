@@ -206,9 +206,10 @@ function MovingDie({ fromX, fromY, toX, toY, diceStack, hexSize, playerColors })
  * @param {Set<string>} [props.clickableHexes] - Set of hexKeys that should show pointer cursor and receive click events.
  * @param {boolean} [props.debugMode] - When true, renders the Phase 14.1 debug overlay on every hex.
  * @param {function(string): void} [props.onHexClick] - Called with the hexKey when a hex is clicked.
+ * @param {function(string|null): void} [props.onHexHover] - Called with hexKey on mouse enter, null on leave.
  * @returns {JSX.Element}
  */
-export function Board({ state = null, selectedHex = null, highlightedHexes = {}, clickableHexes = new Set(), pickerData = null, pendingMove = null, debugMode = false, onHexClick }) {
+export function Board({ state = null, selectedHex = null, highlightedHexes = {}, clickableHexes = new Set(), pickerData = null, pendingMove = null, debugMode = false, onHexClick, onHexHover }) {
     const dice        = state?.dice ?? {};
     const focalPoints = state?.focalPoints ?? {};
 
@@ -298,6 +299,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                             onApproachHover:   pickerData.onApproachHover,
                         } : null}
                         onClick={clickableHexes.has(key) ? onHexClick : undefined}
+                        onHover={onHexHover}
                     />
                 );
             })}

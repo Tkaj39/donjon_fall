@@ -51,9 +51,10 @@ const STACK_OFFSET_RATIO = 0.22;
  * }|null} [props.debugInfo]
  *   When non-null, renders debug overlay text on this hex (Phase 14.1).
  * @param {function(): void} [props.onClick]               - Click handler; cursor becomes pointer when provided.
+ * @param {function(string|null): void} [props.onHover]    - Called with hexKey on mouse enter, null on leave.
  * @returns {JSX.Element}
  */
-export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, directionPicker = null, themeImageHref = null, debugInfo = null, onClick }) {
+export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, directionPicker = null, themeImageHref = null, debugInfo = null, onClick, onHover }) {
     const corners = hexCorners(centerX, centerY, size);
     const points = corners.map(({ x, y }) => `${x},${y}`).join(" ");
 
@@ -83,6 +84,8 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
             data-highlight={highlight ?? undefined}
             style={{ cursor: onClick ? "pointer" : "default" }}
             onClick={onClick ? () => onClick(hexKey(coords)) : undefined}
+            onMouseEnter={onHover ? () => onHover(hexKey(coords)) : undefined}
+            onMouseLeave={onHover ? () => onHover(null) : undefined}
         >
             {hasTexture && (
                 <defs>
