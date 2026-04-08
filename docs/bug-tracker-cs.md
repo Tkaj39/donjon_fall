@@ -22,6 +22,7 @@
 | BUG-005 | game / combat | Po zvolení posunutí se útočící kostka nepohne na napadené pole — po odsunutí nepřítele by se útočník měl přesunout na uvolněné pole | P1 | otevřená | — |
 | BUG-006 | hex / boardDefinition | Krajní ohniska jsou umístěna příliš blízko středu — každé by mělo být 2 pole od středového ohniska v horizontální řadě | P2 | otevřená | — |
 | BUG-007 | game / victory | Vítězství se vyhodnocuje pouze na konci tahu — hra by měla skončit okamžitě, jakmile některý hráč dosáhne 5 bodů (např. uprostřed tahu po zisku bodů za zničení nebo ohniska) | P1 | otevřená | — |
+| BUG-008 | game / movement | Přesun věže, kterou hráč kontroluje, je nesprávně vyhodnocen jako souboj, pokud cílové pole obsazuje vlastní kostka — přesun kontrolované věže na vlastní kostku by neměl spustit souboj | P1 | otevřená | — |
 
 ---
 
