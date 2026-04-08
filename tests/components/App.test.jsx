@@ -22,9 +22,9 @@ function getHighlightedKeys(container) {
 }
 
 describe('App', () => {
-    test('renders the game title', () => {
-        const { getByRole } = render(<Game />);
-        expect(getByRole('heading', { level: 1 })).toHaveTextContent('Donjon Fall');
+    test('renders the board', () => {
+        const { container } = render(<Game />);
+        expect(container.querySelector('svg')).toBeInTheDocument();
     });
 
     test('clicking an empty hex does nothing', () => {

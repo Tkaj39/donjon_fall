@@ -13,6 +13,8 @@ import { MainMenu } from "./components/MainMenu.jsx";
 import { MapSelection } from "./components/MapSelection.jsx";
 import { PlayerSetup } from "./components/PlayerSetup.jsx";
 import { GameLoading } from "./components/GameLoading.jsx";
+import { DEFAULT_MAP } from "./game/boardDefinition.js";
+import { ANIMAL_OPTIONS } from "./styles/themes/default.js";
 
 /**
  * @typedef {"splash"|"mainMenu"|"mapSelection"|"playerSetup"|"gameLoading"|"game"} Screen
@@ -48,7 +50,20 @@ export function App() {
         case "splash":
             return <SplashScreen onDone={() => navigate("mainMenu")} />;
         case "mainMenu":
-            return <MainMenu onPlay={() => navigate("mapSelection")} />;
+            return (
+                <MainMenu
+                    onPlay={() => navigate("mapSelection")}
+                    onDirectPlay={() => {
+                        const randomAnimal = () => ANIMAL_OPTIONS[Math.floor(Math.random() * ANIMAL_OPTIONS.length)].id;
+                        setSelectedMap(DEFAULT_MAP);
+                        setPlayerConfigs([
+                            { id: "red",  name: "Red",  coatOfArms: randomAnimal() },
+                            { id: "blue", name: "Blue", coatOfArms: randomAnimal() },
+                        ]);
+                        navigate("gameLoading");
+                    }}
+                />
+            );
         case "mapSelection":
             return (
                 <MapSelection

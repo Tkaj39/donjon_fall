@@ -8,10 +8,10 @@ import { Logo } from "./Logo.jsx";
 import { RulesViewer } from "./RulesViewer.jsx";
 
 /**
- * @param {{ onPlay: () => void }} props
+ * @param {{ onPlay: () => void, onDirectPlay: () => void }} props
  * @returns {JSX.Element}
  */
-export function MainMenu({ onPlay }) {
+export function MainMenu({ onPlay, onDirectPlay }) {
     const [rulesOpen, setRulesOpen] = useState(false);
 
     return (
@@ -27,6 +27,12 @@ export function MainMenu({ onPlay }) {
                     className="bg-red-700 hover:bg-red-600 text-white font-semibold py-3 rounded-lg tracking-wide uppercase transition-colors"
                 >
                     Play
+                </button>
+                <button
+                    onClick={onDirectPlay}
+                    className="bg-stone-600 hover:bg-stone-500 text-white font-semibold py-3 rounded-lg tracking-wide uppercase transition-colors"
+                >
+                    Direct Play
                 </button>
                 <button
                     onClick={() => setRulesOpen(true)}

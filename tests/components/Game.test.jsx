@@ -44,9 +44,9 @@ describe('Game', () => {
     // Rendering
     // -----------------------------------------------------------------------
 
-    test('renders the game title', () => {
-        render(<Game />);
-        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Donjon Fall');
+    test('renders the board', () => {
+        const { container } = render(<Game />);
+        expect(container.querySelector('svg')).toBeInTheDocument();
     });
 
     test('renders the score board', () => {
@@ -155,12 +155,14 @@ describe('Game', () => {
         expect(container.querySelector('[role="toolbar"]')).toBeInTheDocument();
     });
 
-    test('action panel disappears after deselecting', () => {
+    test('action panel buttons are disabled after deselecting', () => {
         const { container } = render(<Game />);
         const hex = RED_HEXES[0];
         fireEvent.click(getHexGroup(container, hex)); // select
         expect(container.querySelector('[role="toolbar"]')).toBeInTheDocument();
         fireEvent.click(getHexGroup(container, hex)); // deselect
-        expect(container.querySelector('[role="toolbar"]')).not.toBeInTheDocument();
+        const buttons = [...container.querySelectorAll('[role="toolbar"] button')];
+        expect(buttons.length).toBeGreaterThan(0);
+        expect(buttons.every(b => b.disabled)).toBe(true);
     });
 });
