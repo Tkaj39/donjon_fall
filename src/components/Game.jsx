@@ -387,6 +387,29 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
     }, [reachableKeys, state, trajectoryPath]);
 
     // -----------------------------------------------------------------------
+    // Derived: clickable hexes (drives cursor:pointer on Board)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Set of hexKeys that should respond to clicks (and show pointer cursor).
+     * Recomputed whenever selection, reachable destinations, or game phase changes.
+     */
+    const clickableHexes = useMemo(() => {
+        if (state.phase !== "action" || pendingMove) return new Set();
+        const set = new Set();
+        if (!state.actionTaken) {
+            for (const [key, stack] of Object.entries(state.dice)) {
+                if (stack.length > 0) set.add(key);
+            }
+        }
+        if (selectedHex) {
+            set.add(selectedHex);
+            for (const key of reachableKeys) set.add(key);
+        }
+        return set;
+    }, [state, pendingMove, selectedHex, reachableKeys]);
+
+    // -----------------------------------------------------------------------
     // Derived: winner
     // -----------------------------------------------------------------------
 
@@ -673,6 +696,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                     state={state}
                     selectedHex={selectedHex}
                     highlightedHexes={highlightedHexes}
+                    clickableHexes={clickableHexes}
                     pendingMove={pendingMove}
                     debugMode={debugMode}
                     pickerData={pickerEnemyKey ? {

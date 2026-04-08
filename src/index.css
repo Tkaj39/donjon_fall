@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+img {
+    -webkit-user-drag: none;
+    user-drag: none;
+}
+
 /* ── Phase 12.6 — Animations ──────────────────────────────────────────────── */
 
 /**
