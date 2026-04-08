@@ -159,7 +159,7 @@ export function getActiveFocalPoints(state) {
 // ---------------------------------------------------------------------------
 
 /** Default starting die value (face-up value for all dice at game start). */
-const DEFAULT_DIE_VALUE = 3;
+const DEFAULT_DIE_VALUE = 6;
 
 /**
  * Builds the canonical starting GameState for a new game.
