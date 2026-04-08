@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { Logo } from "./Logo.jsx";
 import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER } from "../styles/themes/default.js";
 
 /**
@@ -167,6 +168,9 @@ export function PlayerSetup({ map, onConfirm, onBack }) {
                 >
                     ← Back
                 </button>
+                <div className="flex justify-center mb-4">
+                    <Logo className="w-20 h-20" />
+                </div>
                 <h2 className="text-2xl font-bold tracking-wide uppercase mb-6">Player Setup</h2>
 
                 <div className="flex flex-col gap-4 mb-8">

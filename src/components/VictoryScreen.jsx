@@ -26,6 +26,8 @@ const FALLBACK_COLOR = "#94a3b8";
  * @param {function} props.onNewGame - Callback invoked when the player clicks "New game".
  * @returns {JSX.Element}
  */
+import { Logo } from "./Logo.jsx";
+
 export function VictoryScreen({ winner, onNewGame }) {
     const color = PLAYER_COLORS[winner] ?? FALLBACK_COLOR;
 
@@ -36,6 +38,7 @@ export function VictoryScreen({ winner, onNewGame }) {
             aria-label="Victory screen"
             className="fixed inset-0 flex flex-col items-center justify-center bg-[rgba(0,0,0,0.82)] z-[200] gap-6"
         >
+            <Logo className="w-20 h-20" />
             {/* Trophy / crown icon (SVG, no external asset needed) */}
             <svg
                 aria-hidden="true"
