@@ -118,6 +118,14 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     style={{ pointerEvents: "none" }}
                 />
             )}
+            {isFocalPoint && isActiveFocalPoint && (
+                <polygon
+                    points={points}
+                    fill="var(--color-focal-active)"
+                    opacity={0.25}
+                    style={{ pointerEvents: "none" }}
+                />
+            )}
             {isFocalPoint && (
                 <FocalPointMarker
                     cx={centerX}
