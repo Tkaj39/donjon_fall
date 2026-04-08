@@ -206,7 +206,7 @@ export function createInitialState(players, boardFields) {
 
     return {
         players: [...players],
-        currentPlayer: players[0],
+        currentPlayer: players[Math.floor(Math.random() * players.length)],
         phase: "focal",
         dice,
         focalPoints,
