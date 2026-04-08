@@ -86,8 +86,8 @@ function rollD6() {
  * }} props
  * @returns {JSX.Element}
  */
-export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = []}) {
-    const {state, dispatch, recordedActions, initialState} = useGameState(players, boardFields);
+export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null}) {
+    const {state, dispatch, recordedActions, initialState} = useGameState(players, boardFields, firstPlayer);
 
     // -----------------------------------------------------------------------
     // Local UI state

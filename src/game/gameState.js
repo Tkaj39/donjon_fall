@@ -172,7 +172,7 @@ const DEFAULT_DIE_VALUE = 6;
  *                                    properties (see fieldProperties.js).
  * @returns {GameState}
  */
-export function createInitialState(players, boardFields) {
+export function createInitialState(players, boardFields, firstPlayer = null) {
     const dice = {};
     const focalPoints = {};
     const scores = {};
@@ -206,7 +206,7 @@ export function createInitialState(players, boardFields) {
 
     return {
         players: [...players],
-        currentPlayer: players[Math.floor(Math.random() * players.length)],
+        currentPlayer: (firstPlayer && players.includes(firstPlayer)) ? firstPlayer : players[Math.floor(Math.random() * players.length)],
         phase: "focal",
         dice,
         focalPoints,

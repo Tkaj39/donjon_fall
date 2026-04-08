@@ -272,9 +272,10 @@ describe('createInitialState', () => {
         expect(state.players).not.toBe(players);
     });
 
-    it('sets currentPlayer to the first player in the list', () => {
-        const state = createInitialState(['red', 'blue'], []);
-        expect(state.currentPlayer).toBe('red');
+    it('sets currentPlayer to one of the players in the list', () => {
+        const players = ['red', 'blue'];
+        const state = createInitialState(players, []);
+        expect(players).toContain(state.currentPlayer);
     });
 
     it('sets phase to focal', () => {

@@ -11,7 +11,7 @@ const PLAYERS = ['red', 'blue'];
 
 /** Render the hook once and return its result. */
 function setup() {
-    return renderHook(() => useGameState(PLAYERS, BOARD_FIELDS));
+    return renderHook(() => useGameState(PLAYERS, BOARD_FIELDS, PLAYERS[0]));
 }
 
 // ---------------------------------------------------------------------------
