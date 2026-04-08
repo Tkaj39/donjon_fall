@@ -4,6 +4,7 @@
  */
 
 import { useState } from "react";
+import { Logo } from "./Logo.jsx";
 import { RulesViewer } from "./RulesViewer.jsx";
 
 /**
@@ -15,10 +16,7 @@ export function MainMenu({ onPlay }) {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60 text-white">
-            {/* Placeholder logo */}
-            <div className="w-24 h-24 rounded-full bg-stone-600 flex items-center justify-center mb-6 text-stone-400 text-sm">
-                LOGO
-            </div>
+            <Logo className="w-32 h-32 mb-6" />
 
             <h1 className="text-4xl font-bold tracking-widest uppercase mb-2">Donjon Fall</h1>
             <p className="text-stone-400 text-sm mb-12">Pád Donjonu</p>

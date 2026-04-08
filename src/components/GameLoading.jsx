@@ -7,6 +7,7 @@
  */
 
 import { useEffect } from "react";
+import { Logo } from "./Logo.jsx";
 import { createInitialState } from "../game/gameState.js";
 import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER } from "../styles/themes/default.js";
 
@@ -38,6 +39,7 @@ export function GameLoading({ playerConfigs, map, onDone }) {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60 text-white p-8">
+            <Logo className="w-24 h-24 mb-6" />
             <p className="text-stone-400 text-sm uppercase tracking-widest mb-10">Get ready…</p>
 
             <div className="flex flex-col gap-6 w-full max-w-xs">

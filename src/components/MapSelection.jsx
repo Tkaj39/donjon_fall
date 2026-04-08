@@ -4,6 +4,7 @@
  */
 
 import { ALL_MAPS } from "../game/boardDefinition.js";
+import { Logo } from "./Logo.jsx";
 
 /**
  * Placeholder thumbnail shown until a real preview asset is available.
@@ -57,6 +58,9 @@ export function MapSelection({ onSelect, onBack }) {
                 >
                     ← Back
                 </button>
+                <div className="flex justify-center mb-4">
+                    <Logo className="w-20 h-20" />
+                </div>
                 <h2 className="text-2xl font-bold tracking-wide uppercase mb-6">Select Map</h2>
 
                 <div className="flex flex-col gap-4">
