@@ -43,6 +43,7 @@ import {StateInspector} from "./StateInspector.jsx";
 import {VictoryScreen} from "./VictoryScreen.jsx";
 import {CombatPowerTooltip} from "./CombatPowerTooltip.jsx";
 import {PlayerShield} from "./PlayerShield.jsx";
+import {Logo} from "./Logo.jsx";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -630,9 +631,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
             })()}
             {/* ── Header ──────────────────────────────────────────── */}
             <header className="flex items-center justify-between px-4 py-2 shrink-0">
-                <h1 className="text-base font-bold tracking-wide text-stone-100 m-0">
-                    Pád donjonu
-                </h1>
+                <Logo className="w-64" />
                 <button
                     aria-label="Open rules"
                     onClick={() => setShowRules(true)}

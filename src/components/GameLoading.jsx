@@ -11,6 +11,7 @@ import { Logo } from "./Logo.jsx";
 import { createInitialState } from "../game/gameState.js";
 import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER, GAME_ASSETS } from "../styles/themes/default.js";
 import { preloadImages } from "../utils/preloadImages.js";
+import Spinner from "./Spinner.jsx";
 
 /** Minimum display duration after assets are loaded. */
 const LOADING_DURATION_MS = 1800;
@@ -26,7 +27,7 @@ const PLAYER_COLOR = {
  * @param {import("./PlayerSetup.jsx").PlayerConfig[]} props.playerConfigs
  * @param {import("../game/boardDefinition.js").BoardDefinition} props.map
  * @param {(players: string[], boardFields: import("../hex/fieldProperties.js").HexField[]) => void} props.onDone
- * @returns {JSX.Element}
+ * @returns {React.JSX.Element}
  */
 export function GameLoading({ playerConfigs, map, onDone }) {
     useEffect(() => {
@@ -43,39 +44,42 @@ export function GameLoading({ playerConfigs, map, onDone }) {
         return () => { cancelled = true; };
     }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
+    const shields = playerConfigs.map(config => {
+        const color = PLAYER_COLOR[config.id] ?? { bg: "bg-stone-600", label: config.id };
+        return (
+            <div key={config.id} className="flex items-center gap-4">
+                {/* Coat of arms: shield + animal */}
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                    <img
+                        src={SHIELD_BY_PLAYER[config.id] ?? SHIELD_BY_PLAYER.blue}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <img
+                        src={ANIMAL_OPTIONS.find(a => a.id === config.coatOfArms)?.href ?? ANIMAL_OPTIONS[0].href}
+                        alt={config.coatOfArms}
+                        className="absolute inset-0 w-full h-full object-contain p-1"
+                    />
+                </div>
+                <div>
+                    <p className="text-white font-semibold text-lg leading-tight">{config.name}</p>
+                    <p className="text-stone-400 text-sm">{color.label}</p>
+                </div>
+            </div>
+        );
+    })
+
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60 text-white p-8">
-            <Logo className="w-24 h-24 mb-6" />
-            <div className="flex flex-col gap-6 w-full max-w-xs">
-                {playerConfigs.map(config => {
-                    const color = PLAYER_COLOR[config.id] ?? { bg: "bg-stone-600", label: config.id };
-                    return (
-                        <div key={config.id} className="flex items-center gap-4">
-                            {/* Coat of arms: shield + animal */}
-                            <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
-                                <img
-                                    src={SHIELD_BY_PLAYER[config.id] ?? SHIELD_BY_PLAYER.blue}
-                                    alt=""
-                                    className="absolute inset-0 w-full h-full object-cover"
-                                />
-                                <img
-                                    src={ANIMAL_OPTIONS.find(a => a.id === config.coatOfArms)?.href ?? ANIMAL_OPTIONS[0].href}
-                                    alt={config.coatOfArms}
-                                    className="absolute inset-0 w-full h-full object-contain p-1"
-                                />
-                            </div>
-                            <div>
-                                <p className="text-white font-semibold text-lg leading-tight">{config.name}</p>
-                                <p className="text-stone-400 text-sm">{color.label}</p>
-                            </div>
-                        </div>
-                    );
-                })}
+        <>
+            <Logo className="fixed top-16 left-1/2 -translate-x-1/2"/>
+            <div className="flex items-center justify-around min-h-screen bg-stone-900/60 text-white p-8">
+                {shields[0]}
+                <div className="flex flex-col items-center gap-8">
+                    <p className="text-stone-400 text-sm uppercase tracking-widest">Get ready…</p>
+                    <Spinner />
+                </div>
+                {shields[1]}
             </div>
-            <div className="mt-10 flex flex-col items-center gap-3">
-                <p className="text-stone-400 text-sm uppercase tracking-widest">Get ready…</p>
-                <div className="w-6 h-6 rounded-full border-2 border-stone-400 border-t-transparent animate-spin" />
-            </div>
-        </div>
+        </>
     );
 }
