@@ -9,9 +9,10 @@
 import { useEffect } from "react";
 import { Logo } from "./Logo.jsx";
 import { createInitialState } from "../game/gameState.js";
-import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER } from "../styles/themes/default.js";
+import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER, GAME_ASSETS } from "../styles/themes/default.js";
+import { preloadImages } from "../utils/preloadImages.js";
 
-/** How long to show the loading screen before entering the game. */
+/** Minimum display duration after assets are loaded. */
 const LOADING_DURATION_MS = 1800;
 
 /** Color display config per player ID — matches PlayerSetup. */
@@ -33,15 +34,18 @@ export function GameLoading({ playerConfigs, map, onDone }) {
         const playerIds = playerConfigs.map(c => c.id);
         createInitialState(playerIds, map.fields);
 
-        const timer = setTimeout(() => onDone(playerIds, map.fields), LOADING_DURATION_MS);
-        return () => clearTimeout(timer);
+        let cancelled = false;
+        preloadImages(GAME_ASSETS).then(() => {
+            if (cancelled) return;
+            const timer = setTimeout(() => { if (!cancelled) onDone(playerIds, map.fields); }, LOADING_DURATION_MS);
+            return () => clearTimeout(timer);
+        });
+        return () => { cancelled = true; };
     }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60 text-white p-8">
             <Logo className="w-24 h-24 mb-6" />
-            <p className="text-stone-400 text-sm uppercase tracking-widest mb-10">Get ready…</p>
-
             <div className="flex flex-col gap-6 w-full max-w-xs">
                 {playerConfigs.map(config => {
                     const color = PLAYER_COLOR[config.id] ?? { bg: "bg-stone-600", label: config.id };
@@ -67,6 +71,10 @@ export function GameLoading({ playerConfigs, map, onDone }) {
                         </div>
                     );
                 })}
+            </div>
+            <div className="mt-10 flex flex-col items-center gap-3">
+                <p className="text-stone-400 text-sm uppercase tracking-widest">Get ready…</p>
+                <div className="w-6 h-6 rounded-full border-2 border-stone-400 border-t-transparent animate-spin" />
             </div>
         </div>
     );
