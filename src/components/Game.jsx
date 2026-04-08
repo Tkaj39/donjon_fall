@@ -147,6 +147,23 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
      */
     const focalFiredRef = useRef(false);
 
+    /** Guards against double-dispatch for the auto-end-turn effect. */
+    const endTurnFiredRef = useRef(false);
+
+    // -----------------------------------------------------------------------
+    // Auto-end turn: when action is taken and no combat is pending, advance
+    // -----------------------------------------------------------------------
+
+    useEffect(() => {
+        if (state.phase !== "action" || !state.actionTaken || state.combat !== null) {
+            endTurnFiredRef.current = false;
+            return;
+        }
+        if (endTurnFiredRef.current) return;
+        endTurnFiredRef.current = true;
+        dispatch({ type: "CONFIRM_ACTION" });
+    }, [state.phase, state.actionTaken, state.combat, dispatch]);
+
     useEffect(() => {
         if (state.phase !== "focal") {
             focalFiredRef.current = false;
@@ -540,16 +557,6 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
     }
 
     /**
-     * Ends the current player"s turn after their action is complete.
-     *
-     * @returns {void}
-     */
-    function handleEndTurn() {
-        dispatch({ type: "END_TURN" });
-        deselect();
-    }
-
-    /**
      * Resets the game by reloading the page (full state re-initialisation).
      *
      * @returns {void}
@@ -563,7 +570,6 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
     // -----------------------------------------------------------------------
 
     const combatOptions    = state.phase === "combat" ? getAvailableCombatOptions(state) : [];
-    const canEndTurn       = state.phase === "action" && state.actionTaken;
     const showActionPanel  = state.phase === "action" && selectedHex !== null && !state.actionTaken;
 
     // -----------------------------------------------------------------------
@@ -710,14 +716,6 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                     />
                 </div>
 
-                <div style={{ visibility: canEndTurn ? "visible" : "hidden" }}>
-                    <button
-                        onClick={handleEndTurn}
-                        className="bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-lg text-[var(--color-panel-text,#f1f5f9)] cursor-pointer text-base font-semibold py-[0.6rem] px-6"
-                    >
-                        End Turn
-                    </button>
-                </div>
             </div>
 
             {/* ── Victory screen ──────────────────────────────────── */}
