@@ -49,16 +49,6 @@ describe('Game', () => {
         expect(container.querySelector('svg')).toBeInTheDocument();
     });
 
-    test('renders the score board', () => {
-        render(<Game />);
-        expect(screen.getByRole('region', { name: 'Score board' })).toBeInTheDocument();
-    });
-
-    test('renders the phase indicator', () => {
-        render(<Game />);
-        expect(screen.getByRole('status', { name: 'Phase indicator' })).toBeInTheDocument();
-    });
-
     test('renders the rules button', () => {
         render(<Game />);
         expect(screen.getByRole('button', { name: 'Open rules' })).toBeInTheDocument();

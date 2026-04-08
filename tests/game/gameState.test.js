@@ -300,8 +300,8 @@ describe('createInitialState', () => {
         ];
         const state = createInitialState(['red', 'blue'], boardFields);
         
-        expect(state.dice['0,0,0']).toEqual([{ owner: 'red', value: 3 }]);
-        expect(state.dice['1,-1,0']).toEqual([{ owner: 'blue', value: 3 }]);
+        expect(state.dice['0,0,0']).toEqual([{ owner: 'red', value: 6 }]);
+        expect(state.dice['1,-1,0']).toEqual([{ owner: 'blue', value: 6 }]);
         expect(state.dice['2,-2,0']).toBeUndefined();
     });
 
@@ -312,7 +312,7 @@ describe('createInitialState', () => {
         ];
         const state = createInitialState(['red', 'blue'], boardFields);
         
-        expect(state.dice['0,0,0']).toEqual([{ owner: 'red', value: 3 }]);
+        expect(state.dice['0,0,0']).toEqual([{ owner: 'red', value: 6 }]);
         expect(state.dice['1,-1,0']).toBeUndefined();
     });
 

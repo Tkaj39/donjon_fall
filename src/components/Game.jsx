@@ -37,9 +37,7 @@ import { ActionPanel } from "./ActionPanel.jsx";
 import { ACTION_ORDER } from "./actionConstants.js";
 import { Board, MOVE_ANIMATION_MS, SVG_WIDTH } from "./Board.jsx";
 import { CombatOverlay } from "./CombatOverlay.jsx";
-import { PhaseIndicator } from "./PhaseIndicator.jsx";
 import { RulesViewer } from "./RulesViewer.jsx";
-import { ScoreBoard } from "./ScoreBoard.jsx";
 import { ActionReplay } from "./ActionReplay.jsx";
 import { StateInspector } from "./StateInspector.jsx";
 import { VictoryScreen } from "./VictoryScreen.jsx";
@@ -638,12 +636,6 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                     initialState={initialState}
                 />
             )}
-
-            {/* ── Status bar ──────────────────────────────────────── */}
-            <div className="flex gap-3 items-center flex-wrap justify-center">
-                <ScoreBoard players={state.players} scores={state.scores} />
-                <PhaseIndicator phase={state.phase} currentPlayer={state.currentPlayer} />
-            </div>
 
             {/* ── Board area + side shields ────────────────────── */}
             <div className="flex-1 min-h-0 flex items-center justify-center px-2 py-1">
