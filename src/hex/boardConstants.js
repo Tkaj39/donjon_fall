@@ -8,16 +8,6 @@ import { hexKey } from "./hexUtils.js";
 /** Radius of the large-hexagon board; total hexes = 1 + 6 + 12 + 18 + 24 = 61. */
 const BOARD_RADIUS = 4;
 
-/**
- * Focal point property descriptors keyed by hex key.
- * All three hexes share the same group ID — they form one focal point group.
- */
-const FOCAL_POINT_PROPS = {
-    ["-2,0,2"]: { type: "focalPoint", active: false, group: "main" },
-    ["0,0,0"]:  { type: "focalPoint", active: true,  group: "main" },
-    ["2,0,-2"]: { type: "focalPoint", active: false, group: "main" },
-};
-
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -61,28 +51,15 @@ export const BOARD_HEX_SET = new Set(BOARD_HEXES.map(hexKey));
 
 /**
  * Focal point hex coordinate objects: left, center, right in the middle row.
- * Center = (0,0,0), left = (-2,0,2), right = (2,0,-2) — evenly spaced across
- * the 9-hex middle row.
+ * The center starts active; the two side focal points start inactive.
  *
  * @type {{q: number, r: number, s: number}[]}
  */
 export const FOCAL_POINT_HEXES = [
-    {q: -2, r: 0, s: 2},  // left
+    {q: -3, r: 0, s: 3},  // left
     {q: 0, r: 0, s: 0},   // center
-    {q: 2, r: 0, s: -2},  // right
+    {q: 3, r: 0, s: -3},  // right
 ];
-
-/** Hex keys for all three focal point hexes. @type {string[]} */
-export const FOCAL_POINT_KEYS = FOCAL_POINT_HEXES.map(hexKey);
-
-/** Hex key of the center focal point. @type {string} */
-export const FOCAL_CENTER_KEY = hexKey({q: 0, r: 0, s: 0});
-
-/** Hex key of the left focal point. @type {string} */
-export const FOCAL_LEFT_KEY = hexKey({q: -2, r: 0, s: 2});
-
-/** Hex key of the right focal point. @type {string} */
-export const FOCAL_RIGHT_KEY = hexKey({q: 2, r: 0, s: -2});
 
 /**
  * All hex objects in the red base row (r = -BOARD_RADIUS, top of board).
@@ -99,6 +76,7 @@ export const BLUE_BASE_HEXES = BOARD_HEXES.filter(h => h.r === BOARD_RADIUS);
 /**
  * All 61 board fields as HexField objects: `{ coords, properties[] }`.
  * Each field carries zero or more properties (startingField, focalPoint).
+ * Index 1 in FOCAL_POINT_HEXES is the active focal point at game start.
  *
  * @type {Array<{coords: {q:number,r:number,s:number}, properties: object[]}>}
  */
@@ -108,7 +86,10 @@ export const BOARD_FIELDS = BOARD_HEXES.map(coords => {
 
     if (coords.r === -BOARD_RADIUS) properties.push({ type: "startingField", owner: "red" });
     if (coords.r === BOARD_RADIUS)  properties.push({ type: "startingField", owner: "blue" });
-    if (FOCAL_POINT_PROPS[key])     properties.push(FOCAL_POINT_PROPS[key]);
+
+    FOCAL_POINT_HEXES.forEach((h, i) => {
+        if (hexKey(h) === key) properties.push({ type: "focalPoint", active: i === 1, group: "main" });
+    });
 
     return { coords, properties };
 });
