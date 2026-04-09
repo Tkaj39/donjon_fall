@@ -129,8 +129,10 @@ describe('full turn sequence — move → combat → push → turn advances', ()
         const pushedStack = state.dice[C] ?? [];
         expect(pushedStack.some(d => d.owner === 'blue')).toBe(true);
         expect((state.dice[B] ?? []).some(d => d.owner === 'blue')).toBe(false);
-        // Red attacker value decreased by 1
-        expect(state.dice[A][0].value).toBe(4);
+        // Red attacker moved to B (defenderHex), value decreased by 1
+        expect(state.dice[A]).toBeUndefined();
+        expect(state.dice[B][0].value).toBe(4);
+        expect(state.dice[B][0].owner).toBe('red');
         // Turn passed to blue
         expect(state.phase).toBe('focal');
         expect(state.currentPlayer).toBe('blue');
@@ -211,8 +213,9 @@ describe('edge case — attacker value clamps at 1 after combat', () => {
             },
         });
         state = gameReducer(state, { type: 'CHOOSE_COMBAT_OPTION', option: 'push', rerollValue: 1 });
-        // Attacker value: 2 − 1 = 1 (not 0)
-        expect(state.dice[A][0].value).toBe(1);
+        // Attacker value: 2 − 1 = 1 (not 0); attacker moved to B (defenderHex)
+        expect(state.dice[A]).toBeUndefined();
+        expect(state.dice[B][0].value).toBe(1);
     });
 
     it('attacker already at value 1 stays at 1 after occupy', () => {
@@ -352,10 +355,10 @@ describe('edge case — chain push encirclement', () => {
         expect(state.dice[D][0].owner).toBe('red');
         // Red scored 1 for destroying the blue die at C's original position
         expect(state.scores.red).toBe(1);
-        // B moved to C; B's original position now empty
-        expect(state.dice[B]).toBeUndefined();
-        // Attacker (red at A) decremented
-        expect(state.dice[A][0].value).toBe(4);
+        // Attacker moved to B (defenderHex), value decremented
+        expect(state.dice[A]).toBeUndefined();
+        expect(state.dice[B][0].owner).toBe('red');
+        expect(state.dice[B][0].value).toBe(4);
     });
 
     it('chain push: two blue dice destroyed by encirclement scores 2 VPs', () => {
@@ -387,7 +390,9 @@ describe('edge case — chain push encirclement', () => {
 
         // Both blue dice at B destroyed → +2 VP
         expect(state.scores.red).toBe(2);
-        expect(state.dice[B]).toBeUndefined();
+        // Attacker moved to B (defenderHex); blue dice destroyed
+        expect(state.dice[A]).toBeUndefined();
+        expect(state.dice[B][0].owner).toBe('red');
         // C untouched
         expect(state.dice[C][0].owner).toBe('red');
     });
@@ -422,10 +427,10 @@ describe('edge case — off-map scoring', () => {
         state = gameReducer(state, { type: 'CHOOSE_COMBAT_OPTION', option: 'push', rerollValue: 1 });
 
         expect(state.scores.red).toBe(1);
-        // Blue die no longer on the board
-        expect(state.dice[EDGE]).toBeUndefined();
-        // Attacker decremented
-        expect(state.dice[NEAR_EDGE][0].value).toBe(4);
+        // Attacker moved to EDGE (defenderHex), value decremented
+        expect(state.dice[NEAR_EDGE]).toBeUndefined();
+        expect(state.dice[EDGE][0].owner).toBe('red');
+        expect(state.dice[EDGE][0].value).toBe(4);
     });
 
     it('two blue dice pushed off map scores 2 VPs', () => {
@@ -452,7 +457,9 @@ describe('edge case — off-map scoring', () => {
         state = gameReducer(state, { type: 'CHOOSE_COMBAT_OPTION', option: 'push', rerollValue: 1 });
 
         expect(state.scores.red).toBe(2);
-        expect(state.dice[EDGE]).toBeUndefined();
+        // Attacker moved to EDGE; the two blue dice were destroyed (off map)
+        expect(state.dice[NEAR_EDGE]).toBeUndefined();
+        expect(state.dice[EDGE][0].owner).toBe('red');
     });
 
     it('off-map destruction with 5 VP triggers victory', () => {
@@ -517,10 +524,11 @@ describe('edge case — chain push where last formation exits the board', () => 
         // EDGE's blue die destroyed → +1 VP
         expect(state.scores.red).toBe(1);
         // NEAR_EDGE's blue moved to EDGE's position
-        expect(state.dice[NEAR_EDGE]).toBeUndefined();
+        expect(state.dice[NEAR_EDGE][0].owner).toBe('red'); // attacker moved here
+        expect(state.dice[ATTACKER]).toBeUndefined(); // attacker left
         expect(state.dice[EDGE]).toBeDefined();
         expect(state.dice[EDGE].some(d => d.owner === 'blue')).toBe(true);
         // Attacker decremented
-        expect(state.dice[ATTACKER][0].value).toBe(5);
+        expect(state.dice[NEAR_EDGE][0].value).toBe(5);
     });
 });

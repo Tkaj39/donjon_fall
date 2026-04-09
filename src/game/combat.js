@@ -302,7 +302,7 @@ export function applyPush(state, rerollValue) {
         }
     }
 
-    // Attacker"s top die decreases by 1 (minimum = MIN_DIE_VALUE)
+    // Attacker"s top die decreases by 1 (minimum = MIN_DIE_VALUE), then move to defenderHex
     const attackerStack = getDiceAt({ ...state, dice }, attackerHex);
     if (attackerStack.length > 0) {
         const topIdx = attackerStack.length - 1;
@@ -310,7 +310,8 @@ export function applyPush(state, rerollValue) {
         const newAttackerStack = attackerStack.map((d, idx) =>
             idx === topIdx ? { ...d, value: newValue } : d
         );
-        dice = setStack(dice, attackerHex, newAttackerStack);
+        dice = setStack(dice, attackerHex, []);
+        dice = setStack(dice, defenderHex, newAttackerStack);
     }
 
     return {

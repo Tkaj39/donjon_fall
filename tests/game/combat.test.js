@@ -299,7 +299,8 @@ describe('applyPush', () => {
             combat: { attackerHex: HEX_A, defenderHex: HEX_B, approachDirection: HEX_A, options: ['push', 'occupy'] },
         });
         const next = applyPush(state, 4); // rerollValue 4 ≤ original 3 → capped at 3
-        expect(next.dice[HEX_B]).toBeUndefined();
+        expect(next.dice[HEX_A]).toBeUndefined(); // attacker left
+        expect(next.dice[HEX_B][0].owner).toBe('red'); // attacker moved here
         expect(next.dice[HEX_C]).toBeDefined();
         expect(next.dice[HEX_C][0].owner).toBe('blue');
     });
@@ -328,7 +329,7 @@ describe('applyPush', () => {
         expect(next.dice[HEX_C][0].value).toBe(1);
     });
 
-    it('decreases attacker top die by 1 (min 1)', () => {
+    it('decreases attacker top die by 1 (min 1) and moves attacker to defenderHex', () => {
         const state = makeState({
             dice: {
                 [HEX_A]: [{ owner: 'red', value: 5 }],
@@ -337,7 +338,9 @@ describe('applyPush', () => {
             combat: { attackerHex: HEX_A, defenderHex: HEX_B, approachDirection: HEX_A, options: ['push'] },
         });
         const next = applyPush(state, 3);
-        expect(next.dice[HEX_A][0].value).toBe(4);
+        expect(next.dice[HEX_A]).toBeUndefined();
+        expect(next.dice[HEX_B][0].value).toBe(4);
+        expect(next.dice[HEX_B][0].owner).toBe('red');
     });
 
     it('does not decrease attacker below value 1', () => {
@@ -349,7 +352,7 @@ describe('applyPush', () => {
             combat: { attackerHex: HEX_A, defenderHex: HEX_B, approachDirection: HEX_A, options: ['push'] },
         });
         const next = applyPush(state, 1);
-        expect(next.dice[HEX_A][0].value).toBe(1);
+        expect(next.dice[HEX_B][0].value).toBe(1);
     });
 
     it('destroys last formation pushed off the map and scores points', () => {
@@ -365,7 +368,8 @@ describe('applyPush', () => {
             combat: { attackerHex: HEX_PRE_EDGE, defenderHex: HEX_EDGE, approachDirection: HEX_PRE_EDGE, options: ['push'] },
         });
         const next = applyPush(state, 3);
-        expect(next.dice[HEX_EDGE]).toBeUndefined(); // removed
+        expect(next.dice[HEX_PRE_EDGE]).toBeUndefined(); // attacker left
+        expect(next.dice[HEX_EDGE][0].owner).toBe('red'); // attacker moved here
         expect(next.scores.red).toBe(1);  // scored 1 for the destroyed enemy die
     });
 
@@ -380,7 +384,8 @@ describe('applyPush', () => {
             combat: { attackerHex: HEX_A, defenderHex: HEX_B, approachDirection: HEX_A, options: ['push'] },
         });
         const next = applyPush(state, 3);
-        expect(next.dice[HEX_B]).toBeUndefined();
+        expect(next.dice[HEX_A]).toBeUndefined(); // attacker left
+        expect(next.dice[HEX_B][0].owner).toBe('red'); // attacker moved here, defender destroyed
         expect(next.scores.red).toBe(1);
     });
 
@@ -408,7 +413,8 @@ describe('applyPush', () => {
             combat: { attackerHex: HEX_A, defenderHex: HEX_B, approachDirection: HEX_A, options: ['push'] },
         });
         const next = applyPush(state, 2);
-        expect(next.dice[HEX_B]).toBeUndefined();
+        expect(next.dice[HEX_A]).toBeUndefined(); // attacker left
+        expect(next.dice[HEX_B][0].owner).toBe('red'); // attacker moved here
         expect(next.dice[HEX_C]).toBeDefined(); // B moved here
         expect(next.dice[HEX_D]).toBeDefined(); // C moved here
         expect(next.scores.red).toBe(0); // no destruction
