@@ -44,23 +44,13 @@ describe('Game', () => {
     // Rendering
     // -----------------------------------------------------------------------
 
-    test('renders the game title', () => {
-        render(<Game />);
-        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Donjon Fall');
-    });
-
-    test('renders the score board', () => {
-        render(<Game />);
-        expect(screen.getByRole('region', { name: 'Score board' })).toBeInTheDocument();
-    });
-
-    test('renders the phase indicator', () => {
-        render(<Game />);
-        expect(screen.getByRole('status', { name: 'Phase indicator' })).toBeInTheDocument();
+    test('renders the board', () => {
+        const { container } = render(<Game firstPlayer="red" />);
+        expect(container.querySelector('svg')).toBeInTheDocument();
     });
 
     test('renders the rules button', () => {
-        render(<Game />);
+        render(<Game firstPlayer="red" />);
         expect(screen.getByRole('button', { name: 'Open rules' })).toBeInTheDocument();
     });
 
@@ -69,13 +59,13 @@ describe('Game', () => {
     // -----------------------------------------------------------------------
 
     test('clicking the rules button opens the rules viewer', () => {
-        render(<Game />);
+        render(<Game firstPlayer="red" />);
         fireEvent.click(screen.getByRole('button', { name: 'Open rules' }));
         expect(screen.getByRole('dialog', { name: 'Rules viewer' })).toBeInTheDocument();
     });
 
     test('closing rules viewer removes it from the DOM', () => {
-        render(<Game />);
+        render(<Game firstPlayer="red" />);
         fireEvent.click(screen.getByRole('button', { name: 'Open rules' }));
         // RulesViewer renders a close button
         const closeBtn = screen.getByRole('button', { name: /close/i });
@@ -88,19 +78,19 @@ describe('Game', () => {
     // -----------------------------------------------------------------------
 
     test('clicking an empty hex does not highlight anything', () => {
-        const { container } = render(<Game />);
+        const { container } = render(<Game firstPlayer="red" />);
         fireEvent.click(getHexGroup(container, EMPTY_FAR));
         expect(getHighlightedKeys(container)).toHaveLength(0);
     });
 
     test('clicking a red die highlights reachable hexes', () => {
-        const { container } = render(<Game />);
+        const { container } = render(<Game firstPlayer="red" />);
         fireEvent.click(getHexGroup(container, RED_HEXES[0]));
         expect(getHighlightedKeys(container).length).toBeGreaterThan(0);
     });
 
     test('highlighted hexes have recognised data-highlight values', () => {
-        const { container } = render(<Game />);
+        const { container } = render(<Game firstPlayer="red" />);
         fireEvent.click(getHexGroup(container, RED_HEXES[2]));
         const types = getHighlightedKeys(container)
             .map((k) => container.querySelector(`g[data-hex="${k}"]`)?.getAttribute('data-highlight'));
@@ -109,7 +99,7 @@ describe('Game', () => {
     });
 
     test('clicking the selected die again deselects it', () => {
-        const { container } = render(<Game />);
+        const { container } = render(<Game firstPlayer="red" />);
         const hex = RED_HEXES[0];
         fireEvent.click(getHexGroup(container, hex)); // select
         fireEvent.click(getHexGroup(container, hex)); // deselect
@@ -119,7 +109,7 @@ describe('Game', () => {
     });
 
     test('clicking a different own die switches selection', () => {
-        const { container } = render(<Game />);
+        const { container } = render(<Game firstPlayer="red" />);
         // RED_HEXES[4] is 4 hexes away from RED_HEXES[0] — beyond the die's
         // range (value 3), so the click switches selection rather than moving.
         fireEvent.click(getHexGroup(container, RED_HEXES[0]));
@@ -134,7 +124,7 @@ describe('Game', () => {
     });
 
     test('clicking outside the reachable area deselects', () => {
-        const { container } = render(<Game />);
+        const { container } = render(<Game firstPlayer="red" />);
         fireEvent.click(getHexGroup(container, RED_HEXES[0])); // select red die
 
         // Blue base bottom row — far from red, definitely not reachable
@@ -149,18 +139,20 @@ describe('Game', () => {
     // -----------------------------------------------------------------------
 
     test('action panel appears when a die is selected in action phase', () => {
-        const { container } = render(<Game />);
+        const { container } = render(<Game firstPlayer="red" />);
         fireEvent.click(getHexGroup(container, RED_HEXES[0]));
         // ActionPanel has role="toolbar"
         expect(container.querySelector('[role="toolbar"]')).toBeInTheDocument();
     });
 
-    test('action panel disappears after deselecting', () => {
-        const { container } = render(<Game />);
+    test('action panel buttons are disabled after deselecting', () => {
+        const { container } = render(<Game firstPlayer="red" />);
         const hex = RED_HEXES[0];
         fireEvent.click(getHexGroup(container, hex)); // select
         expect(container.querySelector('[role="toolbar"]')).toBeInTheDocument();
         fireEvent.click(getHexGroup(container, hex)); // deselect
-        expect(container.querySelector('[role="toolbar"]')).not.toBeInTheDocument();
+        const buttons = [...container.querySelectorAll('[role="toolbar"] button')];
+        expect(buttons.length).toBeGreaterThan(0);
+        expect(buttons.every(b => b.disabled)).toBe(true);
     });
 });

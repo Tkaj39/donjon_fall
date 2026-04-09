@@ -6,6 +6,9 @@ Now that the core of the game is implemented (see implementation-plan.md), there
 
 ---
 
+## Responsivity
+Make the game responsive for mobile and larger screens.
+
 ## AI Opponent
 
 A computer-controlled player that can take any player slot. All bots share a common interface so the game loop treats them identically to human players.

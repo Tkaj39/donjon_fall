@@ -17,6 +17,7 @@ const HIGHLIGHT_FILL = {
 };
 
 /** Focal point marker circle radius as a fraction of hex size. */
+const HEX_STROKE_WIDTH = 1.5;
 const FOCAL_MARKER_RATIO = 0.18;
 
 /** Vertical spacing between stacked dice as a fraction of hex size. */
@@ -44,10 +45,17 @@ const STACK_OFFSET_RATIO = 0.22;
  * }|null} [props.directionPicker]
  *   When non-null, renders the Phase 12.4 approach-direction picker overlay on this hex.
  * @param {string}  [props.themeImageHref]                - Image URL stretched to fill the hex tile from the active theme. Used when no other state-driven fill applies.
+ * @param {{
+ *   attackStrength: number|null,
+ *   focalGroup: string|null,
+ *   focalActive: boolean,
+ * }|null} [props.debugInfo]
+ *   When non-null, renders debug overlay text on this hex (Phase 14.1).
  * @param {function(): void} [props.onClick]               - Click handler; cursor becomes pointer when provided.
+ * @param {function(string|null): void} [props.onHover]    - Called with hexKey on mouse enter, null on leave.
  * @returns {JSX.Element}
  */
-export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, directionPicker = null, themeImageHref = null, onClick }) {
+export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, directionPicker = null, themeImageHref = null, debugInfo = null, onClick, onHover }) {
     const corners = hexCorners(centerX, centerY, size);
     const points = corners.map(({ x, y }) => `${x},${y}`).join(" ");
 
@@ -77,6 +85,8 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
             data-highlight={highlight ?? undefined}
             style={{ cursor: onClick ? "pointer" : "default" }}
             onClick={onClick ? () => onClick(hexKey(coords)) : undefined}
+            onMouseEnter={onHover ? () => onHover(hexKey(coords)) : undefined}
+            onMouseLeave={onHover ? () => onHover(null) : undefined}
         >
             {hasTexture && (
                 <defs>
@@ -89,7 +99,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                 points={points}
                 fill={polygonFill}
                 stroke="var(--color-hex-stroke)"
-                strokeWidth={1.5}
+                strokeWidth={HEX_STROKE_WIDTH}
             />
             {hasTexture && (
                 <image
@@ -108,7 +118,15 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     points={points}
                     fill="none"
                     stroke="var(--color-hex-stroke)"
-                    strokeWidth={1.5}
+                    strokeWidth={HEX_STROKE_WIDTH}
+                    style={{ pointerEvents: "none" }}
+                />
+            )}
+            {isFocalPoint && isActiveFocalPoint && (
+                <polygon
+                    points={points}
+                    fill="var(--color-focal-active)"
+                    opacity={0.25}
                     style={{ pointerEvents: "none" }}
                 />
             )}
@@ -146,6 +164,44 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     selectedApproachKey={directionPicker.selectedApproachKey}
                     onApproachHover={directionPicker.onApproachHover}
                 />
+            )}
+            {debugInfo && (
+                <>
+                    <text
+                        className="pointer-events-none select-none"
+                        x={centerX}
+                        y={centerY - size * 0.45}
+                        textAnchor="middle"
+                        fontSize={size * 0.22}
+                        fill="var(--color-debug-coords)"
+                    >
+                        {`${coords.q},${coords.r},${coords.s}`}
+                    </text>
+                    {debugInfo.attackStrength !== null && (
+                        <text
+                            className="pointer-events-none select-none"
+                            x={centerX}
+                            y={centerY + size * 0.62}
+                            textAnchor="middle"
+                            fontSize={size * 0.24}
+                            fill="var(--color-debug-attack)"
+                        >
+                            {`atk:${debugInfo.attackStrength}`}
+                        </text>
+                    )}
+                    {debugInfo.focalGroup !== null && (
+                        <text
+                            className="pointer-events-none select-none"
+                            x={centerX}
+                            y={centerY + size * 0.5}
+                            textAnchor="middle"
+                            fontSize={size * 0.22}
+                            fill={debugInfo.focalActive ? "var(--color-debug-focal-active)" : "var(--color-debug-focal-passive)"}
+                        >
+                            {`${debugInfo.focalGroup}${debugInfo.focalActive ? "(A)" : "(P)"}`}
+                        </text>
+                    )}
+                </>
             )}
         </g>
     );

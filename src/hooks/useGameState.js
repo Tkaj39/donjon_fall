@@ -2,8 +2,32 @@
  * Phase 2 — React hook for managing game state and exposing bound selectors.
  */
 
-import { useReducer, useCallback } from "react";
+import { useReducer, useState } from "react";
 import { gameReducer } from "../game/gameReducer.js";
+
+// ---------------------------------------------------------------------------
+// Recording reducer wrapper (Phase 14.3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Wraps `gameReducer` to accumulate every dispatched action in an array stored
+ * alongside the game state.  The wrapper is kept here so that the `dispatch`
+ * identity returned to callers is always the original `useReducer` dispatch —
+ * avoiding any side-effects on dependency arrays in Game.jsx effects.
+ *
+ * The outer state shape is `{ game: GameState, actions: Action[] }`.
+ * `useGameState` unwraps the two parts before returning them to the caller.
+ *
+ * @param {{ game: import("../game/gameState.js").GameState, actions: Array<object> }} state
+ * @param {{ type: string, [key: string]: unknown }} action
+ * @returns {{ game: import("../game/gameState.js").GameState, actions: Array<object> }}
+ */
+function recordingReducer(state, action) {
+    return {
+        game:    gameReducer(state.game, action),
+        actions: [...state.actions, action],
+    };
+}
 import { createInitialState } from "../game/gameState.js";
 import {
   getDiceAt,
@@ -35,6 +59,8 @@ import { hasLegalMoves } from "../game/turnManager.js";
  * @returns {{
  *   state: import("../game/gameState.js").GameState,
  *   dispatch: Function,
+ *   recordedActions: Array<{ type: string, [key: string]: unknown }>,
+ *   initialState: import("../game/gameState.js").GameState,
  *   getDiceAt: Function,
  *   getTopDie: Function,
  *   getController: Function,
@@ -56,29 +82,29 @@ import { hasLegalMoves } from "../game/turnManager.js";
  *   hasLegalMoves: Function,
  * }}
  */
-export function useGameState(players, boardFields) {
-  const [state, dispatch] = useReducer(
-    gameReducer,
+export function useGameState(players, boardFields, firstPlayer = null) {
+  const [combined, dispatch] = useReducer(
+    recordingReducer,
     undefined,
-    () => createInitialState(players, boardFields)
+    () => ({ game: createInitialState(players, boardFields, firstPlayer), actions: [] }),
   );
 
+  const state = combined.game;
+  const recordedActions = combined.actions;
+
   /**
-   * Creates a bound version of a selector function that pre-applies the current state.
-   *
-   * @param {Function} fn - A selector function that takes state as its first argument
-   * @returns {Function} A new function that accepts remaining args and calls fn with state
+   * Snapshot of the initial game state, captured once at mount.
+   * Used by ActionReplay (Phase 14.3) as the deterministic replay baseline.
    */
-  const bound = useCallback(
-    (fn) =>
-      (...args) =>
-        fn(state, ...args),
-    [state]
-  );
+  const [initialState] = useState(() => createInitialState(players, boardFields, firstPlayer));
+
+  const bound = (fn) => (...args) => fn(state, ...args);
 
   return {
     state,
     dispatch,
+    recordedActions,
+    initialState,
     getDiceAt: bound(getDiceAt),
     getTopDie: bound(getTopDie),
     getController: bound(getController),

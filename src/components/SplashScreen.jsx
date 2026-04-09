@@ -4,26 +4,35 @@
  */
 
 import { useEffect } from "react";
-import { Logo } from "./Logo";
+import { Logo } from "./Logo.jsx";
+import { preloadImages } from "../utils/preloadImages.js";
+import { MENU_ASSETS } from "../styles/themes/default.js";
+import Spinner from "./Spinner.jsx";
 
-/** Duration in milliseconds before auto-advancing to the main menu. */
+/** Minimum display duration after assets are loaded. */
 const SPLASH_DURATION_MS = 2000;
 
 /**
  * @param {{ onDone: () => void }} props
- * @returns {JSX.Element}
+ * @returns { React.JSX.Element }
  */
 export function SplashScreen({ onDone }) {
     useEffect(() => {
-        const timer = setTimeout(onDone, SPLASH_DURATION_MS);
-        return () => clearTimeout(timer);
+        let cancelled = false;
+        preloadImages(MENU_ASSETS).then(() => {
+            if (cancelled) return;
+            const timer = setTimeout(() => { if (!cancelled) onDone(); }, SPLASH_DURATION_MS);
+            return () => clearTimeout(timer);
+        });
+        return () => { cancelled = true; };
     }, [onDone]);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60 text-white">
-            <Logo className="w-48 h-48 mb-8" />
-            <h1 className="text-4xl font-bold tracking-widest uppercase">Donjon Fall</h1>
-            <p className="mt-4 text-stone-400 text-sm">Pád Donjonu</p>
-        </div>
+        <>
+            <Logo className="fixed top-16 left-1/2 -translate-x-1/2"/>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60">
+                <Spinner />
+            </div>
+        </>
     );
 }

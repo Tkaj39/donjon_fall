@@ -159,7 +159,7 @@ export function getActiveFocalPoints(state) {
 // ---------------------------------------------------------------------------
 
 /** Default starting die value (face-up value for all dice at game start). */
-const DEFAULT_DIE_VALUE = 3;
+const DEFAULT_DIE_VALUE = 6;
 
 /**
  * Builds the canonical starting GameState for a new game.
@@ -172,7 +172,7 @@ const DEFAULT_DIE_VALUE = 3;
  *                                    properties (see fieldProperties.js).
  * @returns {GameState}
  */
-export function createInitialState(players, boardFields) {
+export function createInitialState(players, boardFields, firstPlayer = null) {
     const dice = {};
     const focalPoints = {};
     const scores = {};
@@ -206,7 +206,7 @@ export function createInitialState(players, boardFields) {
 
     return {
         players: [...players],
-        currentPlayer: players[0],
+        currentPlayer: (firstPlayer && players.includes(firstPlayer)) ? firstPlayer : players[Math.floor(Math.random() * players.length)],
         phase: "focal",
         dice,
         focalPoints,

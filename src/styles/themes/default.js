@@ -79,6 +79,25 @@ export function resolveHexImage(fieldProperties, playerColors) {
 }
 
 /**
+ * Assets needed for the menu screens (PlayerSetup, GameLoading preview).
+ * Preloaded during the splash screen.
+ * @type {string[]}
+ */
+export const MENU_ASSETS = [
+    shieldRedImg, shieldBlueImg, shieldBlackImg, shieldGreenImg, shieldOrangeImg, shieldLightBlueImg,
+    animalBearImg, animalDeerImg, animalHorseImg, animalPigImg, animalRoosterImg, animalWolfImg,
+];
+
+/**
+ * Assets needed for the game board.
+ * Preloaded during the GameLoading screen.
+ * @type {string[]}
+ */
+export const GAME_ASSETS = [
+    grassImg, grassDenseImg, focusImg, starterRedImg, starterBlueImg,
+];
+
+/**
  * @deprecated Use resolveHexImage instead.
  * Kept for any direct callers that pass a string type.
  */

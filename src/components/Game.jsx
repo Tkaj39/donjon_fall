@@ -18,9 +18,9 @@
  * Victory is detected and shown via VictoryScreen.
  */
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import { getAvailableCombatOptions } from "../game/combat.js";
-import { getController, getTopDie, getTowerSize, canEnterTower } from "../game/gameState.js";
+import {useState, useMemo, useEffect, useRef} from "react";
+import {getAvailableCombatOptions} from "../game/combat.js";
+import {getController, getTopDie, getTowerSize, canEnterTower, getAttackStrength} from "../game/gameState.js";
 import {
     getReachableHexes,
     getTowerReachableHexes,
@@ -29,19 +29,21 @@ import {
     getShortestPathToHex,
     getApproachDirections,
 } from "../game/movement.js";
-import { hasLegalMoves } from "../game/turnManager.js";
-import { BOARD_FIELDS } from "../hex/boardConstants.js";
-import { hexFromKey, hexesDistance } from "../hex/hexUtils.js";
-import { useGameState } from "../hooks/useGameState.js";
-import { ActionPanel } from "./ActionPanel.jsx";
-import { ACTION_ORDER } from "./actionConstants.js";
-import { Board, MOVE_ANIMATION_MS, SVG_WIDTH } from "./Board.jsx";
-import { CombatOverlay } from "./CombatOverlay.jsx";
-import { PhaseIndicator } from "./PhaseIndicator.jsx";
-import { RulesViewer } from "./RulesViewer.jsx";
-import { ScoreBoard } from "./ScoreBoard.jsx";
-import { VictoryScreen } from "./VictoryScreen.jsx";
-import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER } from "../styles/themes/default.js";
+import {hasLegalMoves} from "../game/turnManager.js";
+import {BOARD_FIELDS} from "../hex/boardConstants.js";
+import {hexFromKey, hexesDistance} from "../hex/hexUtils.js";
+import {useGameState} from "../hooks/useGameState.js";
+import {ActionPanel} from "./ActionPanel.jsx";
+import {ActionReplay} from "./ActionReplay.jsx";
+import {ACTION_ORDER} from "./actionConstants.js";
+import {Board, MOVE_ANIMATION_MS, SVG_WIDTH} from "./Board.jsx";
+import {CombatOverlay} from "./CombatOverlay.jsx";
+import {CombatPowerTooltip} from "./CombatPowerTooltip.jsx";
+import {Logo} from "./Logo.jsx";
+import {PlayerShield} from "./PlayerShield.jsx";
+import {RulesViewer} from "./RulesViewer.jsx";
+import {StateInspector} from "./StateInspector.jsx";
+import {VictoryScreen} from "./VictoryScreen.jsx";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -52,12 +54,12 @@ const DEFAULT_PLAYERS = ["red", "blue"];
 
 /** Subtle glow colour per player ID — used for the active-player edge indicator. */
 const PLAYER_GLOW = {
-    red:  "#3b82f6",
-    blue: "#ef4444",
+    red: "var(--color-player-red)",
+    blue: "var(--color-player-blue)",
 };
 
-/** Which edge to show the glow on per player index (0 = bottom/red, 1 = top/blue). */
-const PLAYER_GLOW_EDGE = ["bottom", "top"];
+/** Which edge to show the glow on per player index (0 = top/red, 1 = bottom/blue). */
+const PLAYER_GLOW_EDGE = ["top", "bottom"];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -85,8 +87,8 @@ function rollD6() {
  * }} props
  * @returns {JSX.Element}
  */
-export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [] }) {
-    const { state, dispatch } = useGameState(players, boardFields);
+export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null}) {
+    const {state, dispatch, recordedActions, initialState} = useGameState(players, boardFields, firstPlayer);
 
     // -----------------------------------------------------------------------
     // Local UI state
@@ -103,6 +105,12 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
 
     /** Whether the rules modal is open. */
     const [showRules, setShowRules] = useState(false);
+
+    /** Whether the Phase 14.1 debug overlay is visible (toggled by Ctrl+D). */
+    const [debugMode, setDebugMode] = useState(false);
+
+    /** Hex key currently under the mouse pointer, or null. */
+    const [hoveredHex, setHoveredHex] = useState(null);
 
     /**
      * Planned movement trajectory as an ordered array of hexKeys, starting at
@@ -142,6 +150,23 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
      */
     const focalFiredRef = useRef(false);
 
+    /** Guards against double-dispatch for the auto-end-turn effect. */
+    const endTurnFiredRef = useRef(false);
+
+    // -----------------------------------------------------------------------
+    // Auto-end turn: when action is taken and no combat is pending, advance
+    // -----------------------------------------------------------------------
+
+    useEffect(() => {
+        if (state.phase !== "action" || !state.actionTaken || state.combat !== null) {
+            endTurnFiredRef.current = false;
+            return;
+        }
+        if (endTurnFiredRef.current) return;
+        endTurnFiredRef.current = true;
+        dispatch({type: "CONFIRM_ACTION"});
+    }, [state.phase, state.actionTaken, state.combat, dispatch]);
+
     useEffect(() => {
         if (state.phase !== "focal") {
             focalFiredRef.current = false;
@@ -150,7 +175,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
         if (focalFiredRef.current) return;
         focalFiredRef.current = true;
         dispatch({
-            type:        "ADVANCE_FOCAL_PHASE",
+            type: "ADVANCE_FOCAL_PHASE",
             dieNewValue: rollD6(),
             extraDieRoll: rollD6(),
         });
@@ -168,6 +193,11 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
          * @returns {void}
          */
         function handleKeyDown(e) {
+            if (e.key === "F2") {
+                e.preventDefault();
+                setDebugMode(prev => !prev);
+                return;
+            }
             if (e.key !== "Escape") return;
             setTrajectoryPath((prev) => {
                 if (prev.length > 0) return []; // cancel trajectory only
@@ -177,6 +207,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                 return [];
             });
         }
+
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, []); // setters are stable; no external values read
@@ -189,9 +220,9 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
         if (!pendingMove) return;
         const id = setTimeout(() => {
             dispatch({
-                type:              pendingMove.actionType,
-                fromHex:           pendingMove.fromKey,
-                toHex:             pendingMove.toKey,
+                type: pendingMove.actionType,
+                fromHex: pendingMove.fromKey,
+                toHex: pendingMove.toKey,
                 approachDirection: pendingMove.approachDirection,
             });
             setPendingMove(null);
@@ -273,7 +304,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
      * Set of hex keys that are valid movement destinations for the active action.
      * Empty when the action is not a movement action or nothing is selected.
      */
-    const reachableKeys = useMemo(() => {
+    const reachableKeys = (() => {
         if (!selectedHex || state.phase !== "action" || state.actionTaken) return new Set();
         if (activeAction === "move-die") {
             // getReachableHexes includes own-die hexes as potential landing spots,
@@ -291,7 +322,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
         }
         if (activeAction === "move-tower") return getTowerReachableHexes(state, selectedHex);
         return new Set();
-    }, [state, selectedHex, activeAction]);
+    })();
 
     // -----------------------------------------------------------------------
     // Derived: Phase 12.4 direction picker data
@@ -303,23 +334,22 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
      *  - reachable from more than one approach direction.
      * Null otherwise (picker is not shown).
      */
-    const pickerEnemyKey = useMemo(() => {
+    const pickerEnemyKey = (() => {
         if (!selectedHex || trajectoryPath.length === 0) return null;
         const dest = trajectoryPath[trajectoryPath.length - 1];
         const ctrl = getController(state, dest);
         if (ctrl === null || ctrl === state.currentPlayer) return null;
         const dirs = getApproachDirections(state, selectedHex, dest);
         return dirs.size > 1 ? dest : null;
-    }, [selectedHex, trajectoryPath, state]);
+    })();
 
     /**
      * Set of valid approach hexKeys for the picker enemy hex.
      * Empty when the picker is not active.
      */
-    const pickerApproachDirs = useMemo(() => {
-        if (!pickerEnemyKey || !selectedHex) return new Set();
-        return getApproachDirections(state, selectedHex, pickerEnemyKey);
-    }, [pickerEnemyKey, selectedHex, state]);
+    const pickerApproachDirs = pickerEnemyKey && selectedHex
+        ? getApproachDirections(state, selectedHex, pickerEnemyKey)
+        : new Set();
 
     /**
      * The effective approach direction for the current trajectory:
@@ -341,25 +371,43 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
      *  - Trajectory path hexes (excluding selectedHex) are overlaid as "trajectory",
      *    making the planned path clearly distinct.
      */
-    const highlightedHexes = useMemo(() => {
-        /** @type {{ [hexKey: string]: string }} */
+    /** @type {{ [hexKey: string]: string }} */
+    const highlightedHexes = (() => {
         const map = {};
-
-        // Base layer — all reachable destinations
         for (const key of reachableKeys) {
             const ctrl = getController(state, key);
             map[key] = ctrl !== null && ctrl !== state.currentPlayer
                 ? "enemy-reachable"
                 : "reachable";
         }
-
-        // Overlay — planned trajectory path (takes visual priority over base layer)
         for (const key of trajectoryPath.slice(1)) {
             map[key] = "trajectory";
         }
-
         return map;
-    }, [reachableKeys, state, trajectoryPath]);
+    })();
+
+    // -----------------------------------------------------------------------
+    // Derived: clickable hexes (drives cursor:pointer on Board)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Set of hexKeys that should respond to clicks (and show pointer cursor).
+     * Recomputed whenever selection, reachable destinations, or game phase changes.
+     */
+    const clickableHexes = (() => {
+        if (state.phase !== "action" || pendingMove) return new Set();
+        const set = new Set();
+        if (!state.actionTaken) {
+            for (const [key, stack] of Object.entries(state.dice)) {
+                if (stack.length > 0) set.add(key);
+            }
+        }
+        if (selectedHex) {
+            set.add(selectedHex);
+            for (const key of reachableKeys) set.add(key);
+        }
+        return set;
+    })();
 
     // -----------------------------------------------------------------------
     // Derived: winner
@@ -372,18 +420,14 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
      *  - `phase === "action"` with no action taken and no legal moves: sudden
      *    death; the other player wins.
      */
-    const winner = useMemo(() => {
+    const winner = (() => {
         if (state.phase === "victory") return state.currentPlayer;
-        if (
-            state.phase === "action" &&
-            !state.actionTaken &&
-            !hasLegalMoves(state)
-        ) {
+        if (state.phase === "action" && !state.actionTaken && !hasLegalMoves(state)) {
             const idx = state.players.indexOf(state.currentPlayer);
             return state.players[(idx + 1) % state.players.length];
         }
         return null;
-    }, [state]);
+    })();
 
     // -----------------------------------------------------------------------
     // Helpers
@@ -425,7 +469,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
     function handleHexClick(clickedKey) {
         if (state.phase !== "action" || winner || pendingMove) return;
 
-        const ctrl  = getController(state, clickedKey);
+        const ctrl = getController(state, clickedKey);
         const isOwn = ctrl === state.currentPlayer;
 
         // ── Nothing selected — try to select an own die ───────────────────
@@ -441,10 +485,10 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                 setTrajectoryPath([]);
                 setPickerApproachKey(null);
             } else if (activeAction === "reroll") {
-                dispatch({ type: "REROLL", hex: clickedKey, newValue: rollD6() });
+                dispatch({type: "REROLL", hex: clickedKey, newValue: rollD6()});
                 deselect();
             } else if (activeAction === "collapse") {
-                dispatch({ type: "COLLAPSE", hex: clickedKey });
+                dispatch({type: "COLLAPSE", hex: clickedKey});
                 deselect();
             } else {
                 deselect();
@@ -468,8 +512,8 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                 // after MOVE_ANIMATION_MS once the die reaches its destination.
                 const actionType = activeAction === "move-die" ? "MOVE_DIE" : "MOVE_TOWER";
                 setPendingMove({
-                    fromKey:          selectedHex,
-                    toKey:            clickedKey,
+                    fromKey: selectedHex,
+                    toKey: clickedKey,
                     actionType,
                     approachDirection: effectiveApproachKey,
                 });
@@ -483,7 +527,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                 const moveRange = activeAction === "move-tower"
                     ? getTowerMoveRange(state, selectedHex)
                     : (getTopDie(state, selectedHex)?.value ?? 0);
-                const stepsUsed      = trajectoryPath.length > 0 ? trajectoryPath.length - 1 : 0;
+                const stepsUsed = trajectoryPath.length > 0 ? trajectoryPath.length - 1 : 0;
                 const remainingSteps = moveRange - stepsUsed;
 
                 const isAdjacentToEnd = trajectoryEnd !== null &&
@@ -526,17 +570,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
      * @returns {void}
      */
     function handleCombatChoose(option) {
-        dispatch({ type: "CHOOSE_COMBAT_OPTION", option, rerollValue: rollD6() });
-    }
-
-    /**
-     * Ends the current player"s turn after their action is complete.
-     *
-     * @returns {void}
-     */
-    function handleEndTurn() {
-        dispatch({ type: "END_TURN" });
-        deselect();
+        dispatch({type: "CHOOSE_COMBAT_OPTION", option, rerollValue: rollD6()});
     }
 
     /**
@@ -552,9 +586,8 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
     // Render helpers
     // -----------------------------------------------------------------------
 
-    const combatOptions    = state.phase === "combat" ? getAvailableCombatOptions(state) : [];
-    const canEndTurn       = state.phase === "action" && state.actionTaken;
-    const showActionPanel  = state.phase === "action" && selectedHex !== null && !state.actionTaken;
+    const combatOptions = state.phase === "combat" ? getAvailableCombatOptions(state) : [];
+    const showActionPanel = state.phase === "action" && selectedHex !== null && !state.actionTaken;
 
     // -----------------------------------------------------------------------
     // Render
@@ -566,10 +599,10 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
         >
             {/* ── Active player edge glow ─────────────────────── */}
             {(() => {
-                const idx   = state.players.indexOf(state.currentPlayer);
-                const edge  = PLAYER_GLOW_EDGE[idx] ?? "bottom";
+                const idx = state.players.indexOf(state.currentPlayer);
+                const edge = PLAYER_GLOW_EDGE[idx] ?? "bottom";
                 const color = PLAYER_GLOW[state.currentPlayer] ?? "#94a3b8";
-                const grad  = edge === "top"
+                const grad = edge === "top"
                     ? `linear-gradient(to bottom, ${color}, transparent)`
                     : `linear-gradient(to top,    ${color}, transparent)`;
                 return (
@@ -588,9 +621,7 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
             })()}
             {/* ── Header ──────────────────────────────────────────── */}
             <header className="flex items-center justify-between px-4 py-2 shrink-0">
-                <h1 className="text-base font-bold tracking-wide text-stone-100 m-0">
-                    Pád donjonu
-                </h1>
+                <Logo className="w-64" />
                 <button
                     aria-label="Open rules"
                     onClick={() => setShowRules(true)}
@@ -598,70 +629,123 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                 >
                     ?
                 </button>
+                {debugMode && (
+                    <span
+                        className="text-[0.75rem] font-mono bg-yellow-400 text-black rounded px-2 py-[0.1rem] select-none">
+                        DEBUG
+                    </span>
+                )}
             </header>
 
+            {/* ── Debug state summary (Phase 14.1) ────────────────── */}
+            {debugMode && (
+                <div
+                    className="font-mono text-[0.72rem] bg-black/60 border border-yellow-400/40 rounded px-3 py-1 text-yellow-200 w-full text-center">
+                    {`player: ${state.currentPlayer}  |  phase: ${state.phase}  |  actionTaken: ${state.actionTaken}`}
+                </div>
+            )}
+
+            {/* ── State inspector (Phase 14.2) ─────────────────────── */}
+            {debugMode && <StateInspector state={state}/>}
+
+            {/* ── Action replay (Phase 14.3) ───────────────────────── */}
+            {debugMode && (
+                <ActionReplay
+                    actions={recordedActions}
+                    initialState={initialState}
+                />
+            )}
+
             {/* ── Board area + side shields ────────────────────── */}
-            <div className="flex-1 min-h-0 flex items-center justify-center px-2 py-1">
+            <div className="flex-1 min-h-0 flex items-center px-2 py-1">
+
+                {/* Left spacer — balances right panel so board stays centred */}
+                <div className="flex-1"/>
 
                 {/* Three-column: left shield | board | right shield */}
-                <div className="flex items-center gap-2 h-full">
+                <div className="flex items-start gap-2 h-full">
 
                     {state.players.map((playerId, idx) => {
-                        const cfg        = playerConfigs.find(c => c.id === playerId);
-                        const score      = state.scores[playerId] ?? 0;
-                        const shieldHref = SHIELD_BY_PLAYER[playerId] ?? SHIELD_BY_PLAYER.blue;
-                        const animalHref = ANIMAL_OPTIONS.find(a => a.id === cfg?.coatOfArms)?.href ?? ANIMAL_OPTIONS[0].href;
-                        const isActive   = state.currentPlayer === playerId;
+                        const cfg = playerConfigs.find(c => c.id === playerId);
+                        const score = state.scores[playerId] ?? 0;
+                        const isActive = state.currentPlayer === playerId;
 
                         const shield = (
-                            <div key={playerId} className="flex flex-col items-center gap-1 shrink-0">
-                                <div className="relative w-28 h-28">
-                                    <img src={shieldHref} alt="" className="w-full h-full object-contain" />
-                                    <img src={animalHref} alt={cfg?.coatOfArms ?? ""} className="absolute inset-0 w-full h-full object-contain p-1" />
-                                    <span className={[
-                                        "absolute -bottom-1 left-1/2 -translate-x-1/2 text-xs font-bold leading-none px-1.5 py-0.5 rounded-full",
-                                        isActive ? "bg-amber-400 text-stone-900" : "bg-stone-700 text-stone-200",
-                                    ].join(" ")}>
-                                        {score}
-                                    </span>
-                                </div>
-                                <p className="text-xs font-semibold text-stone-100 text-center leading-tight max-w-[7rem] truncate">
-                                    {cfg?.name || playerId}
-                                </p>
-                            </div>
+                            <PlayerShield
+                                key={playerId}
+                                playerId={playerId}
+                                cfg={cfg}
+                                score={score}
+                                isActive={isActive}
+                            />
                         );
 
-                        if (idx === 0) return <>{shield}<div key="board" className="relative h-full" style={{ width: SVG_WIDTH }}>
-                    <Board
-                    state={state}
-                    selectedHex={selectedHex}
-                    highlightedHexes={highlightedHexes}
-                    pendingMove={pendingMove}
-                    pickerData={pickerEnemyKey ? {
-                        enemyKey:           pickerEnemyKey,
-                        approachDirs:       pickerApproachDirs,
-                        selectedApproachKey: effectiveApproachKey,
-                        onApproachHover:    setPickerApproachKey,
-                    } : null}
-                    onHexClick={handleHexClick}
-                />
-                {state.phase === "combat" && (
-                    <CombatOverlay
-                        state={state}
-                        options={combatOptions}
-                        onChoose={handleCombatChoose}
-                    />
-                )}
-                </div></>;
+                        if (idx === 0) return <>{shield}
+                            <div key="board" className="relative h-full" style={{width: SVG_WIDTH}}>
+                                <Board
+                                    state={state}
+                                    selectedHex={selectedHex}
+                                    highlightedHexes={highlightedHexes}
+                                    clickableHexes={clickableHexes}
+                                    pendingMove={pendingMove}
+                                    debugMode={debugMode}
+                                    pickerData={pickerEnemyKey ? {
+                                        enemyKey: pickerEnemyKey,
+                                        approachDirs: pickerApproachDirs,
+                                        selectedApproachKey: effectiveApproachKey,
+                                        onApproachHover: setPickerApproachKey,
+                                    } : null}
+                                    onHexClick={handleHexClick}
+                                    onHexHover={setHoveredHex}
+                                />
+                                {state.phase === "combat" && (
+                                    <CombatOverlay
+                                        state={state}
+                                        options={combatOptions}
+                                        onChoose={handleCombatChoose}
+                                    />
+                                )}
+                            </div>
+                        </>;
                         return shield;
                     })}
 
                 </div>
-            </div>{/* end flex-1 scroll area */}
+
+                {/* Right panel — hex element centred between board right edge and screen edge */}
+                <div className="flex-1 flex items-center">
+                    <div className="mx-auto ml-16">
+                        {(() => {
+                            const isReachableEnemy = hoveredHex &&
+                                selectedHex &&
+                                reachableKeys.has(hoveredHex) &&
+                                getController(state, hoveredHex) !== null &&
+                                getController(state, hoveredHex) !== state.currentPlayer;
+
+                            const versus = isReachableEnemy ? {
+                                attackerStrength: getAttackStrength(state, selectedHex),
+                                attackerColor: PLAYER_GLOW[state.currentPlayer] ?? "rgba(255,255,255,0.9)",
+                                defenderStrength: getAttackStrength(state, hoveredHex),
+                                defenderColor: PLAYER_GLOW[getController(state, hoveredHex)] ?? "rgba(255,255,255,0.9)",
+                            } : null;
+
+                            return (
+                                <CombatPowerTooltip
+                                    color={PLAYER_GLOW[state.currentPlayer]}
+                                    combatStrength={!versus && hoveredHex && getController(state, hoveredHex) !== null ? getAttackStrength(state, hoveredHex) : null}
+                                    hoveredPlayerColor={hoveredHex ? PLAYER_GLOW[getController(state, hoveredHex)] ?? null : null}
+                                    versus={versus}
+                                />
+                            );
+                        })()}
+                    </div>
+                </div>
+            </div>
+            {/* end flex-1 scroll area */}
 
             {/* ── Action panel + End turn ──────────────────────── */}
             <div className="flex flex-col items-center gap-2 shrink-0 pb-4 px-4">
-                <div style={{ visibility: showActionPanel ? "visible" : "hidden" }}>
+                <div style={{visibility: showActionPanel ? "visible" : "hidden"}}>
                     <ActionPanel
                         currentPlayer={state.currentPlayer}
                         availableActions={availableActions}
@@ -670,24 +754,16 @@ export function Game({ players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pl
                     />
                 </div>
 
-                <div style={{ visibility: canEndTurn ? "visible" : "hidden" }}>
-                    <button
-                        onClick={handleEndTurn}
-                        className="bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-lg text-[var(--color-panel-text,#f1f5f9)] cursor-pointer text-base font-semibold py-[0.6rem] px-6"
-                    >
-                        End Turn
-                    </button>
-                </div>
             </div>
 
             {/* ── Victory screen ──────────────────────────────────── */}
             {winner && (
-                <VictoryScreen winner={winner} onNewGame={handleNewGame} />
+                <VictoryScreen winner={winner} onNewGame={handleNewGame}/>
             )}
 
             {/* ── Rules viewer ────────────────────────────────────── */}
             {showRules && (
-                <RulesViewer onClose={() => setShowRules(false)} />
+                <RulesViewer onClose={() => setShowRules(false)}/>
             )}
         </div>
     );

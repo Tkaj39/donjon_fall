@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { BOARD_HEXES, BOARD_FIELDS } from "../hex/boardConstants.js";
 import { hexCorners, hexFromKey, hexKey, hexToPixel } from "../hex/hexUtils.js";
+import { getAttackStrength } from "../game/gameState.js";
 import { Die } from "./Die.jsx";
 import { HexTile } from "./HexTile.jsx";
 import { resolveHexImage } from "../styles/themes/default.js";
@@ -16,7 +17,7 @@ import { resolveHexImage } from "../styles/themes/default.js";
 // ---------------------------------------------------------------------------
 
 /** Circumradius in pixels for each hex tile. */
-const HEX_SIZE = 36;
+const HEX_SIZE = 40;
 
 /** Hex size passed to HexTile and MovingDie (HEX_SIZE minus stroke allowance). */
 const TILE_SIZE = HEX_SIZE - 1;
@@ -26,7 +27,6 @@ const PADDING_RATIO = 1.2;
 
 /**
  * Ordered colour palette for up to 6 players.
- * Player at index 0 in state.players gets palette[0], etc.
  * `primary` — die body colour; `tint` — base-hex background tint.
  */
 const PLAYER_PALETTE = [
@@ -37,6 +37,19 @@ const PLAYER_PALETTE = [
     { primary: "#9333ea", tint: "#d8b4fe" }, // purple
     { primary: "#0891b2", tint: "#67e8f9" }, // cyan
 ];
+
+/**
+ * Named colour overrides — player IDs whose names match a colour get that colour
+ * regardless of their position in the players array.
+ */
+const NAMED_PLAYER_COLORS = {
+    red:    PLAYER_PALETTE[0],
+    blue:   PLAYER_PALETTE[1],
+    green:  PLAYER_PALETTE[2],
+    amber:  PLAYER_PALETTE[3],
+    purple: PLAYER_PALETTE[4],
+    cyan:   PLAYER_PALETTE[5],
+};
 
 /**
  * Fallback playerColors derived from BOARD_FIELDS for empty-board dev rendering.
@@ -51,7 +64,9 @@ const DEFAULT_PLAYER_COLORS = (() => {
             }
         }
     }
-    return Object.fromEntries(owners.map((id, i) => [id, PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]));
+    return Object.fromEntries(
+        owners.map((id, i) => [id, NAMED_PLAYER_COLORS[id] ?? PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]),
+    );
 })();
 
 /** Pre-computed pixel centres of every hex. */
@@ -188,16 +203,19 @@ function MovingDie({ fromX, fromY, toX, toY, diceStack, hexSize, playerColors })
  * @param {{ fromKey: string, toKey: string } | null} [props.pendingMove]
  *   When non-null, suppresses dice at `fromKey` and renders an animated MovingDie
  *   flying from `fromKey` to `toKey` (Phase 12.6).
+ * @param {Set<string>} [props.clickableHexes] - Set of hexKeys that should show pointer cursor and receive click events.
+ * @param {boolean} [props.debugMode] - When true, renders the Phase 14.1 debug overlay on every hex.
  * @param {function(string): void} [props.onHexClick] - Called with the hexKey when a hex is clicked.
+ * @param {function(string|null): void} [props.onHexHover] - Called with hexKey on mouse enter, null on leave.
  * @returns {JSX.Element}
  */
-export function Board({ state = null, selectedHex = null, highlightedHexes = {}, pickerData = null, pendingMove = null, onHexClick }) {
+export function Board({ state = null, selectedHex = null, highlightedHexes = {}, clickableHexes = new Set(), pickerData = null, pendingMove = null, debugMode = false, onHexClick, onHexHover }) {
     const dice        = state?.dice ?? {};
     const focalPoints = state?.focalPoints ?? {};
 
     const players = state?.players ?? [];
     const playerColors = players.length > 0
-        ? Object.fromEntries(players.map((id, i) => [id, PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]))
+        ? Object.fromEntries(players.map((id, i) => [id, NAMED_PLAYER_COLORS[id] ?? PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]))
         : DEFAULT_PLAYER_COLORS;
 
     // ── Phase 12.6: pre-compute moving die pixel positions ──────────────────
@@ -248,6 +266,17 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                 const diceStack = pendingMove?.fromKey === key ? [] : (dice[key] ?? []);
                 const fieldProps = FIELD_PROPS_BY_KEY[key] ?? [];
 
+                const debugInfo = debugMode ? (() => {
+                    const hasDice = (dice[key] ?? []).length > 0;
+                    const fp = focalPoints[key] ?? null;
+                    const fpProps = (FIELD_PROPS_BY_KEY[key] ?? []).find(p => p.type === "focalPoint");
+                    return {
+                        attackStrength: hasDice && state ? getAttackStrength(state, key) : null,
+                        focalGroup:     fpProps?.group ?? (fp ? fp.group : null),
+                        focalActive:    fp?.isActive ?? false,
+                    };
+                })() : null;
+
                 return (
                     <HexTile
                         key={key}
@@ -262,13 +291,15 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                         isSelected={selectedHex === key}
                         playerColors={playerColors}
                         isActiveFocalPoint={focalPoints[key]?.isActive ?? false}
+                        debugInfo={debugInfo}
                         directionPicker={pickerData?.enemyKey === key ? {
                             enemyHexKey:       key,
                             validApproachKeys: pickerData.approachDirs,
                             selectedApproachKey: pickerData.selectedApproachKey,
                             onApproachHover:   pickerData.onApproachHover,
                         } : null}
-                        onClick={onHexClick}
+                        onClick={clickableHexes.has(key) ? onHexClick : undefined}
+                        onHover={onHexHover}
                     />
                 );
             })}
