@@ -45,6 +45,22 @@ describe('advancePhase — focal → action', () => {
 });
 
 // ---------------------------------------------------------------------------
+// advancePhase — focal → victory (BUG-007)
+// ---------------------------------------------------------------------------
+
+describe('advancePhase — focal → victory', () => {
+    it('transitions immediately to victory when focal scoring reaches VICTORY_POINTS', () => {
+        const state = makeState({ phase: 'focal', scores: { red: VICTORY_POINTS, blue: 0 } });
+        expect(advancePhase(state).phase).toBe('victory');
+    });
+
+    it('does not go to victory when points are below threshold', () => {
+        const state = makeState({ phase: 'focal', scores: { red: VICTORY_POINTS - 1, blue: 0 } });
+        expect(advancePhase(state).phase).toBe('action');
+    });
+});
+
+// ---------------------------------------------------------------------------
 // advancePhase — action → combat
 // ---------------------------------------------------------------------------
 
