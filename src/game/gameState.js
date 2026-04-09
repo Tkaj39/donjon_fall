@@ -105,8 +105,8 @@ export function getAttackStrength(state, hexKey, { jumped = false } = {}) {
     if (stack.length === 0) return 0;
     const top = stack[stack.length - 1];
     if (jumped) return top.value;
-    const ownCount = stack.filter(d => d.owner === top.owner).length;
-    const enemyCount = stack.length - ownCount;
+    const ownCount = stack.filter(d => d.owner === top.owner).length - 1; // exclude top die
+    const enemyCount = stack.length - ownCount - 1; // exclude top die from total
     return top.value + ownCount - enemyCount;
 }
 

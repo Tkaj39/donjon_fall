@@ -67,7 +67,7 @@ npm run preview   # Preview production build
 
 Triggered when a move ends on an enemy-occupied field.
 
-- **Attack strength** = top die value + own dice count − enemy dice count.
+- **Attack strength** = top die value + supporting own dice count − enemy dice count. For a standalone die, attack strength equals its face value. For a tower, "supporting own dice" excludes the top die itself.
 - Attack succeeds only if attack strength **strictly exceeds** the defense (same formula from defender's perspective, i.e., enemy's attack strength).
 - Cannot attack a field where the enemy is stronger.
 
