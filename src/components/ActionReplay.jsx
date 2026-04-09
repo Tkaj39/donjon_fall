@@ -9,7 +9,7 @@
  * in the background unaffected.
  */
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { gameReducer } from "../game/gameReducer.js";
 
 /**
@@ -62,14 +62,14 @@ export function ActionReplay({ actions, initialState }) {
     const [replayStep, setReplayStep] = useState(null);
 
     /** Rebuild the game state up to and including step `replayStep`. */
-    const replayState = useMemo(() => {
+    const replayState = (() => {
         if (replayStep === null || replayStep < 0) return null;
         let s = initialState;
         for (let i = 0; i <= replayStep; i++) {
             s = gameReducer(s, actions[i]);
         }
         return s;
-    }, [replayStep, actions, initialState]);
+    })();
 
     /**
      * Toggles the preview for the given action index.

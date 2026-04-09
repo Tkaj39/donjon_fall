@@ -17,6 +17,7 @@ const HIGHLIGHT_FILL = {
 };
 
 /** Focal point marker circle radius as a fraction of hex size. */
+const HEX_STROKE_WIDTH = 1.5;
 const FOCAL_MARKER_RATIO = 0.18;
 
 /** Vertical spacing between stacked dice as a fraction of hex size. */
@@ -98,7 +99,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                 points={points}
                 fill={polygonFill}
                 stroke="var(--color-hex-stroke)"
-                strokeWidth={1.5}
+                strokeWidth={HEX_STROKE_WIDTH}
             />
             {hasTexture && (
                 <image
@@ -117,7 +118,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     points={points}
                     fill="none"
                     stroke="var(--color-hex-stroke)"
-                    strokeWidth={1.5}
+                    strokeWidth={HEX_STROKE_WIDTH}
                     style={{ pointerEvents: "none" }}
                 />
             )}

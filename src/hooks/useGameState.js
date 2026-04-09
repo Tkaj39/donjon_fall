@@ -2,7 +2,7 @@
  * Phase 2 — React hook for managing game state and exposing bound selectors.
  */
 
-import { useReducer, useCallback, useState } from "react";
+import { useReducer, useState } from "react";
 import { gameReducer } from "../game/gameReducer.js";
 
 // ---------------------------------------------------------------------------
@@ -98,18 +98,7 @@ export function useGameState(players, boardFields, firstPlayer = null) {
    */
   const [initialState] = useState(() => createInitialState(players, boardFields, firstPlayer));
 
-  /**
-   * Creates a bound version of a selector function that pre-applies the current state.
-   *
-   * @param {Function} fn - A selector function that takes state as its first argument
-   * @returns {Function} A new function that accepts remaining args and calls fn with state
-   */
-  const bound = useCallback(
-    (fn) =>
-      (...args) =>
-        fn(state, ...args),
-    [state]
-  );
+  const bound = (fn) => (...args) => fn(state, ...args);
 
   return {
     state,

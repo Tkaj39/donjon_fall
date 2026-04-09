@@ -34,16 +34,16 @@ import {BOARD_FIELDS} from "../hex/boardConstants.js";
 import {hexFromKey, hexesDistance} from "../hex/hexUtils.js";
 import {useGameState} from "../hooks/useGameState.js";
 import {ActionPanel} from "./ActionPanel.jsx";
+import {ActionReplay} from "./ActionReplay.jsx";
 import {ACTION_ORDER} from "./actionConstants.js";
 import {Board, MOVE_ANIMATION_MS, SVG_WIDTH} from "./Board.jsx";
 import {CombatOverlay} from "./CombatOverlay.jsx";
+import {CombatPowerTooltip} from "./CombatPowerTooltip.jsx";
+import {Logo} from "./Logo.jsx";
+import {PlayerShield} from "./PlayerShield.jsx";
 import {RulesViewer} from "./RulesViewer.jsx";
-import {ActionReplay} from "./ActionReplay.jsx";
 import {StateInspector} from "./StateInspector.jsx";
 import {VictoryScreen} from "./VictoryScreen.jsx";
-import {CombatPowerTooltip} from "./CombatPowerTooltip.jsx";
-import {PlayerShield} from "./PlayerShield.jsx";
-import {Logo} from "./Logo.jsx";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -304,7 +304,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      * Set of hex keys that are valid movement destinations for the active action.
      * Empty when the action is not a movement action or nothing is selected.
      */
-    const reachableKeys = useMemo(() => {
+    const reachableKeys = (() => {
         if (!selectedHex || state.phase !== "action" || state.actionTaken) return new Set();
         if (activeAction === "move-die") {
             // getReachableHexes includes own-die hexes as potential landing spots,
@@ -322,7 +322,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
         }
         if (activeAction === "move-tower") return getTowerReachableHexes(state, selectedHex);
         return new Set();
-    }, [state, selectedHex, activeAction]);
+    })();
 
     // -----------------------------------------------------------------------
     // Derived: Phase 12.4 direction picker data
@@ -334,23 +334,22 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      *  - reachable from more than one approach direction.
      * Null otherwise (picker is not shown).
      */
-    const pickerEnemyKey = useMemo(() => {
+    const pickerEnemyKey = (() => {
         if (!selectedHex || trajectoryPath.length === 0) return null;
         const dest = trajectoryPath[trajectoryPath.length - 1];
         const ctrl = getController(state, dest);
         if (ctrl === null || ctrl === state.currentPlayer) return null;
         const dirs = getApproachDirections(state, selectedHex, dest);
         return dirs.size > 1 ? dest : null;
-    }, [selectedHex, trajectoryPath, state]);
+    })();
 
     /**
      * Set of valid approach hexKeys for the picker enemy hex.
      * Empty when the picker is not active.
      */
-    const pickerApproachDirs = useMemo(() => {
-        if (!pickerEnemyKey || !selectedHex) return new Set();
-        return getApproachDirections(state, selectedHex, pickerEnemyKey);
-    }, [pickerEnemyKey, selectedHex, state]);
+    const pickerApproachDirs = pickerEnemyKey && selectedHex
+        ? getApproachDirections(state, selectedHex, pickerEnemyKey)
+        : new Set();
 
     /**
      * The effective approach direction for the current trajectory:
@@ -372,25 +371,20 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      *  - Trajectory path hexes (excluding selectedHex) are overlaid as "trajectory",
      *    making the planned path clearly distinct.
      */
-    const highlightedHexes = useMemo(() => {
-        /** @type {{ [hexKey: string]: string }} */
+    /** @type {{ [hexKey: string]: string }} */
+    const highlightedHexes = (() => {
         const map = {};
-
-        // Base layer — all reachable destinations
         for (const key of reachableKeys) {
             const ctrl = getController(state, key);
             map[key] = ctrl !== null && ctrl !== state.currentPlayer
                 ? "enemy-reachable"
                 : "reachable";
         }
-
-        // Overlay — planned trajectory path (takes visual priority over base layer)
         for (const key of trajectoryPath.slice(1)) {
             map[key] = "trajectory";
         }
-
         return map;
-    }, [reachableKeys, state, trajectoryPath]);
+    })();
 
     // -----------------------------------------------------------------------
     // Derived: clickable hexes (drives cursor:pointer on Board)
@@ -400,7 +394,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      * Set of hexKeys that should respond to clicks (and show pointer cursor).
      * Recomputed whenever selection, reachable destinations, or game phase changes.
      */
-    const clickableHexes = useMemo(() => {
+    const clickableHexes = (() => {
         if (state.phase !== "action" || pendingMove) return new Set();
         const set = new Set();
         if (!state.actionTaken) {
@@ -413,7 +407,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
             for (const key of reachableKeys) set.add(key);
         }
         return set;
-    }, [state, pendingMove, selectedHex, reachableKeys]);
+    })();
 
     // -----------------------------------------------------------------------
     // Derived: winner
@@ -426,18 +420,14 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      *  - `phase === "action"` with no action taken and no legal moves: sudden
      *    death; the other player wins.
      */
-    const winner = useMemo(() => {
+    const winner = (() => {
         if (state.phase === "victory") return state.currentPlayer;
-        if (
-            state.phase === "action" &&
-            !state.actionTaken &&
-            !hasLegalMoves(state)
-        ) {
+        if (state.phase === "action" && !state.actionTaken && !hasLegalMoves(state)) {
             const idx = state.players.indexOf(state.currentPlayer);
             return state.players[(idx + 1) % state.players.length];
         }
         return null;
-    }, [state]);
+    })();
 
     // -----------------------------------------------------------------------
     // Helpers
