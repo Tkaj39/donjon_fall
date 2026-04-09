@@ -15,7 +15,7 @@
 
 | ID | Component | Description                                                                                                                                                                                | Priority | Status | Resolution |
 |----|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|--------|------------|
-| BUG-001 | Game / PlayerHUD | Shields display on wrong sides — red player's score shown on blue shield                                                                                                                   | P2 | open | — |
+| BUG-001 | Game / PlayerHUD | Shields display on wrong sides — red player's score shown on blue shield                                                                                                                   | P2 | resolved | Could not reproduce — code correctly keys shield image, score, and active state by playerId |
 | BUG-002 | Game / PlayerHUD | Active player indicator and score accumulation are inverted — when red plays, blue shield is highlighted as active and blue receives the points; blue player wins with red player's points | P1 | open | — |
 | BUG-003 | game / combat | Player can initiate attack on an enemy die or tower with equal or higher attack strength — attack should only be allowed when attacker's strength strictly exceeds defender's strength     | P1 | open | — |
 | BUG-004 | Board / FocalPointMarker | Active focal point indicator is hidden when a die occupies the focal point field — the active focal point marker should always be visible on top of any die                                | P2 | open | — |

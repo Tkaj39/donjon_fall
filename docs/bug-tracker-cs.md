@@ -15,7 +15,7 @@
 
 | ID | Komponenta | Popis                                                                                                                                                                                    | Priorita | Stav | Řešení |
 |----|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|------|--------|
-| BUG-001 | Game / PlayerHUD | Erby se zobrazují na špatných stranách — skóre červeného hráče se ukazuje na modrém erbu                                                                                                 | P2 | otevřená | — |
+| BUG-001 | Game / PlayerHUD | Erby se zobrazují na špatných stranách — skóre červeného hráče se ukazuje na modrém erbu                                                                                                 | P2 | vyřešená | Chybu se nepodařilo reprodukovat — kód správně váže obrázek erbu, skóre i aktivní stav na playerId |
 | BUG-002 | Game / PlayerHUD | Indikátor aktivního hráče a přičítání bodů jsou prohozené — když hraje červený, na modrém erbu svítí aktivní stav a body dostává modrý; modrý hráč vyhrává body nasbíranými červeným     | P1 | otevřená | — |
 | BUG-003 | game / combat | Hráč může zaútočit na nepřátelskou kostku nebo věž se stejnou nebo vyšší silou útoku — útok by měl být povolen pouze pokud útočníkova síla striktně převyšuje obranu                     | P1 | otevřená | — |
 | BUG-004 | Board / FocalPointMarker | Indikátor aktivního ohniska není vidět, když je na ohnisku umístěna kostka — značka aktivního ohniska by měla být vždy viditelná nad každou kostkou                                      | P2 | otevřená | — |
