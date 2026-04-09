@@ -11,6 +11,7 @@
 import { hexKey, hexFromKey, getNeighbors, hexesDistance } from "../hex/hexUtils.js";
 import { isOnBoard } from "../hex/boardUtils.js";
 import { getDiceAt, getTopDie, getController, canEnterTower, getAttackStrength } from "./gameState.js";
+import { canAttack } from "./combat.js";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -361,6 +362,7 @@ export function applyMoveAction(state, fromKey, toKey, approachDirection = null)
     }
 
     // --- Enemy die: set up combat (die does NOT move yet) ---
+    if (!canAttack(state, fromKey, toKey)) return state;
     let resolvedDirection = approachDirection;
     if (!resolvedDirection) {
         const dirs = getApproachDirections(state, fromKey, toKey);
@@ -489,6 +491,10 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
     }
 
     // Enemy — set up combat (jump variant: face value only)
+    const jumperStrength = getAttackStrength(state, towerKey, { jumped: true });
+    const defenseStrength = getAttackStrength(state, targetKey);
+    if (jumperStrength <= defenseStrength) return state;
+
     let resolvedDirection = approachDirection;
     if (!resolvedDirection) {
         // If target is adjacent (1 step), there is exactly one approach direction: the source.
@@ -500,8 +506,6 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
             if (dirs.size === 1) resolvedDirection = [...dirs][0];
         }
     }
-
-    const jumperStrength = getAttackStrength(state, towerKey, { jumped: true });
 
     return {
         ...state,
@@ -628,6 +632,8 @@ export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = 
     }
 
     // Enemy destination — combat, push only
+    if (!canAttack(state, fromKey, toKey)) return state;
+
     let resolvedDirection = approachDirection;
     if (!resolvedDirection) {
         if (hexesDistance(hexFromKey(fromKey), hexFromKey(toKey)) === 1) {
@@ -644,7 +650,7 @@ export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = 
             attackerHex: fromKey,
             defenderHex: toKey,
             approachDirection: resolvedDirection,
-            options: ["push"], // occupy not available for whole-tower moves
+            towerMove: true,
         },
     };
 }

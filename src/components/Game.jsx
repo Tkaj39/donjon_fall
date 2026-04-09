@@ -19,7 +19,7 @@
  */
 
 import {useState, useMemo, useEffect, useRef} from "react";
-import {getAvailableCombatOptions} from "../game/combat.js";
+import {getAvailableCombatOptions, canAttack} from "../game/combat.js";
 import {getController, getTopDie, getTowerSize, canEnterTower, getAttackStrength} from "../game/gameState.js";
 import {
     getReachableHexes,
@@ -316,11 +316,21 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
             for (const key of all) {
                 const ctrl = getController(state, key);
                 if (ctrl === state.currentPlayer && !canEnterTower(state, moverDie, key)) continue;
+                if (ctrl !== null && ctrl !== state.currentPlayer && !canAttack(state, selectedHex, key)) continue;
                 filtered.add(key);
             }
             return filtered;
         }
-        if (activeAction === "move-tower") return getTowerReachableHexes(state, selectedHex);
+        if (activeAction === "move-tower") {
+            const all = getTowerReachableHexes(state, selectedHex);
+            const filtered = new Set();
+            for (const key of all) {
+                const ctrl = getController(state, key);
+                if (ctrl !== null && ctrl !== state.currentPlayer && !canAttack(state, selectedHex, key)) continue;
+                filtered.add(key);
+            }
+            return filtered;
+        }
         return new Set();
     })();
 

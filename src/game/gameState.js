@@ -126,8 +126,8 @@ export function canEnterTower(state, moverDie, targetHexKey) {
     // Top die"s attack strength at the target (current state, before mover arrives)
     const topStrength = getAttackStrength(state, targetHexKey);
 
-    // Mover"s standalone attack strength (solo die: own=1, enemy=0)
-    const moverStrength = moverDie.value + 1;
+    // Mover approaches as a standalone die — its attack strength is its face value alone.
+    const moverStrength = moverDie.value;
 
     return moverStrength > topStrength;
 }
