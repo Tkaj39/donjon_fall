@@ -83,39 +83,232 @@
 
 ### B) Kostky (Die)
 
-| Prvek | Současný stav | Potřeba |
-|-------|---------------|---------|
-| **Tělo kostky** | SVG obdélník s barvou hráče | 3D vzhled, stín, lesk, textura dřeva/kovu? |
-| **Tečky (pips)** | Bílé SVG kruhy | Styl odpovídající tématu (reliéf, gravírování?) |
-| **Stacking ve věži** | Dimmed opacity 0.55 | Lepší vizuální vrstvení, 3D efekt věže |
+> Kostky jsou vizuálně nejdůležitější herní jednotky — hráč s nimi interaguje každý tah.
+> Dva vizuální režimy: **2D s 3D efektem** (výchozí, lehčí) a **plné 3D** (volitelné, náročnější).
+
+#### B.1) Současný stav
+
+| Prvek | Hodnota | Detail |
+|-------|---------|--------|
+| **Tvar** | SVG `<rect>` se zaoblenými rohy (`rx = 0.3 × half`) | Čtverec, strana = `hexSize × 0.55` (≈ 21 px) |
+| **Barva těla** | `primary` z `PLAYER_PALETTE` | Červená `#dc2626`, modrá `#2563eb` |
+| **Obrys** | `rgba(0,0,0,0.35)`, šířka 1 px | Jednotný pro všechny hráče |
+| **Tečky (pips)** | Bílé SVG `<circle>`, opacity 0.9, r = `hexSize × 0.075` | Klasické rozmístění 1–6 |
+| **Opacity non-top** | 0.55 | Ztlumené kostky pod vrcholem věže |
+| **Stacking offset** | `hexSize × 0.22` per úroveň | Vertikální posun ve věži |
+| **Vizuální stav „vybrané"** | ❗ Žádný — mění se jen barva hexu | Chybí odlišení kostky samotné |
+| **Stín / 3D** | ❗ Žádný | Plochý vzhled |
+| **Animace** | Žádná na kostce samotné | Pouze MovingDie (let mezi hexy, 260ms) |
+
+#### B.2) Varianta 1 — 2D s 3D efektem (výchozí)
+
+Lehký vizuální upgrade zachovávající SVG `<rect>` základ, vhodný pro nízký výkon i mobilní zařízení.
+
+```
+  ┌─────────────┐
+  │ ╔═══════╗   │  ← vnější stín (drop shadow)
+  │ ║ ● · ● ║   │  ← tělo kostky s gradientem
+  │ ║ · ● · ║   │     (světlý → tmavý shora dolů)
+  │ ║ ● · ● ║   │
+  │ ╚═══════╝   │  ← spodní hrana (tmavší linka)
+  └─────────────┘
+```
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Tělo** | SVG `<rect>` + lineární gradient (shora světlejší → dole tmavší) | Simulace osvětlení shora |
+| **Horní hrana** | Tenká světlá linka (1 px, bílá 20 %) | Odraz světla |
+| **Spodní/pravá hrana** | Tmavší linka (1 px, černá 25 %) | Hloubka |
+| **Drop shadow** | SVG `<filter>` — `feDropShadow`, dx=1, dy=2, blur=2 | Kostka „leží" na desce |
+| **Tečky** | Vnitřní stín (inset efekt) — tmavší stín kolem pip | Reliéf / vydlabání |
+| **Lesk** | Malý bílý kruhový gradient v levém horním rohu (opacity 0.15) | Plast/sklo efekt |
+| **Vybraná kostka** | Zlatý obrys (2 px, `#f59e0b`) + jemná záře | ❗ Nový stav |
+| **Hover** | Mírné zvětšení (`transform: scale(1.08)`) + zesvětlení | ❗ Nový stav |
+| **Animace rerollu** | CSS `@keyframes` — rychlé přepínání pip layoutu (0.3s) | Vizuální „přehození" |
+| **Tower stacking** | Gradient stínu na nižších kostkách — tmavší = níže | Lepší hloubka |
+
+#### B.3) Varianta 2 — Plné 3D kostky
+
+Izometrický vzhled se třemi viditelnými stranami. Náročnější na rendering, vhodné jako volitelné „premium" nastavení.
+
+```
+       ╱─────╲
+      ╱  ● ●  ╲        ← horní strana (aktuální hodnota)
+     ╱  ●   ●  ╲
+    ╱─────────────╲
+    │  ·       ·  │╲
+    │  ·   ·   ·  │ ╲   ← pravá boční strana (dekorativní)
+    │  ·       ·  │  │
+    └─────────────┘  │
+       ╲──────────╱  │  ← spodní hrana
+        ╲─────────╱
+```
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Horní strana** | SVG `<polygon>` — kosočtverec (izometrická projekce) | Zobrazuje aktuální hodnotu (pips) |
+| **Levá strana** | SVG `<polygon>` — lichoběžník, tmavší odstín barvy hráče | Dekorativní — žádné pips nebo fixní vzor |
+| **Pravá strana** | SVG `<polygon>` — lichoběžník, středně tmavý odstín | Dekorativní — žádné pips nebo fixní vzor |
+| **Osvětlení** | Horní = 100 %, levá = 65 %, pravá = 80 % jasu | Konzistentní světlo shora-zleva |
+| **Pips na horní straně** | Izometricky transformované pozice | Ovály místo kruhů (perspektiva) |
+| **Stín pod kostkou** | SVG elipsa, rozmazaná, černá 15 % | Kostka „stojí" na hexu |
+| **Vybraná kostka** | Záře kolem všech tří stran (outer glow, zlatá) | Konzistentní s 2D variantou |
+| **Hover** | Mírný „nadzvednutí" efekt — posun nahoru o 2 px + větší stín | Jako by se vznášela |
+| **Animace rerollu** | Rotace kolem vertikální osy (CSS 3D transform, 0.4s) | Kostka se „otočí" |
+| **Tower stacking** | Izometrické vrstvení — každá kostka výš a mírně dozadu | Realistická věž |
+| **Rozměry** | Celková výška ≈ `hexSize × 0.7`, šířka ≈ `hexSize × 0.55` | Větší než 2D kvůli bočním stranám |
+
+#### B.4) Společné prvky (obě varianty)
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Barvy hráčů** | Zachovat `PLAYER_PALETTE.primary` | Červená, modrá (+ green, amber, purple, cyan pro budoucí hráče) |
+| **Pip barva** | Bílá s jemným stínem | Konzistentní viditelnost na tmavém i světlém těle |
+| **Non-top opacity** | Snížit z 0.55 → 0.45 + desaturace | Jasnější rozlišení top vs nižší |
+| **Vybraná kostka** | ❗ NOVÝ STAV — zlatý obrys + záře | Aktuálně chybí |
+| **Hover kostka** | ❗ NOVÝ STAV — zvětšení + zesvětlení | Aktuálně chybí |
+| **Přepínání variant** | Nastavení → Styl grafiky → „2D" / „3D" | Hráč si vybere v menu |
+| **Číslo jako fallback** | SVG `<text>` s číslem místo pip pro malé rozlišení / přístupnost | Volitelné v nastavení přístupnosti |
+
+#### B.5) Co chybí / co zlepšit
+
+| Problém | Popis | Návrh řešení |
+|---------|-------|--------------|
+| **Žádný stav „vybraná kostka"** | Hráč nevidí kterou kostku vybral — mění se jen hex | Zlatý obrys + záře na kostce |
+| **Žádný hover efekt** | Najetí na kostku nemá vizuální odezvu | Scale + zesvětlení |
+| **Plochý vzhled** | Žádný stín, gradient ani hloubka | Gradient + drop shadow (2D) nebo 3 strany (3D) |
+| **Monotónní pips** | Bílé kruhy bez efektu | Reliéf / inset stín |
+| **Reroll bez vizuálu** | Hodnota se změní „instantně" | Animace přehození / rotace |
+| **Věž vypadá ploše** | Jen opacity rozlišuje úrovně | Stínový gradient + izometrické vrstvení |
 
 ### C) Akční panel (ActionPanel)
 
-| Prvek | Současný stav | Potřeba |
-|-------|---------------|---------|
-| **Tlačítka akcí** | Tailwind slate barvy | Ikony + text, rámování odpovídající tématu |
-| **Aktivní stav** | Amber border | Výraznější vizuální feedback |
+> Panel se 4 akčními tlačítky ve spodní části obrazovky. Viditelný jen když hráč vybere hex s vlastní kostkou.
 
-### D) Skóre a hráčské štíty (ScoreBoard + PlayerShield)
+#### C.1) Současný stav
 
-| Prvek | Současný stav | Potřeba |
-|-------|---------------|---------|
-| **Štíty** | 6× shield-[color].png | Finální kvalita, konzistentní styl |
-| **Zvířata** | 6× animal-[type].png | Finální kvalita, sjednotit styl |
-| **VP badge** | Barevný kroužek s číslem | Heraldický štítek, medailony |
+| Prvek | Hodnota | Detail |
+|-------|---------|--------|
+| **Layout** | Horizontální `flex gap-2` | Dole-střed, uvnitř `pb-4 px-4` |
+| **Kontejner** | `bg-[#1e293b]`, border `#475569`, `rounded-xl` | Temná karta s jemným okrajem |
+| **Stín** | `0 4px 16px rgba(0,0,0,0.4)` | Mírný drop shadow |
+| **Viditelnost** | `visibility: hidden/visible` | Zůstává v layoutu i když skrytý |
+| **Podmínka zobrazení** | `phase === "action"` + vybraný hex + akce neprovedena | — |
 
----
+#### C.2) Tlačítka akcí
 
-## PRIORITA 2 — Boj a interakce
+| Akce | Label | Viditelnost |
+|------|-------|-------------|
+| **Move tower** | `"Move tower"` | Jen když je vybraný hex věž s dosažitelnými poli |
+| **Move die** | `"Move die"` | Když kostka má dosažitelná pole |
+| **Reroll** | `"Reroll"` | Vždy |
+| **Collapse** | `"Collapse"` | Jen věž 3+ kostek s vlastní nahoře |
 
-### E) Boj (CombatOverlay + CombatPowerTooltip)
+**Stavy tlačítek:**
 
-| Prvek | Současný stav | Potřeba |
-|-------|---------------|---------|
-| **Overlay** | Slate-800 box | Tematický rámec (pergamen? kamenná tabule?) |
-| **Síla** | Čísla v hexu | Ikonografie — meče, štíty, efekty |
-| **Push/Occupy tlačítka** | Textová tlačítka | Ikony s popisem |
-| **Combat flash** | CSS pulsing opacity | Výraznější efekt — exploze, jiskry |
+| Stav | Border | Pozadí | Barva textu | Font |
+|------|--------|--------|-------------|------|
+| **Aktivní** | `2px solid #f59e0b` | `rgba(245,158,11,0.18)` | `#f59e0b` (amber) | 700 |
+| **Dostupné** | `2px solid transparent` | `rgba(255,255,255,0.08)` | `#f1f5f9` (světlá) | 500 |
+| **Zakázané** | `2px solid transparent` | `rgba(255,255,255,0.04)` | `rgba(255,255,255,0.25)` | 500 |
+
+Přechody: `background 0.12s, border-color 0.12s, color 0.12s`.
+
+#### C.3) Grafický návrh
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Kontejner** | Tematický rámeček — dřevěná/kamenná deska | Místo generického slate panelu |
+| **Tlačítka** | Ikona + text (meč pro tah, šipky pro přesun, kostka pro reroll, zřícení pro kolaps) | Aktuálně jen text |
+| **Hover efekt** | Zesvětlení + jemný scale(1.05) | Aktuálně žádný hover |
+| **Aktivní stav** | Tematický glow / zapuštění (pressed efekt) | Výraznější než jen amber border |
+| **Zakázaný stav** | Šedivé + přeškrtnutí nebo zámek ikona | Jasné „nelze použít" |
+| **Animace výběru** | Krátký pulse/bounce při kliknutí (0.15s) | Aktuálně žádná |
+| **Popisky** | Tooltip při hoveru s vysvětlením akce | Aktuálně žádné |
+| **Klávesové zkratky** | Vizuální indikace zkratky na tlačítku (1–4) | Pro budoucí klávesové ovládání |
+
+### D) Skóre a hráčské štíty (PlayerShield)
+
+> Dva štíty po stranách desky — erb, jméno, VP skóre, indikátor aktivního hráče.
+
+#### D.1) Současný stav
+
+| Prvek | Hodnota | Detail |
+|-------|---------|--------|
+| **Rozměr štítu** | `w-28 h-28` (112×112 px) | Kontejner pro shield + animal |
+| **Shield obrázek** | `shield-[color].png` (6 barev) | Vrstva 1 — pozadí |
+| **Animal obrázek** | `animal-[type].png` (6 zvířat: bear, deer, horse, pig, rooster, wolf) | Vrstva 2 — overlay s `p-1` |
+| **Jméno** | `text-xs font-semibold`, `max-w-28 truncate` | Fallback na player ID |
+| **VP badge (aktivní)** | `bg-amber-400 text-stone-900` | Kroužek pod štítem |
+| **VP badge (neaktivní)** | `bg-stone-700 text-stone-200` | Šedý kroužek |
+| **Badge pozice** | `absolute -bottom-1 left-1/2 -translate-x-1/2` | Centrovaný pod štítem |
+| **Layout** | `flex flex-col items-center gap-1 shrink-0` | Vertikální: štít → jméno |
+
+#### D.2) Grafický návrh
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Shield kvalita** | Finální artworky – konzistentní styl (heraldický, ručně malovaný?) | 6 barev: red, blue, green, amber, purple, cyan |
+| **Animal kvalita** | Sjednotit styl — všechna zvířata ve stejné technice | Aktuálně různé styly/kvality |
+| **Větší jméno** | `text-sm` nebo `text-base`, lepší font | `text-xs` je příliš malé |
+| **VP badge redesign** | Heraldický medailon / štítek místo kroužku | Zlato pro aktivního, stříbro/bronz pro neaktivního |
+| **Aktivní hráč** | Animovaný okraj kolem celého štítu (glow, pulsování) | Jen badge nestačí |
+| **Score-pop animace** | Zachovat `scale 1→1.55→1` + přidat barvu/záři | Existuje `@keyframes score-pop` |
+| **Hover na štít** | Jemné zvětšení + tooltip s detaily hráče | Aktuálně žádná interakce |
+| **Přechod tahů** | Plynulá animace změny badge barvy (0.3s) | Aktuálně instantní přepnutí |
+| **Zničené kostky** | Indikátor kolik kostek hráč ztratil (mini kostky / číslo) | ❗ Chybí zcela |
+| **Počet kostek na mapě** | Mini přehled „3/5 kostek" pod VP | ❗ Chybí zcela |
+
+### E) Boj (CombatOverlay)
+
+> Modální dialog nad herní deskou zobrazující síly útočníka a obránce s volbou Push/Occupy.
+
+#### E.1) Současný stav
+
+| Prvek | Hodnota | Detail |
+|-------|---------|--------|
+| **Pozice** | `absolute top-1/2 left-1/2 -translate-x/y-1/2` | Centrovaný nad deskou |
+| **Z-index** | `z-[100]` | Nad vším kromě celoobrazovkových modálů |
+| **Kontejner** | `bg-[#1e293b]`, border `#475569`, `rounded-xl` | Stejný styl jako ActionPanel |
+| **Rozměr** | `min-w-56` (224 px), `py-5 px-6` | Kompaktní karta |
+| **Stín** | `0 8px 32px rgba(0,0,0,0.5)` | Výrazný drop shadow |
+| **Nadpis** | `"Combat"`, `1.1rem bold` | Jednoduchý text |
+| **Síla útočníka** | `text-2xl font-bold` | Číslo + label „Attacker" |
+| **Síla obránce** | `text-2xl font-bold` | Číslo + label „Defender" |
+| **Separator** | `"vs"`, `opacity-50` | Mezi sloupci |
+| **Tlačítka** | Push / Occupy (jen dostupné se zobrazí) | `bg-[#334155]`, border `#475569` |
+| **Animace** | Žádná na overlayi | Jen combat-flash na hexech za ním |
+
+#### E.2) Grafický návrh
+
+```
+┌─────────────────────────────┐
+│         ⚔ COMBAT ⚔         │
+│                             │
+│    ⚔ ATTACKER   🛡 DEFENDER │
+│       ┌───┐        ┌───┐   │
+│       │ 5 │  vs.   │ 3 │   │
+│       └───┘        └───┘   │
+│     [die icon]  [die icon]  │
+│                             │
+│   [ 🗡 Push ]  [ 🏰 Occupy ] │
+└─────────────────────────────┘
+```
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Rámec** | Tematický — pergamen, kamenná tabule, nebo dřevěný rám | Místo generického slate |
+| **Nadpis** | Ikona mečů ⚔ + dekorativní font | Dramatičtější |
+| **Síla — vizualizace** | Mini kostka s hodnotou místo jen čísla | Barevná kostka útočníka/obránce |
+| **Síla — breakdown** | Rozložení: „top die (4) + own (2) − enemy (1) = 5" | Hráč vidí jak se síla počítá |
+| **VS separator** | Ikona zkřížených mečů místo textu „vs" | Grafické oddělení |
+| **Push tlačítko** | Ikona šipky/úderu + text + tooltip | Vysvětlení co se stane |
+| **Occupy tlačítko** | Ikona věže/hradby + text + tooltip | Vysvětlení co se stane |
+| **Hover tlačítek** | Zesvětlení + preview efektu na desce | Hráč vidí dopad akce |
+| **Vstupní animace** | Slide-in + fade (0.2s ease-out) | Aktuálně se objeví instantně |
+| **Výstupní animace** | Fade-out (0.15s) | Po volbě zmizí plynule |
+| **Zvukový efekt** | Zvuk tříštění/úderu při otevření | Pro budoucí audio |
+| **Info panel** | Co se stane po Push vs Occupy — krátký tooltip | Nováčci nemusí vědět rozdíl |
 
 ### F) Směr útoku (DirectionPickerOverlay)
 

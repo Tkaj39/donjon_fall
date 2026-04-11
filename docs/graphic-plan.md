@@ -83,39 +83,236 @@
 
 ### B) Dice (Die)
 
-| Element | Current State | Needed |
-|---------|---------------|--------|
-| **Dice body** | SVG rectangle with player color | 3D appearance, shadow, shine, wood/metal texture? |
-| **Pips** | White SVG circles | Style matching theme (relief, engraving?) |
-| **Stacking in tower** | Dimmed opacity 0.55 | Better visual layering, 3D tower effect |
+> Dice are the most important visual game units — the player interacts with them every turn.
+> Two visual modes: **2D with 3D effect** (default, lighter) and **full 3D** (optional, more demanding).
+
+#### B.1) Current State
+
+| Element | Value | Detail |
+|---------|-------|--------|
+| **Shape** | SVG `<rect>` with rounded corners (`rx = 0.3 × half`) | Square, side = `hexSize × 0.55` (≈ 21 px) |
+| **Body color** | `primary` from `PLAYER_PALETTE` | Red `#dc2626`, blue `#2563eb` |
+| **Stroke** | `rgba(0,0,0,0.35)`, width 1 px | Same for all players |
+| **Pips** | White SVG `<circle>`, opacity 0.9, r = `hexSize × 0.075` | Classic layout 1–6 |
+| **Non-top opacity** | 0.55 | Dimmed dice below tower top |
+| **Stacking offset** | `hexSize × 0.22` per level | Vertical shift in tower |
+| **"Selected" visual state** | None — only hex color changes | Missing die highlight |
+| **Shadow / 3D** | None | Flat appearance |
+| **Animation** | None on die itself | Only MovingDie (flight between hexes, 260ms) |
+
+#### B.2) Variant 1 — 2D with 3D Effect (default)
+
+Light visual upgrade keeping SVG `<rect>` base, suitable for low performance and mobile devices.
+
+```
+  ┌─────────────┐
+  │ ╔═══════╗   │  ← outer shadow (drop shadow)
+  │ ║ ● · ● ║   │  ← die body with gradient
+  │ ║ · ● · ║   │     (light → dark top to bottom)
+  │ ║ ● · ● ║   │
+  │ ╚═══════╝   │  ← bottom edge (darker line)
+  └─────────────┘
+```
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Body** | SVG `<rect>` + linear gradient (lighter top → darker bottom) | Simulates top-down lighting |
+| **Top edge** | Thin light line (1 px, white 20 %) | Light reflection |
+| **Bottom/right edge** | Darker line (1 px, black 25 %) | Depth |
+| **Drop shadow** | SVG `<filter>` — `feDropShadow`, dx=1, dy=2, blur=2 | Die "sits" on the board |
+| **Pips** | Inner shadow (inset effect) — darker shadow around pip | Relief / carved look |
+| **Shine** | Small white radial gradient in top-left corner (opacity 0.15) | Plastic/glass effect |
+| **Selected die** | Gold outline (2 px, `#f59e0b`) + subtle glow | New state |
+| **Hover** | Slight scale-up (`transform: scale(1.08)`) + brightening | New state |
+| **Reroll animation** | CSS `@keyframes` — rapid pip layout switching (0.3s) | Visual "flip" |
+| **Tower stacking** | Shadow gradient on lower dice — darker = lower | Better depth |
+
+#### B.3) Variant 2 — Full 3D Dice
+
+Isometric appearance with three visible faces. More demanding on rendering, suitable as optional "premium" setting.
+
+```
+       ╱─────╲
+      ╱  ● ●  ╲        ← top face (current value)
+     ╱  ●   ●  ╲
+    ╱─────────────╲
+    │  ·       ·  │╲
+    │  ·   ·   ·  │ ╲   ← right side face (decorative)
+    │  ·       ·  │  │
+    └─────────────┘  │
+       ╲──────────╱  │  ← bottom edge
+        ╲─────────╱
+```
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Top face** | SVG `<polygon>` — rhombus (isometric projection) | Shows current value (pips) |
+| **Left face** | SVG `<polygon>` — trapezoid, darker shade of player color | Decorative — no pips or fixed pattern |
+| **Right face** | SVG `<polygon>` — trapezoid, medium-dark shade | Decorative — no pips or fixed pattern |
+| **Lighting** | Top = 100 %, left = 65 %, right = 80 % brightness | Consistent top-left light source |
+| **Pips on top face** | Isometrically transformed positions | Ovals instead of circles (perspective) |
+| **Shadow under die** | SVG ellipse, blurred, black 15 % | Die "stands" on hex |
+| **Selected die** | Glow around all three faces (outer glow, gold) | Consistent with 2D variant |
+| **Hover** | Slight "lift" effect — shift up 2 px + larger shadow | As if hovering |
+| **Reroll animation** | Rotation around vertical axis (CSS 3D transform, 0.4s) | Die "flips" |
+| **Tower stacking** | Isometric layering — each die higher and slightly back | Realistic tower |
+| **Dimensions** | Total height ≈ `hexSize × 0.7`, width ≈ `hexSize × 0.55` | Larger than 2D due to side faces |
+
+#### B.4) Common Elements (both variants)
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Player colors** | Keep `PLAYER_PALETTE.primary` | Red, blue (+ green, amber, purple, cyan for future players) |
+| **Pip color** | White with subtle shadow | Consistent visibility on dark and light bodies |
+| **Non-top opacity** | Reduce from 0.55 → 0.45 + desaturation | Clearer top vs lower distinction |
+| **Selected die** | NEW STATE — gold outline + glow | Currently missing |
+| **Hover die** | NEW STATE — scale-up + brightening | Currently missing |
+| **Variant switching** | Settings → Graphics style → "2D" / "3D" | Player selects in menu |
+| **Number as fallback** | SVG `<text>` with number instead of pips for low resolution / accessibility | Optional in accessibility settings |
+
+#### B.5) What's Missing / Improvements Needed
+
+| Problem | Description | Proposed Solution |
+|---------|-------------|-------------------|
+| **No "selected die" state** | Player can't see which die is selected — only hex changes | Gold outline + glow on die |
+| **No hover effect** | Hovering over die has no visual feedback | Scale + brightening |
+| **Flat appearance** | No shadow, gradient, or depth | Gradient + drop shadow (2D) or 3 faces (3D) |
+| **Monotone pips** | White circles without effect | Relief / inset shadow |
+| **Reroll without visual** | Value changes "instantly" | Flip / rotation animation |
+| **Tower looks flat** | Only opacity distinguishes levels | Shadow gradient + isometric layering |
 
 ### C) Action Panel (ActionPanel)
 
-| Element | Current State | Needed |
-|---------|---------------|--------|
-| **Action buttons** | Tailwind slate colors | Icons + text, framing matching theme |
-| **Active state** | Amber border | More prominent visual feedback |
+> Panel with 4 action buttons at the bottom of the screen. Visible only when player selects a hex with their own die.
 
-### D) Score and Player Shields (ScoreBoard + PlayerShield)
+#### C.1) Current State
 
-| Element | Current State | Needed |
-|---------|---------------|--------|
-| **Shields** | 6× shield-[color].png | Final quality, consistent style |
-| **Animals** | 6× animal-[type].png | Final quality, unified style |
-| **VP badge** | Colored circle with number | Heraldic shield, medallions |
+| Element | Value | Detail |
+|---------|-------|--------|
+| **Layout** | Horizontal `flex gap-2` | Bottom-center, inside `pb-4 px-4` |
+| **Container** | `bg-[#1e293b]`, border `#475569`, `rounded-xl` | Dark card with subtle border |
+| **Shadow** | `0 4px 16px rgba(0,0,0,0.4)` | Mild drop shadow |
+| **Visibility** | `visibility: hidden/visible` | Stays in layout even when hidden |
+| **Show condition** | `phase === "action"` + selected hex + action not taken | — |
+
+#### C.2) Action Buttons
+
+| Action | Label | Visibility |
+|--------|-------|------------|
+| **Move tower** | `"Move tower"` | Only when selected hex is a tower with reachable fields |
+| **Move die** | `"Move die"` | When die has reachable fields |
+| **Reroll** | `"Reroll"` | Always |
+| **Collapse** | `"Collapse"` | Only tower 3+ dice with own on top |
+
+**Button states:**
+
+| State | Border | Background | Text Color | Font |
+|-------|--------|------------|------------|------|
+| **Active** | `2px solid #f59e0b` | `rgba(245,158,11,0.18)` | `#f59e0b` (amber) | 700 |
+| **Enabled** | `2px solid transparent` | `rgba(255,255,255,0.08)` | `#f1f5f9` (light) | 500 |
+| **Disabled** | `2px solid transparent` | `rgba(255,255,255,0.04)` | `rgba(255,255,255,0.25)` | 500 |
+
+Transitions: `background 0.12s, border-color 0.12s, color 0.12s`.
+
+#### C.3) Graphic Proposal
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Container** | Thematic frame — wooden/stone board | Instead of generic slate panel |
+| **Buttons** | Icon + text (sword for move, arrows for shift, die for reroll, collapse for demolish) | Currently text only |
+| **Hover effect** | Brightening + subtle scale(1.05) | Currently no hover |
+| **Active state** | Thematic glow / inset (pressed effect) | More prominent than just amber border |
+| **Disabled state** | Gray + strikethrough or lock icon | Clear "cannot use" |
+| **Selection animation** | Short pulse/bounce on click (0.15s) | Currently none |
+| **Tooltips** | Tooltip on hover explaining the action | Currently none |
+| **Keyboard shortcuts** | Visual shortcut indicator on button (1–4) | For future keyboard controls |
+
+### D) Score and Player Shields (PlayerShield)
+
+> Two shields on either side of the board — crest, name, VP score, active player indicator.
+
+#### D.1) Current State
+
+| Element | Value | Detail |
+|---------|-------|--------|
+| **Shield size** | `w-28 h-28` (112×112 px) | Container for shield + animal |
+| **Shield image** | `shield-[color].png` (6 colors) | Layer 1 — background |
+| **Animal image** | `animal-[type].png` (6 animals: bear, deer, horse, pig, rooster, wolf) | Layer 2 — overlay with `p-1` |
+| **Name** | `text-xs font-semibold`, `max-w-28 truncate` | Fallback to player ID |
+| **VP badge (active)** | `bg-amber-400 text-stone-900` | Circle below shield |
+| **VP badge (inactive)** | `bg-stone-700 text-stone-200` | Gray circle |
+| **Badge position** | `absolute -bottom-1 left-1/2 -translate-x-1/2` | Centered below shield |
+| **Layout** | `flex flex-col items-center gap-1 shrink-0` | Vertical: shield → name |
+
+#### D.2) Graphic Proposal
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Shield quality** | Final artworks — consistent style (heraldic, hand-painted?) | 6 colors: red, blue, green, amber, purple, cyan |
+| **Animal quality** | Unify style — all animals in same technique | Currently mixed styles/quality |
+| **Larger name** | `text-sm` or `text-base`, better font | `text-xs` is too small |
+| **VP badge redesign** | Heraldic medallion / shield badge instead of circle | Gold for active, silver/bronze for inactive |
+| **Active player** | Animated border around entire shield (glow, pulsing) | Badge alone is insufficient |
+| **Score-pop animation** | Keep `scale 1→1.55→1` + add color/glow | Existing `@keyframes score-pop` |
+| **Hover on shield** | Subtle scale-up + tooltip with player details | Currently no interaction |
+| **Turn transition** | Smooth badge color animation (0.3s) | Currently instant switch |
+| **Destroyed dice** | Indicator of how many dice the player lost (mini dice / number) | Completely missing |
+| **Dice on map count** | Mini overview "3/5 dice" below VP | Completely missing |
 
 ---
 
 ## PRIORITY 2 — Combat and Interaction
 
-### E) Combat (CombatOverlay + CombatPowerTooltip)
+### E) Combat (CombatOverlay)
 
-| Element | Current State | Needed |
-|---------|---------------|--------|
-| **Overlay** | Slate-800 box | Thematic frame (parchment? stone tablet?) |
-| **Strength** | Numbers in hex | Iconography — swords, shields, effects |
-| **Push/Occupy buttons** | Text buttons | Icons with description |
-| **Combat flash** | CSS pulsing opacity | More prominent effect — explosion, sparks |
+> Modal dialog over the game board showing attacker/defender strengths with Push/Occupy choice.
+
+#### E.1) Current State
+
+| Element | Value | Detail |
+|---------|-------|--------|
+| **Position** | `absolute top-1/2 left-1/2 -translate-x/y-1/2` | Centered over the board |
+| **Z-index** | `z-[100]` | Above everything except full-screen modals |
+| **Container** | `bg-[#1e293b]`, border `#475569`, `rounded-xl` | Same style as ActionPanel |
+| **Size** | `min-w-56` (224 px), `py-5 px-6` | Compact card |
+| **Shadow** | `0 8px 32px rgba(0,0,0,0.5)` | Prominent drop shadow |
+| **Title** | `"Combat"`, `1.1rem bold` | Simple text |
+| **Attacker strength** | `text-2xl font-bold` | Number + label "Attacker" |
+| **Defender strength** | `text-2xl font-bold` | Number + label "Defender" |
+| **Separator** | `"vs"`, `opacity-50` | Between columns |
+| **Buttons** | Push / Occupy (only available ones shown) | `bg-[#334155]`, border `#475569` |
+| **Animation** | None on overlay | Only combat-flash on hexes behind it |
+
+#### E.2) Graphic Proposal
+
+```
+┌─────────────────────────────┐
+│         ⚔ COMBAT ⚔         │
+│                             │
+│    ⚔ ATTACKER   🛡 DEFENDER │
+│       ┌───┐        ┌───┐   │
+│       │ 5 │  vs.   │ 3 │   │
+│       └───┘        └───┘   │
+│     [die icon]  [die icon]  │
+│                             │
+│   [ 🗡 Push ]  [ 🏰 Occupy ] │
+└─────────────────────────────┘
+```
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Frame** | Thematic — parchment, stone tablet, or wooden frame | Instead of generic slate |
+| **Title** | Sword icon ⚔ + decorative font | More dramatic |
+| **Strength — visualization** | Mini die with value instead of just numbers | Colored die for attacker/defender |
+| **Strength — breakdown** | Show formula: "top die (4) + own (2) − enemy (1) = 5" | Player sees how strength is calculated |
+| **VS separator** | Crossed swords icon instead of "vs" text | Graphical separation |
+| **Push button** | Arrow/strike icon + text + tooltip | Explanation of what happens |
+| **Occupy button** | Tower/fortification icon + text + tooltip | Explanation of what happens |
+| **Button hover** | Brightening + preview effect on board | Player sees action impact |
+| **Enter animation** | Slide-in + fade (0.2s ease-out) | Currently appears instantly |
+| **Exit animation** | Fade-out (0.15s) | Disappears smoothly after choice |
+| **Sound effect** | Clash/strike sound on open | For future audio |
+| **Info panel** | What happens after Push vs Occupy — short tooltip | Beginners may not know the difference |
 
 ### F) Attack Direction (DirectionPickerOverlay)
 
