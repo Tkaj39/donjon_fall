@@ -474,10 +474,113 @@ Main Menu
 
 ### I) Player Setup (PlayerSetup)
 
-| Element | Current State | Needed |
-|---------|---------------|--------|
-| **Form layout** | Stone panel | Parchment / heraldic frame |
-| **Coat of arms selection** | Grid of 6 tiles | Larger preview, selection animation |
+> Form for entering player names and selecting coat of arms. Shown after map selection (or standalone for "Quick Start").
+
+#### I.1) Current State
+
+```
+┌─────────────────────────────────────────┐
+│  ← Back                                │
+│                                         │
+│        [Logo w-20 h-20]                 │
+│                                         │
+│        PLAYER SETUP                     │
+│                                         │
+│  ┌─────────────────────────────────┐   │
+│  │ 🔴 Red                         │   │
+│  │ Player name: [____________]     │   │
+│  │ Coat of arms:                   │   │
+│  │ [🐻][🦌][🐴][🐷][🐓][🐺]     │   │
+│  └─────────────────────────────────┘   │
+│  ┌─────────────────────────────────┐   │
+│  │ 🔵 Blue                        │   │
+│  │ Player name: [____________]     │   │
+│  │ Coat of arms:                   │   │
+│  │ [🐻][🦌][🐴][🐷][🐓][🐺]     │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  [       CONFIRM       ]                │
+└─────────────────────────────────────────┘
+```
+
+| Element | Value | Detail |
+|---------|-------|--------|
+| **Background** | `bg-stone-900/60 text-white p-8` | Semi-transparent dark |
+| **Container** | `max-w-lg` (~512 px) | Centered column |
+| **Logo** | `<Logo className="w-20 h-20" />` | Centered, `mb-4` |
+| **Heading** | `text-2xl font-bold tracking-wide uppercase mb-6` | Text: "Player Setup" |
+| **Slot card** | `bg-stone-800 border border-stone-600 rounded-xl p-5` | One card per player |
+| **Color dot** | `w-5 h-5 rounded-full bg-red-700 / bg-blue-700` | Player identification |
+| **Color label** | `text-stone-300 text-sm font-semibold uppercase tracking-wide` | "Red" / "Blue" |
+| **Name input** | `bg-stone-700 border-stone-600 rounded-lg px-3 py-2 text-sm` | `maxLength={24}`, placeholder "Enter name…" |
+| **Focus input** | `focus:border-stone-400` | Border change only |
+| **CoA grid** | `flex flex-wrap gap-2` | 6 tiles in a row |
+| **CoA tile** | `w-14 h-14 rounded-lg border-2 overflow-hidden` | Shield PNG + animal PNG |
+| **CoA selected** | `border-white ring-2 ring-white` | White outline + ring |
+| **CoA unselected** | `border-stone-600 hover:border-stone-400` | Gray outline |
+| **Back button** | `text-stone-400 hover:text-white text-sm` | "← Back" |
+| **Confirm button** | `bg-red-700 hover:bg-red-600 disabled:bg-stone-700` | `disabled` if name missing |
+| **Animation** | `transition-colors` on buttons | No other animations |
+
+#### I.2) Graphic Proposal
+
+```
+┌─────────────────────────────────────────┐
+│  ⬅ Back                                │
+│        [Logo]                           │
+│   ══ PLAYER SETUP ══                   │
+│                                         │
+│  ╔═══════════════════════════════════╗   │
+│  ║  🔴 RED                           ║   │
+│  ║  ┌─[parchment input]───────────┐ ║   │
+│  ║  │  Name: Elizabeth             │ ║   │
+│  ║  └──────────────────────────────┘ ║   │
+│  ║  Crest:                           ║   │
+│  ║  ╔════╗ ┌────┐ ┌────┐ ┌────┐    ║   │
+│  ║  ║ 🐻 ║ │ 🦌 │ │ 🐴 │ │ 🐷 │    ║   │
+│  ║  ╚════╝ └────┘ └────┘ └────┘    ║   │
+│  ║  (selected)                       ║   │
+│  ╚═══════════════════════════════════╝   │
+│                                         │
+│  ╔═══════════════════════════════════╗   │
+│  ║  🔵 BLUE                          ║   │
+│  ║  ...                              ║   │
+│  ╚═══════════════════════════════════╝   │
+│                                         │
+│  [  ⚔  CONFIRM & PLAY  ⚔  ]            │
+└─────────────────────────────────────────┘
+```
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Background** | Illustration / dark artwork instead of `stone-900/60` | Consistent with MainMenu |
+| **Slot card** | Parchment / leather frame with relief | Instead of generic `stone-800` |
+| **Color dot** | Heraldic badge / ribbon with player color | Instead of bare circle |
+| **Name input** | Parchment style — warm tone, calligraphic font | Instead of `stone-700` rectangle |
+| **Focus input** | Golden outline + subtle glow | Instead of just `border-stone-400` |
+| **CoA tile — larger** | `w-20 h-20` instead of `w-14 h-14` | Better recognizability |
+| **CoA selected** | Golden outline + pulsing glow + "inset" effect | More prominent than just white ring |
+| **CoA hover** | Scale `scale(1.08)` + subtle shadow | Currently just border change |
+| **CoA selection animation** | Bounce / pop effect (0.2s) | Missing |
+| **CoA preview** | Below grid show large selected crest (~128×128 px) | Missing — player can't see detail |
+| **Confirm button** | Thematic — stone / metal style, sword icons | Instead of generic `bg-red-700` |
+| **Confirm disabled** | Grayed + tooltip "Enter both player names" | Currently just grayed out |
+| **Back button** | Arrow in thematic style | Consistent with other screens |
+| **Validation** | Red glow around empty input on confirm attempt | Missing |
+| **Sound effect** | Click on crest selection, fanfare on confirm | For future audio |
+
+#### I.3) Missing / To Improve
+
+| Problem | Description | Proposed Solution |
+|---------|-------------|-------------------|
+| **Small CoA tiles** | 56×56 px — hard to see detail | Enlarge to 80×80+ px |
+| **No CoA preview** | Player can't see selected crest enlarged | Large preview (128×128) below grid |
+| **No validation** | Empty name → button just disabled, no explanation | Tooltip + input highlight |
+| **No hover on CoA** | Just border change | Scale + shadow + tooltip with name |
+| **No selection animation** | Instant switch | Bounce/pop effect |
+| **Generic look** | Stone panels, no theming | Parchment, leather, relief |
+| **Missing Human/AI toggle** | Can't set AI opponent | Dropdown in player card |
+| **Missing color selection** | Colors fixed to red/blue | Dropdown/palette selector (6 colors) |
 
 ### J) Map Selection (MapSelection)
 
@@ -549,10 +652,109 @@ After clicking a card, the right side shows:
 
 ### K) Loading + Victory
 
-| Element | Current State | Needed |
-|---------|---------------|--------|
-| **GameLoading** | Minimalist | Preparation animation, dramatic entrance |
-| **VictoryScreen** | SVG crown + player color | Festive effects — confetti, glow, fanfare |
+> Two transitional screens — GameLoading (game preparation) and VictoryScreen (game end).
+
+#### K.1) GameLoading — Current State
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                     [Logo] (fixed top)                      │
+│                                                            │
+│  ┌──────────┐                              ┌──────────┐   │
+│  │ [shield] │        Get ready…            │ [shield] │   │
+│  │ [animal] │      ┌──────────┐            │ [animal] │   │
+│  │ Name     │      │ ◠  spin  │            │ Name     │   │
+│  │ Red      │      │          │            │ Blue     │   │
+│  │          │      └──────────┘            │          │   │
+│  └──────────┘                              └──────────┘   │
+└────────────────────────────────────────────────────────────┘
+```
+
+| Element | Value | Detail |
+|---------|-------|--------|
+| **Background** | `bg-stone-900/60 text-white p-8` | Semi-transparent dark |
+| **Layout** | `flex items-center justify-around min-h-screen` | Players on sides, spinner in center |
+| **Logo** | `fixed top-16 left-1/2 -translate-x-1/2` | Fixed position top, centered |
+| **Text** | `text-stone-400 text-sm uppercase tracking-widest` | "Get ready…" |
+| **Spinner** | `w-32 h-32 rounded-full border-4 border-stone-400 border-t-transparent animate-spin` | 128×128 px, CSS rotation |
+| **Player card** | `flex items-center gap-4` | Shield + animal (16×16 px) + name + color |
+| **Shield** | `w-16 h-16 rounded-xl overflow-hidden` | Smaller than game board (w-28) |
+| **Preloading** | `preloadImages(GAME_ASSETS)` — 5 images | grass, grass-dense, focus, startr-field-red, startr-field-blue |
+| **Min duration** | `LOADING_DURATION_MS = 1800` (1.8s) | Minimum display even on fast load |
+| **Animation** | Only `animate-spin` on spinner | No other effects |
+
+#### K.2) GameLoading — Graphic Proposal
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Background** | Atmospheric artwork — fog, ramparts, landscape | Instead of `stone-900/60` |
+| **Spinner** | Thematic loading — falling dice, rotating crest, sword | Instead of generic border-spin circle |
+| **Progress bar** | Horizontal progress below spinner (% loaded) | Missing — player doesn't know how much remains |
+| **Text** | Rotating tips / game rules during wait | "Did you know? A tower with 3+ dice can collapse…" |
+| **Entrance animation** | Fade-in player cards from sides (0.3s) | Currently everything appears at once |
+| **Player cards** | Larger crests + heraldic frames | Consistent style with PlayerSetup |
+| **VS in center** | Large "VS" or crossed swords between players | Dramatic entrance |
+| **Sound effect** | Drumroll, tension, preparation sound | For future audio |
+| **Exit animation** | Smooth transition to game screen (fade/slide) | Currently instant switch |
+
+#### K.3) VictoryScreen — Current State
+
+| Element | Value | Detail |
+|---------|-------|--------|
+| **Overlay** | `fixed inset-0 bg-[rgba(0,0,0,0.82)] z-[200]` | Full-screen modal |
+| **Layout** | `flex flex-col items-center justify-center gap-6` | Centered vertical column |
+| **Logo** | `<Logo className="w-20 h-20" />` | Top |
+| **Trophy SVG** | 72×72 px: `<circle>` (r=36, opacity 0.15) + `<polygon>` crown + `<rect>` pedestal | Winner's color |
+| **Crown polygon** | `points="14,50 20,28 36,40 52,28 58,50"` | 5-point crown shape |
+| **Pedestal** | `<rect x="14" y="50" width="44" height="6" rx="3" />` | Rounded rectangle |
+| **Heading** | `text-[2.2rem] font-extrabold text-[#f1f5f9]` | "Victory!" |
+| **Winner label** | `text-[1.2rem] font-semibold capitalize` + `style={{ color }}` | "{winner} wins" |
+| **Colors** | Red: `#ef4444`, Blue: `#3b82f6`, Fallback: `#94a3b8` | Dynamic color |
+| **Button** | `py-[0.65rem] px-8 rounded-[0.6rem]` + `style={{ background: color }}` | "New game" |
+| **Button shadow** | `boxShadow: "0 4px 20px ${color}55"` | Colored glow |
+| **Hover** | Inline `opacity: 0.85` via `onMouseEnter/Leave` | Simple dimming |
+| **Animation** | No entrance/exit animation | Everything appears instantly |
+| **Accessibility** | `role="dialog" aria-modal="true"` | OK |
+
+#### K.4) VictoryScreen — Graphic Proposal
+
+```
+┌────────────────────────────────────────────┐
+│                                            │
+│               [Logo]                       │
+│                                            │
+│         ★  ★  ★  ★  ★                    │
+│            ┌──────┐                        │
+│            │ 👑   │  ← animated crown      │
+│            │ CROWN│     (gold + glow)      │
+│            └──────┘                        │
+│         ★  ★  ★  ★  ★                    │
+│                                            │
+│         V I C T O R Y !                    │
+│         ═══════════════                    │
+│         Red wins                           │
+│                                            │
+│   VP: 5  |  Turns: 23  |  Destroyed: 3    │
+│                                            │
+│  [🎮 New Game]   [📊 Statistics]            │
+│                                            │
+│  ✨ confetti / particles ✨                 │
+└────────────────────────────────────────────┘
+```
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Crown** | More detailed SVG — golden crown with gems | Instead of simple 5-point polygon |
+| **Crown animation** | Pulsing glow + rotation / floating | Missing — static |
+| **Confetti** | CSS/Canvas particle effect — falling confetti in winner's color | Missing entirely |
+| **Stars** | Decorative stars around crown (SVG, rotating) | Festive framing |
+| **Heading** | Decorative font + text gradient (gold → white) | More dramatic than plain text |
+| **Statistics** | Mini game summary — VP, turn count, destroyed dice | Missing — player doesn't see summary |
+| **Buttons** | "New Game" + "Statistics" / "Share" | Currently only "New game" |
+| **Entrance animation** | Sequential reveal: overlay fade (0.3s) → crown pop (0.2s) → text slide-up (0.2s) | Currently all at once |
+| **Sound effect** | Fanfare, victory sound | For future audio |
+| **Backdrop** | Behind crown a large circle / mandala in winner's color | Decorative background |
+| **Losing player** | Dimmed crest of the loser in corner | Context — who lost |
 
 ---
 
@@ -560,15 +762,94 @@ After clicking a card, the right side shows:
 
 ### L) Rules (RulesViewer)
 
-| Element | Current State | Needed |
-|---------|---------------|--------|
-| **Modal** | Dark panel, collapsible sections | Rule illustrations, diagrams |
+> Modal dialog accessible from the game screen ([?] button). Displays complete rules in collapsible sections.
+
+#### L.1) Current State
+
+| Element | Value | Detail |
+|---------|-------|--------|
+| **Backdrop** | `fixed inset-0 bg-[rgba(0,0,0,0.75)] z-[300]` | Click-outside closes |
+| **Panel** | `bg-[var(--color-panel-bg,#1e293b)]` | `max-w-[36rem]`, `max-h-[85vh]`, `rounded-2xl` |
+| **Border** | `border-2 border-[var(--color-panel-border,#475569)]` | CSS variable with fallback |
+| **Shadow** | `0 16px 48px rgba(0,0,0,0.6)` | Prominent drop shadow |
+| **Heading** | `text-[1.15rem] font-bold text-[#f1f5f9]` | "Game Rules" |
+| **Header buttons** | Expand all / Collapse all / ✕ | `bg-white/[0.07] border-white/20 text-xs` |
+| **Scrollable body** | `overflow-y-auto px-5 grow` | Sections stacked |
+| **Sections (7)** | Board & Components, Win Condition, Scoring, Turn Structure, Actions, Combat, Towers & Key Terms | Collapsible accordion |
+| **Section toggle** | `<button>` with `aria-expanded` + chevron `▼` | Rotation 0°↔180° (0.2s) |
+| **Section content** | `<ul>` with `<li>` — plain rule text | `text-[0.85rem] leading-[1.65]` |
+| **Accessibility** | `role="dialog" aria-modal aria-label` + `aria-expanded/controls` | Good baseline support |
+| **Animation** | Only chevron rotation (`transition-transform 200ms`) | No slide/fade on content |
+
+#### L.2) Graphic Proposal
+
+```
+┌─────────────────────────────────────┐
+│  📜 GAME RULES            [−][+][✕] │
+│─────────────────────────────────────│
+│                                     │
+│  ▼ Board & Components              │
+│  ┌─────────────────────────────┐   │
+│  │ • 61 hexagonal fields...   │   │
+│  │ • Two players: red, blue   │   │
+│  │                             │   │
+│  │   ┌─────────────────┐      │   │
+│  │   │  [board          │      │   │
+│  │   │   illustration]  │      │   │
+│  │   └─────────────────┘      │   │
+│  └─────────────────────────────┘   │
+│                                     │
+│  ▶ Win Condition (collapsed)        │
+│  ▶ Scoring                         │
+│  ▶ Turn Structure                  │
+│  ▶ Actions                         │
+│  ▶ Combat                          │
+│  ▶ Towers & Key Terms              │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Panel frame** | Parchment / scroll style — warm colors, edges | Instead of generic `#1e293b` |
+| **Heading** | Scroll icon 📜 + decorative font | More thematic |
+| **Illustrations** | Images / diagrams for each rules section | Missing entirely — text only |
+| **Board diagram** | Mini hex grid with labels (starting fields, focal points) | Visual aid |
+| **Combat diagram** | Arrows for attacker vs defender strength, push/occupy visualization | Combat rules are complex |
+| **Tower diagram** | Dice stacking, mixed tower, control | Key concept |
+| **Expand animation** | Slide-down + fade-in (0.2s) on section content | Currently content just shows/hides |
+| **Search** | Text field for searching within rules | Missing — 7 sections, lots of text |
+| **Keywords** | Highlighted key terms (bold, color, tooltip) | "Tower", "Push", "Occupy" as links |
+| **TOC** | Navigation sidebar / sticky section headers | For quick section access |
+| **Content font** | More readable — `text-[0.9rem]` + larger `leading` | Currently rather small |
+| **Header buttons** | Icons instead of text (↕ expand, ↔ collapse, ✕ close) | More compact |
+| **Dark/light** | Dark parchment (default) vs light parchment (accessibility) | Toggle in settings |
+| **Print** | CSS `@media print` style for printing rules | Nice-to-have |
 
 ### M) Favicon
 
-| Element | Current State | Needed |
-|---------|---------------|--------|
-| **favicon.png** | Exists | Verify quality, multi-size ICO? |
+> Browser tab icon — currently `favicon.png` in `/public/`.
+
+#### M.1) Current State
+
+| Element | Value | Detail |
+|---------|-------|--------|
+| **File** | `public/favicon.png` | PNG format |
+| **HTML reference** | `<link rel="icon" type="image/svg+xml" href="/favicon.png">` | `type` mismatch — declares SVG but file is PNG |
+| **Size** | Not verified | Likely single size |
+| **Usage** | Browser tab | — |
+
+#### M.2) Graphic Proposal
+
+| Element | Proposal | Detail |
+|---------|----------|--------|
+| **Fix type** | `type="image/png"` or switch to SVG | Current type/file mismatch |
+| **Multi-size** | ICO bundle: 16×16, 32×32, 48×48, 64×64 | For different contexts (tab, bookmark, desktop) |
+| **SVG variant** | Vector favicon — scales to any size | Modern browsers prefer SVG |
+| **Apple touch icon** | `apple-touch-icon.png` (180×180) | For iOS bookmarks |
+| **Manifest** | `site.webmanifest` with 192×192 and 512×512 icons | For PWA / mobile install |
+| **Motif** | Miniaturized logo or heraldic crest | Recognizable even at 16×16 px |
+| **Dark mode** | `<link rel="icon" media="(prefers-color-scheme: dark)">` | Variant for dark browser mode |
 
 ---
 

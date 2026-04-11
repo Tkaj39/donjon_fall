@@ -470,10 +470,113 @@ Hlavní menu
 
 ### I) Nastavení hráčů (PlayerSetup)
 
-| Prvek | Současný stav | Potřeba |
-|-------|---------------|---------|
-| **Form layout** | Stone panel | Pergamenový / heraldický rámec |
-| **Výběr erbu** | Grid 6 dlaždic | Větší náhled, animace výběru |
+> Formulář pro zadání jmen hráčů a výběr erbu. Zobrazuje se po výběru mapy (nebo samostatně při „Quick Start").
+
+#### I.1) Současný stav
+
+```
+┌─────────────────────────────────────────┐
+│  ← Back                                │
+│                                         │
+│        [Logo w-20 h-20]                 │
+│                                         │
+│        PLAYER SETUP                     │
+│                                         │
+│  ┌─────────────────────────────────┐   │
+│  │ 🔴 Red                         │   │
+│  │ Player name: [____________]     │   │
+│  │ Coat of arms:                   │   │
+│  │ [🐻][🦌][🐴][🐷][🐓][🐺]     │   │
+│  └─────────────────────────────────┘   │
+│  ┌─────────────────────────────────┐   │
+│  │ 🔵 Blue                        │   │
+│  │ Player name: [____________]     │   │
+│  │ Coat of arms:                   │   │
+│  │ [🐻][🦌][🐴][🐷][🐓][🐺]     │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  [       CONFIRM       ]                │
+└─────────────────────────────────────────┘
+```
+
+| Prvek | Hodnota | Detail |
+|-------|---------|--------|
+| **Pozadí** | `bg-stone-900/60 text-white p-8` | Poloprůhledná tmavá |
+| **Kontejner** | `max-w-lg` (~512 px) | Centrovaný sloupec |
+| **Logo** | `<Logo className="w-20 h-20" />` | Centrované, `mb-4` |
+| **Nadpis** | `text-2xl font-bold tracking-wide uppercase mb-6` | Text: „Player Setup" |
+| **Slot karta** | `bg-stone-800 border border-stone-600 rounded-xl p-5` | Jedna karta per hráč |
+| **Barevná tečka** | `w-5 h-5 rounded-full bg-red-700 / bg-blue-700` | Identifikace hráče |
+| **Label barvy** | `text-stone-300 text-sm font-semibold uppercase tracking-wide` | „Red" / „Blue" |
+| **Input jméno** | `bg-stone-700 border-stone-600 rounded-lg px-3 py-2 text-sm` | `maxLength={24}`, placeholder „Enter name…" |
+| **Focus input** | `focus:border-stone-400` | Pouze border změna |
+| **Grid erbů** | `flex flex-wrap gap-2` | 6 dlaždic v řadě |
+| **Erb dlaždice** | `w-14 h-14 rounded-lg border-2 overflow-hidden` | Shield PNG + animal PNG |
+| **Erb vybraný** | `border-white ring-2 ring-white` | Bílý obrys + ring |
+| **Erb nevybraný** | `border-stone-600 hover:border-stone-400` | Šedý obrys |
+| **Tlačítko Back** | `text-stone-400 hover:text-white text-sm` | „← Back" |
+| **Tlačítko Confirm** | `bg-red-700 hover:bg-red-600 disabled:bg-stone-700` | `disabled` pokud chybí jméno |
+| **Animace** | `transition-colors` na tlačítkách | Žádné jiné animace |
+
+#### I.2) Grafický návrh
+
+```
+┌─────────────────────────────────────────┐
+│  ⬅ Zpět                                │
+│        [Logo]                           │
+│   ══ NASTAVENÍ HRÁČŮ ══                │
+│                                         │
+│  ╔═══════════════════════════════════╗   │
+│  ║  🔴 ČERVENÝ                       ║   │
+│  ║  ┌─[pergamenový input]──────────┐ ║   │
+│  ║  │  Jméno: Alžběta              │ ║   │
+│  ║  └──────────────────────────────┘ ║   │
+│  ║  Erb:                             ║   │
+│  ║  ╔════╗ ┌────┐ ┌────┐ ┌────┐    ║   │
+│  ║  ║ 🐻 ║ │ 🦌 │ │ 🐴 │ │ 🐷 │    ║   │
+│  ║  ╚════╝ └────┘ └────┘ └────┘    ║   │
+│  ║  (vybrán)                         ║   │
+│  ╚═══════════════════════════════════╝   │
+│                                         │
+│  ╔═══════════════════════════════════╗   │
+│  ║  🔵 MODRÝ                        ║   │
+│  ║  ...                              ║   │
+│  ╚═══════════════════════════════════╝   │
+│                                         │
+│  [  ⚔  POTVRDIT A HRÁT  ⚔  ]           │
+└─────────────────────────────────────────┘
+```
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Pozadí** | Ilustrace / tmavý artwork místo `stone-900/60` | Konzistentní s MainMenu |
+| **Slot karta** | Pergamenový / kožený rámec s reliéfem | Místo generického `stone-800` |
+| **Barevná tečka** | Heraldický štítek / stužka s barvou hráče | Místo holého kroužku |
+| **Input jméno** | Pergamenový styl — teplý tón, kaligrafický font | Místo `stone-700` obdélníku |
+| **Focus input** | Zlatý obrys + jemná záře | Místo jen `border-stone-400` |
+| **Erb dlaždice — větší** | `w-20 h-20` místo `w-14 h-14` | Lepší rozpoznatelnost |
+| **Erb vybraný** | Zlatý obrys + pulsující záře + „zapuštění" | Výraznější než jen bílý ring |
+| **Erb hover** | Zvětšení `scale(1.08)` + jemný stín | Aktuálně jen border změna |
+| **Erb animace výběru** | Bounce / pop efekt (0.2s) | ❗ Chybí |
+| **Erb náhled** | Pod gridem zobrazit velký vybraný erb (~128×128 px) | ❗ Chybí — hráč nevidí detail |
+| **Confirm tlačítko** | Tematické — kamenný / kovový styl, ikona mečů | Místo generického `bg-red-700` |
+| **Confirm disabled** | Šedivé + tooltip „Zadejte jména obou hráčů" | Aktuálně jen zšednutí |
+| **Back tlačítko** | Šipka v tematickém stylu | Konzistentní s dalšími obrazovkami |
+| **Validace** | Červená záře kolem prázdného inputu po pokusu o confirm | ❗ Chybí |
+| **Zvukový efekt** | Klik při výběru erbu, fanfáry při confirm | Pro budoucí audio |
+
+#### I.3) Co chybí / co zlepšit
+
+| Problém | Popis | Návrh řešení |
+|---------|-------|--------------|
+| **Malé erb dlaždice** | 56×56 px — špatně vidět detail | Zvětšit na 80×80+ px |
+| **Žádný náhled erbu** | Hráč nevidí vybraný erb zvětšený | Velký preview (128×128) pod gridem |
+| **Žádná validace** | Prázdné jméno → tlačítko jen disabled, žádné vysvětlení | Tooltip + zvýraznění inputu |
+| **Žádný hover na erbu** | Jen border změna | Scale + stín + tooltip s názvem |
+| **Žádná animace výběru** | Instantní přepnutí | Bounce/pop efekt |
+| **Generický vzhled** | Stone panely, bez tematiky | Pergamen, kůže, reliéf |
+| **Chybí přepínač Hráč/AI** | Nelze nastavit AI protivníka | Dropdown v kartě hráče |
+| **Chybí výběr barvy** | Barvy fixně red/blue | Dropdown/pallette selector (6 barev) |
 
 ### J) Výběr mapy (MapSelection)
 
@@ -545,10 +648,109 @@ Po kliknutí na kartu se vpravo zobrazí:
 
 ### K) Loading + Victory
 
-| Prvek | Současný stav | Potřeba |
-|-------|---------------|---------|
-| **GameLoading** | Minimalistický | Animace přípravy, dramatický nástup |
-| **VictoryScreen** | SVG koruna + barva hráče | Slavnostní efekty — konfety, záře, fanfáry |
+> Dvě přechodové obrazovky — GameLoading (příprava hry) a VictoryScreen (konec hry).
+
+#### K.1) GameLoading — současný stav
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                     [Logo] (fixed top)                      │
+│                                                            │
+│  ┌──────────┐                              ┌──────────┐   │
+│  │ [shield] │        Get ready…            │ [shield] │   │
+│  │ [animal] │      ┌──────────┐            │ [animal] │   │
+│  │ Jméno    │      │ ◠  spin  │            │ Jméno    │   │
+│  │ Červený  │      │          │            │ Modrý    │   │
+│  │          │      └──────────┘            │          │   │
+│  └──────────┘                              └──────────┘   │
+└────────────────────────────────────────────────────────────┘
+```
+
+| Prvek | Hodnota | Detail |
+|-------|---------|--------|
+| **Pozadí** | `bg-stone-900/60 text-white p-8` | Poloprůhledná tmavá |
+| **Layout** | `flex items-center justify-around min-h-screen` | Hráči po stranách, spinner uprostřed |
+| **Logo** | `fixed top-16 left-1/2 -translate-x-1/2` | Fixní pozice nahoře, centrované |
+| **Text** | `text-stone-400 text-sm uppercase tracking-widest` | „Get ready…" |
+| **Spinner** | `w-32 h-32 rounded-full border-4 border-stone-400 border-t-transparent animate-spin` | 128×128 px, CSS rotace |
+| **Karta hráče** | `flex items-center gap-4` | Shield + animal (16×16 px) + jméno + barva |
+| **Shield** | `w-16 h-16 rounded-xl overflow-hidden` | Menší než na herní desce (w-28) |
+| **Preloading** | `preloadImages(GAME_ASSETS)` — 5 obrázků | grass, grass-dense, focus, startr-field-red, startr-field-blue |
+| **Min. doba** | `LOADING_DURATION_MS = 1800` (1.8s) | Minimální zobrazení i při rychlém loadu |
+| **Animace** | Pouze `animate-spin` na spinneru | Žádné další efekty |
+
+#### K.2) GameLoading — grafický návrh
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Pozadí** | Atmosférický artwork — mlha, hradby, krajina | Místo `stone-900/60` |
+| **Spinner** | Tematický loading — padající kostky, rotující erb, meč | Místo generického border-spin kroužku |
+| **Progress bar** | Horizontální progres pod spinnerem (% načteno) | ❗ Chybí — hráč neví kolik zbývá |
+| **Text** | Rotující tipy / pravidla hry během čekání | „Věděli jste? Věž se 3+ kostkami může zkolabovat…" |
+| **Entrance animace** | Fade-in hráčských karet z boku (0.3s) | Aktuálně se vše objeví najednou |
+| **Karty hráčů** | Větší erby + heraldické rámečky | Konzistentní styl s PlayerSetup |
+| **VS uprostřed** | Velké „VS" nebo zkřížené meče mezi hráči | Dramatický nástup |
+| **Zvukový efekt** | Bubnování, napětí, zvuk přípravy | Pro budoucí audio |
+| **Exit animace** | Plynulý přechod do herní obrazovky (fade/slide) | Aktuálně instantní přepnutí |
+
+#### K.3) VictoryScreen — současný stav
+
+| Prvek | Hodnota | Detail |
+|-------|---------|--------|
+| **Overlay** | `fixed inset-0 bg-[rgba(0,0,0,0.82)] z-[200]` | Celoobrazovkový modál |
+| **Layout** | `flex flex-col items-center justify-center gap-6` | Centrovaný vertikální sloupec |
+| **Logo** | `<Logo className="w-20 h-20" />` | Nahoře |
+| **Trofej SVG** | 72×72 px: `<circle>` (r=36, opacity 0.15) + `<polygon>` koruna + `<rect>` podstavec | Barva vítěze |
+| **Koruna polygon** | `points="14,50 20,28 36,40 52,28 58,50"` | 5bodový tvar koruny |
+| **Podstavec** | `<rect x="14" y="50" width="44" height="6" rx="3" />` | Zaoblený obdélník |
+| **Nadpis** | `text-[2.2rem] font-extrabold text-[#f1f5f9]` | „Victory!" |
+| **Label vítěze** | `text-[1.2rem] font-semibold capitalize` + `style={{ color }}` | „{winner} wins" |
+| **Barvy** | Red: `#ef4444`, Blue: `#3b82f6`, Fallback: `#94a3b8` | Dynamická barva |
+| **Tlačítko** | `py-[0.65rem] px-8 rounded-[0.6rem]` + `style={{ background: color }}` | „New game" |
+| **Stín tlačítka** | `boxShadow: "0 4px 20px ${color}55"` | Barevný glow |
+| **Hover** | Inline `opacity: 0.85` via `onMouseEnter/Leave` | Jednoduché ztlumení |
+| **Animace** | Žádná vstupní/výstupní animace | Vše se objeví instantně |
+| **Accessibility** | `role="dialog" aria-modal="true"` | OK |
+
+#### K.4) VictoryScreen — grafický návrh
+
+```
+┌────────────────────────────────────────────┐
+│                                            │
+│               [Logo]                       │
+│                                            │
+│         ★  ★  ★  ★  ★                    │
+│            ┌──────┐                        │
+│            │ 👑   │  ← animovaná koruna    │
+│            │ CROWN│     (zlato + záře)     │
+│            └──────┘                        │
+│         ★  ★  ★  ★  ★                    │
+│                                            │
+│         V Í T Ě Z S T V Í !               │
+│         ═══════════════                    │
+│         Červený vyhrává                    │
+│                                            │
+│   VP: 5  |  Tahy: 23  |  Zničeno: 3       │
+│                                            │
+│  [🎮 Nová hra]   [📊 Statistiky]           │
+│                                            │
+│  ✨ konfety / částice ✨                    │
+└────────────────────────────────────────────┘
+```
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Koruna** | Detailnější SVG — zlatá koruna s drahokamy | Místo jednoduchého 5bodového polygonu |
+| **Koruna animace** | Pulsující záře + rotace / vznášení | ❗ Chybí — statická |
+| **Konfety** | CSS/Canvas částicový efekt — padající konfety v barvě vítěze | ❗ Chybí zcela |
+| **Hvězdy** | Dekorativní hvězdy kolem koruny (SVG, rotující) | Slavnostní rámeček |
+| **Nadpis** | Dekorativní font + textový gradient (zlato → bílá) | Dramatičtější než plain text |
+| **Statistiky** | Mini shrnutí partie — VP, počet tahů, zničené kostky | ❗ Chybí — hráč nevidí souhrn |
+| **Tlačítka** | „Nová hra" + „Statistiky" / „Sdílet" | Aktuálně jen „New game" |
+| **Vstupní animace** | Postupné odhalení: overlay fade (0.3s) → koruna pop (0.2s) → text slide-up (0.2s) | Aktuálně vše najednou |
+| **Zvukový efekt** | Fanfáry, vítězný zvuk | Pro budoucí audio |
+| **Podložka** | Za korunou velký kruh / mandala v barvě vítěze | Dekorativní pozadí |
+| **Prohrávající hráč** | Tlumený erb prohrávajícího v rohu | Kontext — kdo prohrál |
 
 ---
 
@@ -556,15 +758,94 @@ Po kliknutí na kartu se vpravo zobrazí:
 
 ### L) Pravidla (RulesViewer)
 
-| Prvek | Současný stav | Potřeba |
-|-------|---------------|---------|
-| **Modal** | Dark panel, collapsible sekce | Ilustrace pravidel, diagramy |
+> Modální dialog přístupný z herní obrazovky (tlačítko [?]). Zobrazuje kompletní pravidla ve sbalitelných sekcích.
+
+#### L.1) Současný stav
+
+| Prvek | Hodnota | Detail |
+|-------|---------|--------|
+| **Backdrop** | `fixed inset-0 bg-[rgba(0,0,0,0.75)] z-[300]` | Click-outside zavírá |
+| **Panel** | `bg-[var(--color-panel-bg,#1e293b)]` | `max-w-[36rem]`, `max-h-[85vh]`, `rounded-2xl` |
+| **Border** | `border-2 border-[var(--color-panel-border,#475569)]` | CSS proměnná s fallbackem |
+| **Stín** | `0 16px 48px rgba(0,0,0,0.6)` | Výrazný drop shadow |
+| **Nadpis** | `text-[1.15rem] font-bold text-[#f1f5f9]` | „Game Rules" |
+| **Tlačítka záhlaví** | Expand all / Collapse all / ✕ | `bg-white/[0.07] border-white/20 text-xs` |
+| **Scrollable body** | `overflow-y-auto px-5 grow` | Sekce pod sebou |
+| **Sekce (7)** | Board & Components, Win Condition, Scoring, Turn Structure, Actions, Combat, Towers & Key Terms | Sbalitelné accordion |
+| **Toggle sekce** | `<button>` s `aria-expanded` + chevron `▼` | Rotace 0°↔180° (0.2s) |
+| **Obsah sekce** | `<ul>` s `<li>` — čistý text pravidel | `text-[0.85rem] leading-[1.65]` |
+| **Accessibility** | `role="dialog" aria-modal aria-label` + `aria-expanded/controls` | Dobrá základní podpora |
+| **Animace** | Pouze chevron rotace (`transition-transform 200ms`) | Žádný slide/fade na obsahu |
+
+#### L.2) Grafický návrh
+
+```
+┌─────────────────────────────────────┐
+│  📜 PRAVIDLA HRY          [−][+][✕] │
+│─────────────────────────────────────│
+│                                     │
+│  ▼ Deska a komponenty              │
+│  ┌─────────────────────────────┐   │
+│  │ • 61 hexagonálních polí...  │   │
+│  │ • Dva hráči: červený, modrý │   │
+│  │                             │   │
+│  │   ┌─────────────────┐      │   │
+│  │   │  [ilustrace      │      │   │
+│  │   │   herní desky]   │      │   │
+│  │   └─────────────────┘      │   │
+│  └─────────────────────────────┘   │
+│                                     │
+│  ▶ Podmínka vítězství (collapsed)   │
+│  ▶ Bodování                        │
+│  ▶ Struktura tahu                  │
+│  ▶ Akce                            │
+│  ▶ Boj                             │
+│  ▶ Věže a klíčové pojmy            │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Panel rámec** | Pergamenový / svitkov styl — teplé barvy, okraje | Místo generického `#1e293b` |
+| **Nadpis** | Ikona svitku 📜 + dekorativní font | Tematičtější |
+| **Ilustrace** | Obrázky / diagramy u každé sekce pravidel | ❗ Chybí zcela — jen text |
+| **Diagram desky** | Mini hex grid s popisky (startovní pole, ohniska) | Vizuální pomůcka |
+| **Diagram boje** | Šipky síla útočníka vs obránce, push/occupy vizualizace | Pravidla boje jsou komplexní |
+| **Diagram věží** | Vrstvení kostek, smíšená věž, kontrola | Klíčový koncept |
+| **Animace rozkládání** | Slide-down + fade-in (0.2s) na obsahu sekce | Aktuálně se obsah jen zobrazí/skryje |
+| **Vyhledávání** | Textové pole pro hledání v pravidlech | ❗ Chybí — 7 sekcí, hodně textu |
+| **Klíčová slova** | Zvýraznění důležitých pojmů (bold, barva, tooltip) | „Věž", „Push", „Occupy" jako odkazy |
+| **TOC** | Navigační sidebar / sticky záhlaví sekcí | Pro rychlý přístup k sekci |
+| **Font obsahu** | Čitelnější — `text-[0.9rem]` + větší `leading` | Aktuálně poměrně malé |
+| **Tlačítko záhlaví** | Ikony místo textu (↕ expand, ↔ collapse, ✕ close) | Úspornější |
+| **Dark/light** | Tmavý pergamen (výchozí) vs světlý pergamen (přístupnost) | Přepínač v nastavení |
+| **Tisk** | CSS `@media print` styl pro tisk pravidel | Nice-to-have |
 
 ### M) Favicon
 
-| Prvek | Současný stav | Potřeba |
-|-------|---------------|---------|
-| **favicon.png** | Existuje | Ověřit kvalitu, multi-size ICO? |
+> Ikona v záložce prohlížeče — aktuálně `favicon.png` v `/public/`.
+
+#### M.1) Současný stav
+
+| Prvek | Hodnota | Detail |
+|-------|---------|--------|
+| **Soubor** | `public/favicon.png` | PNG formát |
+| **HTML reference** | `<link rel="icon" type="image/svg+xml" href="/favicon.png">` | ❗ `type` nesedí — deklaruje SVG ale soubor je PNG |
+| **Rozměr** | Neověřeno | Pravděpodobně jedna velikost |
+| **Použití** | Záložka prohlížeče | — |
+
+#### M.2) Grafický návrh
+
+| Prvek | Návrh | Detail |
+|-------|-------|--------|
+| **Oprava type** | `type="image/png"` nebo přejít na SVG | ❗ Aktuální nesoulad type vs soubor |
+| **Multi-size** | ICO balík: 16×16, 32×32, 48×48, 64×64 | Pro různé kontexty (záložka, bookmark, desktop) |
+| **SVG varianta** | Vektorový favicon — škáluje se na jakoukoliv velikost | Moderní prohlížeče preferují SVG |
+| **Apple touch icon** | `apple-touch-icon.png` (180×180) | Pro iOS záložky |
+| **Manifest** | `site.webmanifest` s ikonami 192×192 a 512×512 | Pro PWA / mobilní instalaci |
+| **Motiv** | Zmenšená verze loga nebo heraldický erb | Rozpoznatelný i v 16×16 px |
+| **Dark mode** | `<link rel="icon" media="(prefers-color-scheme: dark)">` | Varianta pro tmavý režim prohlížeče |
 
 ---
 
