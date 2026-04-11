@@ -79,6 +79,59 @@
 | **Tlačítka** | Tailwind bg-red-700 / stone-700 | Tematická tlačítka (kámen, dřevo, reliéf) |
 | **Spinner** | CSS kroužek s border-spin | Tematický loading (padající kostky? erb?) |
 
+#### Rozložení hlavní obrazovky
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  MENU (boční panel)  │       PLÁTNO (hlavní plocha)           │
+│─────────────────────│                                      │
+│  [Logo]             │  Rotující obsah:                      │
+│                     │  • Grafický tutoriál / příběh hry    │
+│  Start         ▶    │  • Záznam ukázkové hry (replay)      │
+│  Pokračovat         │  • Atmosférická ilustrace / artwork   │
+│  Tutoriál           │  • Novinky / changelog               │
+│  Pravidla           │                                      │
+│  Statistiky         │  Obsah se mění automaticky          │
+│  Nastavení     ▶    │  (fade/slide animace, ~8s interval)  │
+│  Vytvořit mapu      │  nebo reaguje na hover položky menu │
+│  Autoři             │                                      │
+│  Ukončit            │                                      │
+└─────────────────────┴──────────────────────────────────────┘
+```
+
+**Plátno (hlavní plocha)** střídá obsah:
+- **Grafický tutoriál** — animované snímky vysvětlující základy hry (pohyb, boj, věže…)
+- **Záznam ukázkové hry** — přehrávání reálné partie (replay demo), aby hráč viděl jak hra vypadá
+- **Atmosférický artwork** — ilustrace světa hry, koncepty
+- **Novinky** — changelog, komunitní informace
+
+#### Struktura hlavního menu
+
+```
+Hlavní menu
+├── Start
+│   ├── Quick Start        — rychlý start s výchozím nastavením
+│   ├── Start vs Bot       — hra proti AI
+│   ├── Start              — klasický start (výběr mapy → hráči)
+│   ├── Online             — hra přes síť (multiplayer)
+│   └── Kampaň             — příběhový režim
+├── Pokračovat             — obnovení rozehrané hry (viditelné jen pokud existuje)
+├── Tutoriál               — interaktivní výuka pravidel
+├── Pravidla                — přehled pravidel (RulesViewer)
+├── Statistiky              — odehrané hry, výhry/prohry, skóre
+├── Nastavení (Settings)
+│   ├── Zvuk               — hlasitost, zapnutí/vypnutí zvukových efektů
+│   ├── Složitost grafiky   — nízká / střední / vysoká (animace, efekty, textury)
+│   ├── Styl grafiky       — výběr vizuálního tématu (default, retro, minimalist…)
+│   ├── Jazyk              — přepínač CS / EN
+│   ├── Ovládání           — klávesové zkratky, myš/touch
+│   ├── Zobrazení          — fullscreen, rozlišení
+│   └── Přístupnost        — barvoslepost, velikost textu
+├── Vytvořit mapu           — editor vlastních map
+├── Autoři                  — credits, informace o tvůrcích
+└── Ukončit                 — zavřít hru
+```
+
 ### I) Nastavení hráčů (PlayerSetup)
 
 | Prvek | Současný stav | Potřeba |

@@ -79,6 +79,59 @@
 | **Buttons** | Tailwind bg-red-700 / stone-700 | Thematic buttons (stone, wood, relief) |
 | **Spinner** | CSS circle with border-spin | Thematic loading (falling dice? coat of arms?) |
 
+#### Main Screen Layout
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  MENU (side panel)   │       CANVAS (main area)              │
+│─────────────────────│                                      │
+│  [Logo]             │  Rotating content:                    │
+│                     │  • Graphic tutorial / game story      │
+│  Start         ▶    │  • Demo game recording (replay)       │
+│  Continue           │  • Atmospheric illustration / artwork  │
+│  Tutorial           │  • News / changelog                   │
+│  Rules              │                                      │
+│  Statistics         │  Content changes automatically       │
+│  Settings      ▶    │  (fade/slide animation, ~8s interval) │
+│  Create Map         │  or reacts to menu item hover        │
+│  Authors            │                                      │
+│  Quit               │                                      │
+└─────────────────────┴──────────────────────────────────────┘
+```
+
+**Canvas (main area)** cycles through:
+- **Graphic tutorial** — animated frames explaining game basics (movement, combat, towers…)
+- **Demo game recording** — replay of a real match so the player can see gameplay in action
+- **Atmospheric artwork** — game world illustrations, concept art
+- **News** — changelog, community info
+
+#### Main Menu Structure
+
+```
+Main Menu
+├── Start
+│   ├── Quick Start        — instant game with default settings
+│   ├── Start vs Bot       — play against AI
+│   ├── Start              — classic start (map select → players)
+│   ├── Online             — network multiplayer
+│   └── Campaign           — story mode
+├── Continue               — resume saved game (visible only if a game exists)
+├── Tutorial               — interactive rules walkthrough
+├── Rules                  — rules overview (RulesViewer)
+├── Statistics             — games played, wins/losses, scores
+├── Settings
+│   ├── Sound              — volume, toggle sound effects
+│   ├── Graphics quality   — low / medium / high (animations, effects, textures)
+│   ├── Graphics style     — visual theme selection (default, retro, minimalist…)
+│   ├── Language           — CS / EN toggle
+│   ├── Controls           — keyboard shortcuts, mouse/touch
+│   ├── Display            — fullscreen, resolution
+│   └── Accessibility      — color blindness, text size
+├── Create Map             — custom map editor
+├── Authors                — credits, developer info
+└── Quit                   — exit the game
+```
+
 ### I) Player Setup (PlayerSetup)
 
 | Element | Current State | Needed |
