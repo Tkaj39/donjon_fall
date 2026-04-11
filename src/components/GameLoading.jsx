@@ -11,7 +11,7 @@ import { Logo } from "./Logo.jsx";
 import { createInitialState } from "../game/gameState.js";
 import { ANIMAL_OPTIONS, SHIELD_BY_PLAYER, GAME_ASSETS } from "../styles/themes/default.js";
 import { preloadImages } from "../utils/preloadImages.js";
-import Spinner from "./Spinner.jsx";
+import { Spinner } from "./Spinner.jsx";
 
 /** Minimum display duration after assets are loaded. */
 const LOADING_DURATION_MS = 1800;

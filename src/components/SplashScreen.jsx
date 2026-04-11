@@ -4,10 +4,10 @@
  */
 
 import { useEffect } from "react";
-import { Logo } from "./Logo.jsx";
 import { preloadImages } from "../utils/preloadImages.js";
 import { MENU_ASSETS } from "../styles/themes/default.js";
-import Spinner from "./Spinner.jsx";
+import { Logo } from "./Logo.jsx";
+import { Spinner } from "./Spinner.jsx";
 
 /** Minimum display duration after assets are loaded. */
 const SPLASH_DURATION_MS = 2000;
@@ -28,11 +28,12 @@ export function SplashScreen({ onDone }) {
     }, [onDone]);
 
     return (
-        <>
-            <Logo className="fixed top-16 left-1/2 -translate-x-1/2"/>
-            <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900/60">
-                <Spinner />
-            </div>
-        </>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-stone-900 text-white">
+            <Logo className="w-48 h-48 mb-8" />
+            <Spinner />
+            <p className="mt-6 text-stone-400 text-sm uppercase tracking-widest">
+                Loading…
+            </p>
+        </div>
     );
 }

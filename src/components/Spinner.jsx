@@ -6,10 +6,8 @@
 /**
  * @returns { React.JSX.Element }
  */
-function Spinner() {
+export function Spinner() {
     return (
         <div className="w-32 h-32 rounded-full border-4 border-stone-400 border-t-transparent animate-spin" />
     );
 }
-
-export default Spinner;
