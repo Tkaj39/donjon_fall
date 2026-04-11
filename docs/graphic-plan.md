@@ -6,6 +6,37 @@
 
 ## PRIORITY 1 — Game Core (player sees 90 % of the time)
 
+#### Game Screen Layout
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  [Logo]              Player glow edge                  [?] │
+│────────────────────────────────────────────────────────────│
+│           Turn phase indicator                              │
+│────────────────────────────────────────────────────────────│
+│                                                            │
+│  ┌────────┐                              ┌────────┐        │
+│  │ SHIELD │     ┌────────────────┐    │ SHIELD │        │
+│  │ Red    │     │                │    │ Blue   │  ┌───┐ │
+│  │ [crest]│     │   GAME BOARD   │    │ [crest]│  │Atk│ │
+│  │ Name   │     │  (61 hexes)    │    │ Name   │  │   │ │
+│  │ VP: 3  │     │                │    │ VP: 1  │  └───┘ │
+│  └────────┘     │                │    └────────┘        │
+│                └────────────────┘                       │
+│                                                            │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │  [Move Tower] [Move Die] [Reroll] [Collapse]        │  │
+│  └────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Layers (Z-index):**
+1. Player glow edge (behind everything, red/blue color)
+2. Game board + hexes + dice
+3. Field highlights, movement animation, combat flash
+4. On-board modals: CombatOverlay, DirectionPicker, CombatPowerTooltip
+5. Full-screen modals: VictoryScreen, RulesViewer
+
 ### A) Game Board (Board + HexTile)
 
 | Element | Current State | Needed |
@@ -14,6 +45,41 @@
 | **Starting fields** | starter-field-red/blue.png | Redesign — better visual distinction |
 | **Focal points** | focus.png texture + SVG star/circle | More prominent graphics — animation, glow effect |
 | **Map background** | grass-dense.png | Map surroundings — decorative frame, landscape |
+
+### A.1) Game Screen Header
+
+| Element | Current State | Needed |
+|---------|---------------|--------|
+| **Logo** | w-64 left | Keep, possibly smaller |
+| **Rules button [?]** | 8×8 px right | Thematic icon (scroll, book?) |
+| **Turn phase indicator** | Debug mode only | ❗ Missing — must be always visible |
+| **Active player indicator** | Glow edge (gradient, 200px) | Improve — clearer signaling |
+
+### A.2) Player Glow Edge (PlayerGlow)
+
+| Element | Current State | Needed |
+|---------|---------------|--------|
+| **Position** | Fixed top/bottom per player | OK |
+| **Color** | Red/blue gradient | Thematic gradient — fire/ice? |
+| **Opacity** | 0.55 | Possibly soften |
+| **Transition** | 0.5s | Smoother animation |
+
+### A.3) Side Panels (PlayerShield × 2)
+
+| Element | Current State | Needed |
+|---------|---------------|--------|
+| **Shield** | w-28 h-28, shield + animal PNG | Final quality, consistent style |
+| **Player name** | text-xs, truncate | Larger font, better readability |
+| **VP badge** | Colored circle (amber/stone) | Heraldic shield, medallions |
+| **Active player** | bg-amber-400 badge | More prominent — glow, animation, frame |
+
+### A.4) CombatPowerTooltip (right panel)
+
+| Element | Current State | Needed |
+|---------|---------------|--------|
+| **SVG hex** | 72×83 px, attack number | Thematic frame, sword/shield icons |
+| **Colors** | Player color | Consistent with other elements |
+| **Format** | "A × D" on enemy hover | Clearer strength visualization |
 
 ### B) Dice (Die)
 
@@ -55,16 +121,79 @@
 
 | Element | Current State | Needed |
 |---------|---------------|--------|
-| **Pie segments** | Semi-transparent wedges | Arrows, visual direction guidance |
+| **Pie segments** | SVG 60° wedges, radius 0.85 × hexSize | Arrows, visual direction guidance |
+| **Available segment** | Fill `rgba(251,191,36,0.18)`, stroke `rgba(251,191,36,0.75)` | More prominent — icon/arrow in segment |
+| **Selected (hover)** | Fill `rgba(251,191,36,0.65)` | Scale or glow animation |
+| **Interaction** | Transparent polygon catches `mousemove` | Touch: tap instead of hover |
+| **Trigger** | Enemy target with >1 approach direction | — |
 
 ### G) Field Highlights (highlights)
 
+> The game board uses 17 visual states for individual fields.
+> Highlights always override textures — when a highlight is active, the grass/focus PNG disappears.
+
+#### G.1) Field Fill Colors
+
+| Field State | CSS Variable | Color | Trigger |
+|-------------|-------------|-------|---------|
+| **Default** | `--color-hex-default` | `#e8e677` (yellow) | No special state |
+| **Starting field** | `--color-hex-starting` | Player tint (red `#fca5a5` / blue `#93c5fd`) | `startingField` property in map definition |
+| **Focal point** | `--color-hex-focal` | `#c4b5fd` (light purple) | `focalPoint` property in map definition |
+| **Selected** | `--color-hex-selected` | `#f59e0b` (amber) | Click on own die |
+| **Reachable** | `--color-hex-reachable` | `#86efac` (green) | Die selected + field in range (empty/own) |
+| **Trajectory** | `--color-hex-trajectory` | `#67e8f9` (cyan) | Player plans movement path |
+| **Enemy reachable** | `--color-hex-enemy-reachable` | `#fca5a5` (pink) | Die selected + enemy field in range |
+| **Highlighted** | `--color-hex-highlighted` | `#34d399` (emerald) | Alias for "selected" highlight |
+
+**Priority** (last wins): default → starting → focal → highlight → selected.
+
+**Texture override**: When a texture exists (`grass.png`, `focus.png`, `starter-field-*.png`) AND no highlight/selection is active → polygon is transparent and texture shows via `<image>` with clip-path. Any highlight overrides the texture.
+
+#### G.2) Combat Flash
+
+| Target | Color | Delay | Trigger |
+|--------|-------|-------|---------|
+| **Attacker hex** | `rgba(239,68,68,0.4)` (red) | 0s | `phase === "combat"` |
+| **Defender hex** | `rgba(251,191,36,0.35)` (amber) | 0.4s | `phase === "combat"` |
+
+**Animation** (`@keyframes combat-flash`): opacity pulses 0.2 → 0.65, duration 0.8s, ease-in-out, infinite loop. SVG `<polygon>` with `pointerEvents: "none"`.
+
+#### G.3) Active Focal Point Overlay
+
 | Element | Current State | Needed |
 |---------|---------------|--------|
-| **Reachable fields** | Green (#86efac) | Animated border, pulsing |
-| **Trajectory** | Cyan (#67e8f9) | Dotted path, arrows |
-| **Selected trajectory** | — | Highlighted selected movement path |
-| **Enemy in range** | Pink (#fca5a5) | Warning effect |
+| **Hex overlay** | Fill `#fbbf24` (gold), opacity 0.25 | Animated glow, pulsing |
+| **Star (active)** | 5-pointed SVG star, R=0.28×hex, r=0.12×hex, gold fill, amber stroke | Rotation? Glow? Sparkle? |
+| **Circle (passive)** | SVG circle, r=0.18×hex, purple fill `#7c3aed` | Softer indication, maybe dashed border |
+
+#### G.4) Die Movement Animation (MovingDie)
+
+| Property | Current State | Needed |
+|----------|---------------|--------|
+| **Duration** | 260ms (`MOVE_ANIMATION_MS`) | OK — fast and smooth |
+| **Easing** | Cubic ease-in-out (custom) | OK |
+| **Visual** | Entire die stack flies from source to target | Shadow under flying die? Trail? |
+| **Source hex** | Stack suppressed (empty) during animation | OK |
+
+#### G.5) Cursor and Interaction
+
+| State | Cursor | Trigger |
+|-------|--------|---------|
+| **Clickable hex** | `pointer` | Hex is in `clickableHexes` |
+| **Non-clickable hex** | `default` | No `onClick` handler |
+| **Hover over hex** | No visual change on polygon | ❗ Missing — add subtle hover effect |
+
+#### G.6) What's Missing / Improvements Needed
+
+| Problem | Description | Proposed Solution |
+|---------|-------------|-------------------|
+| **Highlight overrides texture** | When highlighted, grass/focus texture disappears → field looks "flat" | Tinted overlay instead of fill replacement — texture shows through |
+| **No hover effect** | Mouse over hex has no visual feedback | Subtle edge glow or brightening |
+| **No selected trajectory** | Player can't distinguish the chosen path | Dotted line / arrows along path |
+| **Static reachable fields** | Static green fill | Animated border or gentle opacity pulsing |
+| **Static enemy warning** | Static pink fill | Flashing border, sword / threat icon |
+| **Combat flash too subtle** | Only opacity pulsing | Particle effect, sparks, wave |
+| **Score pop** | `@keyframes score-pop` scale 1→1.55→1 | OK, maybe add glow/color |
 
 ---
 
@@ -157,8 +286,69 @@ Main Menu
 
 | Element | Current State | Needed |
 |---------|---------------|--------|
-| **Map thumbnail** | ⚠️ TEXT PLACEHOLDER "MAP PREVIEW" | SVG mini-preview map or screenshot |
+| **Map thumbnail** | ⚠️ TEXT PLACEHOLDER "MAP PREVIEW" | Map preview image (JPG/PNG) |
 | **Cards** | Stone-800 box | Thematic cards with frame |
+
+#### Map Selection Screen Layout
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  MAP LIST (left panel)    │     MAP DETAIL (right area)        │
+│──────────────────────────│                                    │
+│  [← Back]                 │  Map preview (JPG)                 │
+│                          │  ┌──────────────────────────────┐ │
+│  ┌──────────────────────┐ │  │                              │ │
+│  │ [thumb] Classic     │ │  │       (map image)            │ │
+│  │ 2 players • 5 VP    │ │  │                              │ │
+│  └──────────────────────┘ │  └──────────────────────────────┘ │
+│  ┌──────────────────────┐ │                                    │
+│  │ [thumb] Fortress   │ │  Name: Classic                     │
+│  │ 2 players • 7 VP    │ │  Players: 2 (configure below)      │
+│  └──────────────────────┘ │  Victory: First to 5 VP            │
+│  ┌──────────────────────┐ │  Fields: 61 hexes                   │
+│  │ [thumb] More...    │ │                                    │
+│  │ 3 players • 5 VP    │ │  Player setup:                     │
+│  └──────────────────────┘ │  ┌──────────────────────────────┐ │
+│                          │  │ 🔴 Player 1 [Human ▼] [crest] │ │
+│                          │  │ 🔵 Player 2 [AI   ▼] [crest] │ │
+│                          │  └──────────────────────────────┘ │
+│                          │                                    │
+│                          │         [ PLAY ]                    │
+└──────────────────────────┴────────────────────────────────────┘
+```
+
+#### Map Card
+
+Each card in the list shows:
+- **Mini preview** — small JPG/PNG map image
+- **Map name** — e.g. "Classic", "Fortress"
+- **Player count** — "2 players"
+- **VP to win** — "5 VP"
+- **Difficulty** — stars or label (easy / medium / hard)
+- **Tags** — e.g. "balanced", "asymmetric", "large", "custom"
+
+#### Map Detail (right area)
+
+After clicking a card, the right side shows:
+- **Large map preview** — JPG/PNG image of the full map
+- **Name** — large heading
+- **Map description** — short text (theme, strategy, tip — e.g. "Symmetric classic for beginners")
+- **Difficulty** — stars or label
+- **Player count** — info
+- **Win conditions** — e.g. "First to 5 VP"
+- **Size** — number of hexes
+- **Number of focal points** — e.g. "3 focal"
+- **Tags / categories** — "balanced", "asymmetric", "large", "custom"
+- **Player setup** — for each slot:
+  - Player color (🔴/🔵)
+  - **Human / AI** toggle (dropdown)
+  - **Coat of arms** selection (crest icon)
+- **PLAY button** — starts the game with selected settings
+
+#### Map List — Extras
+
+- **Filter / sorting** — filter by player count, size, difficulty; sort A–Z
+- **Official vs custom** — separation of built-in and user-created maps (tabs or sections)
 
 ### K) Loading + Victory
 
