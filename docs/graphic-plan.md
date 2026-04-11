@@ -85,17 +85,22 @@
 ┌────────────────────────────────────────────────────────────┐
 │  MENU (side panel)   │       CANVAS (main area)              │
 │─────────────────────│                                      │
-│  [Logo]             │  Rotating content:                    │
-│                     │  • Graphic tutorial / game story      │
-│  Start         ▶    │  • Demo game recording (replay)       │
-│  Continue           │  • Atmospheric illustration / artwork  │
-│  Tutorial           │  • News / changelog                   │
-│  Rules              │                                      │
-│  Statistics         │  Content changes automatically       │
-│  Settings      ▶    │  (fade/slide animation, ~8s interval) │
-│  Create Map         │  or reacts to menu item hover        │
+│  [Player Profile]    │  Rotating content:                    │
+│  [Logo]             │  • Graphic tutorial / game story      │
+│                     │  • Demo game recording (replay)       │
+│  Start         ▶    │  • Atmospheric illustration / artwork  │
+│  Continue           │  • News / changelog                   │
+│  Tutorial           │  Content changes automatically       │
+│  Rules              │  (fade/slide animation, ~8s interval) │
+│  Statistics         │  or reacts to menu item hover        │
+│  Leaderboard        │                                      │
+│  Achievements       │                                      │
+│  Settings      ▶    │                                      │
+│  Create Map         │                                      │
 │  Authors            │                                      │
 │  Quit               │                                      │
+│─────────────────────│                                      │
+│  v0.9.1  [💬] [🐙]  │                                      │
 └─────────────────────┴──────────────────────────────────────┘
 ```
 
@@ -114,11 +119,14 @@ Main Menu
 │   ├── Start vs Bot       — play against AI
 │   ├── Start              — classic start (map select → players)
 │   ├── Online             — network multiplayer
+│   ├── Daily Challenge    — special daily scenario with specific conditions
 │   └── Campaign           — story mode
 ├── Continue               — resume saved game (visible only if a game exists)
 ├── Tutorial               — interactive rules walkthrough
 ├── Rules                  — rules overview (RulesViewer)
 ├── Statistics             — games played, wins/losses, scores
+├── Leaderboard            — online player ranking
+├── Achievements           — unlockable trophies for completed challenges
 ├── Settings
 │   ├── Sound              — volume, toggle sound effects
 │   ├── Graphics quality   — low / medium / high (animations, effects, textures)
@@ -131,6 +139,12 @@ Main Menu
 ├── Authors                — credits, developer info
 └── Quit                   — exit the game
 ```
+
+**Menu panel footer:**
+- **Version number** — small text (e.g. “v0.9.1”)
+- **Social links** — Discord / GitHub icons
+- **Post-update notice** — “What’s New” popup on first launch after update
+- **Player profile** — widget at the top of the panel (name, avatar, level)
 
 ### I) Player Setup (PlayerSetup)
 

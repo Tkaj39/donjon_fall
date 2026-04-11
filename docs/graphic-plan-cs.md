@@ -85,17 +85,22 @@
 ┌────────────────────────────────────────────────────────────┐
 │  MENU (boční panel)  │       PLÁTNO (hlavní plocha)           │
 │─────────────────────│                                      │
-│  [Logo]             │  Rotující obsah:                      │
-│                     │  • Grafický tutoriál / příběh hry    │
-│  Start         ▶    │  • Záznam ukázkové hry (replay)      │
-│  Pokračovat         │  • Atmosférická ilustrace / artwork   │
-│  Tutoriál           │  • Novinky / changelog               │
-│  Pravidla           │                                      │
-│  Statistiky         │  Obsah se mění automaticky          │
-│  Nastavení     ▶    │  (fade/slide animace, ~8s interval)  │
-│  Vytvořit mapu      │  nebo reaguje na hover položky menu │
+│  [Profil hráče]      │  Rotující obsah:                      │
+│  [Logo]             │  • Grafický tutoriál / příběh hry    │
+│                     │  • Záznam ukázkové hry (replay)      │
+│  Start         ▶    │  • Atmosférická ilustrace / artwork   │
+│  Pokračovat         │  • Novinky / changelog               │
+│  Tutoriál           │                                      │
+│  Pravidla           │  (fade/slide animace, ~8s interval)  │
+│  Statistiky         │  nebo reaguje na hover položky menu │
+│  Žebříček           │                                      │
+│  Úspěchy            │                                      │
+│  Nastavení     ▶    │                                      │
+│  Vytvořit mapu      │                                      │
 │  Autoři             │                                      │
 │  Ukončit            │                                      │
+│─────────────────────│                                      │
+│  v0.9.1  [💬] [🐙]  │                                      │
 └─────────────────────┴──────────────────────────────────────┘
 ```
 
@@ -114,11 +119,14 @@ Hlavní menu
 │   ├── Start vs Bot       — hra proti AI
 │   ├── Start              — klasický start (výběr mapy → hráči)
 │   ├── Online             — hra přes síť (multiplayer)
+│   ├── Denní výzva        — speciální denní scénář se specifickými podmínkami
 │   └── Kampaň             — příběhový režim
 ├── Pokračovat             — obnovení rozehrané hry (viditelné jen pokud existuje)
 ├── Tutoriál               — interaktivní výuka pravidel
 ├── Pravidla                — přehled pravidel (RulesViewer)
 ├── Statistiky              — odehrané hry, výhry/prohry, skóre
+├── Žebříček (Leaderboard)  — online ranking hráčů
+├── Úspěchy (Achievements)  — odemykatelné trofeje za splněné výzvy
 ├── Nastavení (Settings)
 │   ├── Zvuk               — hlasitost, zapnutí/vypnutí zvukových efektů
 │   ├── Složitost grafiky   — nízká / střední / vysoká (animace, efekty, textury)
@@ -131,6 +139,12 @@ Hlavní menu
 ├── Autoři                  — credits, informace o tvůrcích
 └── Ukončit                 — zavřít hru
 ```
+
+**Patička menu panelu:**
+- **Číslo verze** — malý text (např. „v0.9.1“)
+- **Sociální odkazy** — ikonky Discord / GitHub
+- **Upozornění po aktualizaci** — popup „Co je nového“ při prvním spuštění po updatu
+- **Profil hráče** — widget v horní části panelu (jméno, avatar, úroveň)
 
 ### I) Nastavení hráčů (PlayerSetup)
 
