@@ -550,6 +550,7 @@ export function getTowerMoveRange(state, towerKey) {
  * - Range = getTowerMoveRange.
  * - The entire tower moves as one unit — can only traverse empty hexes.
  * - Can land on enemy hex (triggers combat — push only).
+ * - Can land on friendly hex (forms a tower if top die's combat power exceeds destination's).
  * - Cannot return to the source hex.
  *
  * @param {import("./gameState.js").GameState} state
@@ -628,6 +629,16 @@ export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = 
         const newDice = { ...state.dice };
         delete newDice[fromKey];
         newDice[toKey] = [...stack];
+        return { ...state, dice: newDice, actionTaken: true, phase: "action" };
+    }
+
+    // Friendly destination — stack on top if the moving tower's top die can enter
+    if (ctrl === state.currentPlayer) {
+        const topDie = getTopDie(state, fromKey);
+        if (!canEnterTower(state, topDie, toKey)) return state;
+        const newDice = { ...state.dice };
+        delete newDice[fromKey];
+        newDice[toKey] = [...getDiceAt(state, toKey), ...stack];
         return { ...state, dice: newDice, actionTaken: true, phase: "action" };
     }
 
