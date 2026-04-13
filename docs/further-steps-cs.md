@@ -6,6 +6,55 @@ Nyní, když je základní část hry implementovaná (viz implementační-plán
 
 ---
 
+## Malé úkoly
+
+### Menu
+- Přidat jasná herní pravidla a obecný průvodce
+- Uspořádat tlačítka menu doprava
+- Přidat tlačítko "autoři"
+
+### V průběhu hry
+- Přidat nápovědu, která představuje poslední tah soupeře; odebrat ji hned po jakékoli interakci
+- Přidat klávesové zkratky pro pohyb kostkou/věží, přehody kostky
+- Přidat nápovědu dalšího tahu (pomocí znalostí AI/algoritmu bota)
+- Přidat nápovědu o struktuře věže (viditelná hodnota každé kostky)
+- Hamburgery menu v pravém horním rohu:
+  - nová hra
+    - otázka na ztrátu a ukončení hry?
+  - ukončit hru
+    - otázka na ztrátu a ukončení hry?
+- upravit trajektorii pohybu tak, aby brala v úvahu směr boje (když je zobrazen a přejíždí se směr boje)
+- Když je kostka/věž vybrána pro akci, v tooltipnu hexu zobrazit další informace:
+  - bonusový boj, pokud se kostka přesune z věže/posune přes jednu kostku/věž v poloměru věže
+  - X když je hex nedostupný
+  - aktivní ohnisko, potenciální +1 bod vítězství
+  - pasivní ohnisko, potenciální +0 bodů vítězství
+- během vybraného boje zobrazit pouze právní směry boje (vzhledem k poloměru pohybu)
+- umožnit zrušit výběr kostky/věže kliknutím mimo poloměr pohybu/boje nebo jen mimo desku
+- zachovat stav hry i po měkký (F5) / tvrdý (ctrl+F5) reload
+
+### Obrazovka výhry
+- Přidat informace o vítězství (dosaženo 5 bodů / náhlá smrt soupeře bez právního tahu)
+- Přidat možnosti nová hra / výstup do menu
+
+### Herní pravidla
+- Umožnit "projít" kostkou s hodnotou 6 přehody (je to právní pohyb?)
+- právní pohyb přes přátelskou kostku/věž, zvažit bonusový boj ve věži (včetně pohybující se kostky) poloměr pohybu
+
+### Ostatní
+- seznámit se s technikami/knihovnami lokalizace
+- správně zpracovat texty hry pro lokalizaci EN/CS
+- Lokalizace pro další jazyky? Které? Otázka?
+- definovat výši výherního bodu pro každou mapu, v současné době je pevně zakódována pro výchozí mapu (v současné době oddělená od definice mapy/desky)
+- velikonoční vejce? Donjonský Vodopád je pěkné!
+- vypořádat se s komponentou průvodce stylem: http://localhost:5173/?style-guide 
+
+## Odezva
+
+Zajistěte, aby hra byla responzivní pro mobilní zařízení a větší obrazovky.
+
+---
+
 ## Umělý inteligentní protivník
 
 Počítačem řízený hráč, který může zaujmout libovolný slot hráče. Všichni boti sdílí společné rozhraní, takže herní smyčka je s nimi zachází stejně jako s lidskými hráči.
