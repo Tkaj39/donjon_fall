@@ -14,6 +14,7 @@ import {
     applyCollapseAction,
     applyRerollAction,
 } from '../../src/game/movement.js';
+import { getAvailableCombatOptions } from '../../src/game/combat.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -1101,18 +1102,18 @@ describe('applyMoveTowerAction', () => {
         expect(result.actionTaken).toBe(true);
     });
 
-    it('sets combat.options to push only when moving to enemy hex', () => {
+    it('sets combat.options to push and occupy when moving tower to single enemy die', () => {
         const state = makeState({
             dice: {
                 [CENTER]: [
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 4 }],
             },
         });
         const result = applyMoveTowerAction(state, CENTER, N1);
-        expect(result.combat.options).toEqual(['push']);
+        expect(getAvailableCombatOptions(result)).toEqual(['push', 'occupy']);
     });
 
     it('sets combat.attackerHex and combat.defenderHex when moving to enemy hex', () => {

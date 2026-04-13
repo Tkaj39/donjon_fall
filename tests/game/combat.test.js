@@ -125,11 +125,22 @@ describe('getAvailableCombatOptions', () => {
         expect(getAvailableCombatOptions(state)).toEqual([]);
     });
 
-    it('returns [push] only when combat is flagged as towerMove', () => {
+    it('returns [push, occupy] when towerMove attacks a solo die', () => {
         const state = makeState({
             dice: {
-                [HEX_A]: [{ owner: 'red', value: 4 }],
+                [HEX_A]: [{ owner: 'red', value: 3 }, { owner: 'red', value: 4 }],
                 [HEX_B]: [{ owner: 'blue', value: 3 }],
+            },
+            combat: { attackerHex: HEX_A, defenderHex: HEX_B, towerMove: true, options: [] },
+        });
+        expect(getAvailableCombatOptions(state)).toEqual(['push', 'occupy']);
+    });
+
+    it('returns [push] only when towerMove attacks a tower', () => {
+        const state = makeState({
+            dice: {
+                [HEX_A]: [{ owner: 'red', value: 2 }, { owner: 'red', value: 4 }],
+                [HEX_B]: [{ owner: 'blue', value: 1 }, { owner: 'blue', value: 2 }],
             },
             combat: { attackerHex: HEX_A, defenderHex: HEX_B, towerMove: true, options: [] },
         });

@@ -87,13 +87,8 @@ export function canAttack(state, attackerHex, defenderHex) {
  *
  * Rules:
  * - **Push** is always an option.
- * - **Occupy** is available only when the attacker is a lone die (no tower) and when
- *   the target is also a lone die or is an enemy-only tower — i.e. the result would be
- *   a valid mixed tower (attacker"s die on top with higher attack strength than the
- *   current formation). When Move Whole Tower triggered the combat, occupy is never
- *   available (push only).
- *
- * Per plan section 5.1: tower-vs-tower move allows push only.
+ * - **Occupy** is available unless both the attacker and defender are towers
+ *   (tower-vs-tower: push only).
  *
  * @param {import("./gameState.js").GameState} state
  * @returns {Array<"push"|"occupy">}
@@ -103,10 +98,6 @@ export function getAvailableCombatOptions(state) {
     if (!combat) return [];
 
     const { attackerHex, defenderHex } = combat;
-
-    // If the combat was initiated by a whole-tower move, occupy is available
-    // (the whole tower moves onto the defender). Push is always available too.
-    // Fall through to the standard logic below.
 
     const attackerSize = getTowerSize(state, attackerHex);
     const defenderSize = getTowerSize(state, defenderHex);
