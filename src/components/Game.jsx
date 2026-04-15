@@ -607,28 +607,6 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
         <div
             className="relative h-dvh flex flex-col bg-stone-900/60 text-[var(--color-text,#f1f5f9)] box-border overflow-hidden"
         >
-            {/* ── Active player edge glow ─────────────────────── */}
-            {(() => {
-                const idx = state.players.indexOf(state.currentPlayer);
-                const edge = PLAYER_GLOW_EDGE[idx] ?? "bottom";
-                const color = PLAYER_GLOW[state.currentPlayer] ?? "#94a3b8";
-                const grad = edge === "top"
-                    ? `linear-gradient(to bottom, ${color}, transparent)`
-                    : `linear-gradient(to top,    ${color}, transparent)`;
-                return (
-                    <div
-                        aria-hidden="true"
-                        className="pointer-events-none fixed left-0 right-0 transition-all duration-500"
-                        style={{
-                            [edge]: 0,
-                            height: 200,
-                            background: grad,
-                            opacity: 0.55,
-                            zIndex: -1,
-                        }}
-                    />
-                );
-            })()}
             {/* ── Header ──────────────────────────────────────────── */}
             <header className="flex items-center justify-between px-4 py-2 shrink-0">
                 <Logo className="w-64" />
