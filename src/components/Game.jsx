@@ -25,6 +25,7 @@ import {
     getReachableHexes,
     getTowerReachableHexes,
     getTowerMoveRange,
+    getJumpRange,
     canCollapse,
     getShortestPathToHex,
     getApproachDirections,
@@ -320,12 +321,24 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
             // but the UI should only treat them as destinations when tower entry
             // is legal (mover value strictly exceeds top die value).
             const moverDie = getTopDie(state, selectedHex);
+            const selectedStack = state.dice[selectedHex] ?? [];
+            const isJump = selectedStack.length >= 2;
+            const jumpBoostedRange = isJump ? getJumpRange(state, selectedHex) : 0;
             const all = getReachableHexes(state, selectedHex);
             const filtered = new Set();
             for (const key of all) {
                 const ctrl = getController(state, key);
                 if (ctrl === state.currentPlayer && !canEnterTower(state, moverDie, key)) continue;
-                if (ctrl !== null && ctrl !== state.currentPlayer && !canAttack(state, selectedHex, key)) continue;
+                if (ctrl !== null && ctrl !== state.currentPlayer) {
+                    // For a jump, effective attack strength is distance-dependent:
+                    // tower strength within boostedRange, face value beyond.
+                    const effectiveStrength = isJump
+                        ? (hexesDistance(hexFromKey(selectedHex), hexFromKey(key)) <= jumpBoostedRange
+                            ? getAttackStrength(state, selectedHex)
+                            : moverDie.value)
+                        : undefined;
+                    if (!canAttack(state, selectedHex, key, effectiveStrength)) continue;
+                }
                 filtered.add(key);
             }
             return filtered;
@@ -743,7 +756,19 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                                 getController(state, hoveredHex) !== state.currentPlayer;
 
                             const versus = isReachableEnemy ? {
-                                attackerStrength: getAttackStrength(state, selectedHex),
+                                attackerStrength: (() => {
+                                    // When moving a die off a tower (jump), combat power is
+                                    // boosted to tower strength only within getJumpRange() steps;
+                                    // beyond that it reverts to the die's plain face value.
+                                    const stack = state.dice[selectedHex] ?? [];
+                                    if (activeAction === "move-die" && stack.length >= 2) {
+                                        const dist = hexesDistance(hexFromKey(selectedHex), hexFromKey(hoveredHex));
+                                        if (dist > getJumpRange(state, selectedHex)) {
+                                            return getTopDie(state, selectedHex).value;
+                                        }
+                                    }
+                                    return getAttackStrength(state, selectedHex);
+                                })(),
                                 attackerColor: PLAYER_GLOW[state.currentPlayer] ?? "rgba(255,255,255,0.9)",
                                 defenderStrength: getAttackStrength(state, hoveredHex),
                                 defenderColor: PLAYER_GLOW[getController(state, hoveredHex)] ?? "rgba(255,255,255,0.9)",

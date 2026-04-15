@@ -72,12 +72,14 @@ function setStack(dice, key, newStack) {
  * A die with attack strength ≤ 1 cannot attack.
  *
  * @param {import("./gameState.js").GameState} state
- * @param {string} attackerHex  - hexKey of the attacking formation
- * @param {string} defenderHex  - hexKey of the defending formation
+ * @param {string} attackerHex           - hexKey of the attacking formation
+ * @param {string} defenderHex           - hexKey of the defending formation
+ * @param {number} [attackStrengthOverride] - effective attacker strength to use instead of
+ *                                           computing it from state (e.g. jump distance-based strength)
  * @returns {boolean}
  */
-export function canAttack(state, attackerHex, defenderHex) {
-    const attackStrength = getAttackStrength(state, attackerHex);
+export function canAttack(state, attackerHex, defenderHex, attackStrengthOverride) {
+    const attackStrength = attackStrengthOverride ?? getAttackStrength(state, attackerHex);
     const defenseStrength = getAttackStrength(state, defenderHex);
     return attackStrength > defenseStrength;
 }

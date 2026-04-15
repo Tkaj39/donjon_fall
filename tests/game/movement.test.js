@@ -671,7 +671,9 @@ describe('getJumpReachableHexes', () => {
         expect(result.has(CENTER)).toBe(false);
     });
 
-    it('includes enemy hex but does not traverse through it', () => {
+    it('includes enemy hex and can reach beyond it via other paths', () => {
+        // Range = jumper face value = 4; enemy at N1 blocks traversal through N1,
+        // but N1_N1 is reachable via other paths (range allows it)
         const state = makeState({
             dice: {
                 [CENTER]: [
@@ -682,8 +684,8 @@ describe('getJumpReachableHexes', () => {
             },
         });
         const result = getJumpReachableHexes(state, CENTER);
-        expect(result.has(N1)).toBe(true);      // can land on enemy
-        expect(result.has(N1_N1)).toBe(false);  // cannot traverse through enemy
+        expect(result.has(N1)).toBe(true);     // can land on enemy
+        expect(result.has(N1_N1)).toBe(true);  // reachable via paths not through N1
     });
 
     it('can traverse through own hex if jumper (solo) can enter tower', () => {
@@ -718,16 +720,16 @@ describe('getJumpReachableHexes', () => {
         expect(result.has(N1_N1)).toBe(false);  // only reachable via N1 which blocks traversal
     });
 
-    it('respects range from getJumpRange', () => {
-        // 1 own - 1 enemy = 0 → max(1, 0) = 1, so range is 1
+    it('respects range equal to jumper face value', () => {
+        // Jumper face value 1 → range is 1; only direct neighbors reachable
         const state = makeState({
             dice: { [CENTER]: [
                 { owner: 'blue', value: 2 },
-                { owner: 'red', value: 5 },
+                { owner: 'red', value: 1 },
             ]},
         });
         const result = getJumpReachableHexes(state, CENTER);
-        expect(result.has(N1)).toBe(true);      // 1-step neighbor
+        expect(result.has(N1)).toBe(true);      // 1-step neighbor, within range
         expect(result.has(N1_N1)).toBe(false);  // 2-step neighbor, out of range
     });
 });
@@ -752,11 +754,11 @@ describe('applyJumpAction', () => {
     });
 
     it('returns state unchanged when target is not reachable', () => {
-        // N1_N1 is out of range for jump range 1
+        // Jumper face value 1 → range is 1; N1_N1 is 2 steps away, out of range
         const state = makeState({
             dice: { [CENTER]: [
                 { owner: 'blue', value: 2 },
-                { owner: 'red', value: 4 },
+                { owner: 'red', value: 1 },
             ]},
         });
         const result = applyJumpAction(state, CENTER, N1_N1);
@@ -860,9 +862,10 @@ describe('applyJumpAction', () => {
         expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 3 }]);
     });
 
-    it('sets combat with attackStrengthOverride equal to jumper face value only', () => {
-        // Jumper value 4 in a tower of 2 red dice: normal strength would be 4+1-0=5,
-        // but jump uses only face value = 4
+    it('sets combat with attackStrengthOverride equal to tower strength when within boosted range', () => {
+        // Jumper value 4 in a tower of 2 red dice: tower strength = 4+1-0 = 5.
+        // boostedRange = getJumpRange = max(1, 2-0) = 2; N1 is 1 step away (within range).
+        // So attackStrengthOverride = tower strength = 5.
         const state = makeState({
             dice: {
                 [CENTER]: [
@@ -873,7 +876,25 @@ describe('applyJumpAction', () => {
             },
         });
         const result = applyJumpAction(state, CENTER, N1);
-        expect(result.combat.attackStrengthOverride).toBe(4);
+        expect(result.combat.attackStrengthOverride).toBe(5);
+    });
+
+    it('sets combat with attackStrengthOverride equal to face value beyond boosted range', () => {
+        // Jumper value 4 in a tower of 2 red dice: tower strength = 5, boostedRange = 2.
+        // N1_N1 is 2 steps away from CENTER — exactly at the edge of boostedRange (<=2 qualifies),
+        // so use tower strength = 5. For a target 3+ steps away, use face value = 4.
+        // Use a blue+red tower: boostedRange = max(1,1-1)=1; N1_N1 at distance 2 > 1 → face value.
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'blue', value: 2 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1_N1]: [{ owner: 'blue', value: 2 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1_N1);
+        expect(result.combat.attackStrengthOverride).toBe(4); // face value, beyond boostedRange
     });
 
     it('sets combat.attackerHex and combat.defenderHex when jumping to enemy hex', () => {
@@ -1024,7 +1045,9 @@ describe('getTowerReachableHexes', () => {
         expect(result.has(N1_N1)).toBe(true);  // 2-step neighbor via empty hexes
     });
 
-    it('includes own die blocking hex but does not traverse through it', () => {
+    it('excludes own hex where tower cannot enter and does not traverse through it', () => {
+        // Tower top value 4; N1 has red(5) with strength 5 > 4 — tower cannot enter N1.
+        // N1 is excluded from reachable hexes (BUG-014 fix) and cannot be traversed.
         const state = makeState({
             dice: {
                 [CENTER]: [
@@ -1035,8 +1058,8 @@ describe('getTowerReachableHexes', () => {
             },
         });
         const result = getTowerReachableHexes(state, CENTER);
-        expect(result.has(N1)).toBe(true);      // can land on own
-        expect(result.has(N1_N1)).toBe(false);  // cannot traverse through own
+        expect(result.has(N1)).toBe(false);     // cannot enter: top value 4 ≤ N1 strength 5
+        expect(result.has(N1_N1)).toBe(false);  // cannot traverse through N1
     });
 
     it('includes enemy hex but does not traverse through it', () => {

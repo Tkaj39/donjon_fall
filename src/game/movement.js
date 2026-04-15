@@ -471,13 +471,16 @@ export function getJumpRange(state, towerKey) {
 
 /**
  * Returns the set of hexKeys reachable by the top die jumping out of `towerKey`.
- * The jumping die uses only its face value for attack-strength purposes (no tower bonus),
- * but the *range* is determined by getJumpRange (own − enemy, min 1).
+ *
+ * Movement range = die's face value (same as a standalone die).
+ * Combat power is boosted to the former tower's combat value for the first
+ * `getJumpRange` (own − enemy, min 1) hexes, then reverts to the die's plain face value.
+ * This boosted combat power is used when checking traversal through friendly formations.
  *
  * Traversal rules:
  * - Cannot pass through enemy dice.
- * - Can pass through own dice only if, as a solo die, it could enter that tower
- *   (i.e. its face value + 1 own − 0 enemy > top die strength there).
+ * - Can pass through own dice only if the jumper's effective combat power at that
+ *   step exceeds the top die's combat power there.
  * - Cannot land back on the source tower.
  *
  * @param {import("./gameState.js").GameState} state
@@ -488,7 +491,9 @@ export function getJumpReachableHexes(state, towerKey) {
     const stack = getDiceAt(state, towerKey);
     if (stack.length < 2) return new Set(); // need at least 2 dice to jump
     const jumper = stack[stack.length - 1];
-    const maxSteps = getJumpRange(state, towerKey);
+    const maxSteps = jumper.value; // jump range = die's own face value
+    const boostedRange = getJumpRange(state, towerKey); // steps where tower combat power applies
+    const towerStrength = getAttackStrength(state, towerKey); // former tower's combat power
     const reachable = new Set();
     const minSteps = new Map([[towerKey, 0]]);
     const queue = [[towerKey, 0]];
@@ -512,10 +517,13 @@ export function getJumpReachableHexes(state, towerKey) {
             reachable.add(neighborKey);
             minSteps.set(neighborKey, newSteps);
 
-            // Traversal: enemy blocks further movement; own only if jumper (solo) can enter
+            // Traversal: enemy blocks further movement; own only if jumper's effective
+            // combat power (boosted within boostedRange, face value beyond) allows entry.
             if (!isEnemy) {
-                const soloCanTraverse = ctrl === null || canEnterTower(state, jumper, neighborKey);
-                if (soloCanTraverse) queue.push([neighborKey, newSteps]);
+                const effectiveValue = newSteps <= boostedRange ? towerStrength : jumper.value;
+                const effectiveDie = { ...jumper, value: effectiveValue };
+                const canTraverse = ctrl === null || canEnterTower(state, effectiveDie, neighborKey);
+                if (canTraverse) queue.push([neighborKey, newSteps]);
             }
         }
     }
@@ -556,10 +564,15 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
         return { ...moveTopDie(state, towerKey, targetKey), phase: "action" };
     }
 
-    // Enemy — set up combat (jump variant: face value only)
-    const jumperStrength = getAttackStrength(state, towerKey, { jumped: true });
-    const defenseStrength = getAttackStrength(state, targetKey);
-    if (jumperStrength <= defenseStrength) return state;
+    // Enemy — set up combat.
+    // Combat power is boosted to the former tower's value for the first boostedRange hexes;
+    // beyond that it reverts to the jumper's plain face value.
+    const jumpBoostedRange = getJumpRange(state, towerKey);
+    const distToTarget = hexesDistance(hexFromKey(towerKey), hexFromKey(targetKey));
+    const jumperStrength = distToTarget <= jumpBoostedRange
+        ? getAttackStrength(state, towerKey)
+        : jumper.value;
+    if (!canAttack(state, towerKey, targetKey, jumperStrength)) return state;
 
     let resolvedDirection = approachDirection;
     if (!resolvedDirection) {
