@@ -16,6 +16,7 @@
 | ID | Komponenta | Popis                                                                                                                                                                                    | Priorita | Stav | Řešení |
 |----|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|------|--------|
 | BUG-013 | game / movement | Když samostatná kostka prochází přes přátelskou kostku (za splnění podmínky bojové síly), zbytek jejího pohybu by měl být vyhodnocen jako skok z věže: bojová síla se navýší na hodnotu virtuální věže pro dalších (vlastní kostky − nepřátelské kostky, min 1) polí, poté se vrátí na prostou hodnotu kostky; zbývající pohyb využívá původní hodnotu kostky minus již provedené kroky (žádný bonusový pohyb se neuděluje) | P2 | otevřená | — |
+| BUG-015 | game / movement | Když kostka opouští věž a útočí na nepřítele, může být vybrán neplatný směr souboje — hráči jsou nabídnuty směry přístupu, které nejsou dosažitelné přes platnou cestu skoku. **Tip k opravě:** `getApproachDirections` používá `getPathsToHex` (pravidla pro jednu kostku, plný dosah) pro všechny případy move-die; potřebuje variantu zohledňující skok, která použije pravidla průchodu z `getJumpReachableHexes` a dosah `jumper.value`, pokud je vybraný hex věž. | P2 | otevřená | — |
 
 ---
 
