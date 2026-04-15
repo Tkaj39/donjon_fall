@@ -630,6 +630,7 @@ export function getTowerReachableHexes(state, towerKey) {
     const maxSteps = getTowerMoveRange(state, towerKey);
     if (maxSteps === 0) return new Set();
 
+    const topDie = getTopDie(state, towerKey);
     const reachable = new Set();
     const minSteps = new Map([[towerKey, 0]]);
     const queue = [[towerKey, 0]];
@@ -649,6 +650,9 @@ export function getTowerReachableHexes(state, towerKey) {
 
             const ctrl = getController(state, neighborKey);
             const isOccupied = ctrl !== null;
+
+            // Friendly destination is only reachable if the tower can legally stack there
+            if (ctrl === state.currentPlayer && !canEnterTower(state, topDie, neighborKey)) continue;
 
             reachable.add(neighborKey);
             minSteps.set(neighborKey, newSteps);
