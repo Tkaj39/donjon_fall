@@ -349,7 +349,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
         const dest = trajectoryPath[trajectoryPath.length - 1];
         const ctrl = getController(state, dest);
         if (ctrl === null || ctrl === state.currentPlayer) return null;
-        const dirs = getApproachDirections(state, selectedHex, dest);
+        const dirs = getApproachDirections(state, selectedHex, dest, activeAction);
         return dirs.size > 1 ? dest : null;
     })();
 
@@ -358,7 +358,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      * Empty when the picker is not active.
      */
     const pickerApproachDirs = pickerEnemyKey && selectedHex
-        ? getApproachDirections(state, selectedHex, pickerEnemyKey)
+        ? getApproachDirections(state, selectedHex, pickerEnemyKey, activeAction)
         : new Set();
 
     /**

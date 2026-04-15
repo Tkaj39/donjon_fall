@@ -36,6 +36,66 @@ function canTraverseThrough(state, moverDie, neighborKey) {
     return false; // enemy hex — cannot pass through
 }
 
+/**
+ * Returns all valid tower-movement paths from `fromKey` to `toKey`.
+ *
+ * Tower traversal rules (mirrors getTowerReachableHexes):
+ * - Range = getTowerMoveRange (own − enemy dice count in tower).
+ * - Intermediate hexes must be empty; occupied hexes (own or enemy) are
+ *   valid destinations only, not traversable.
+ *
+ * Returns an empty array if `toKey` is unreachable by the tower.
+ *
+ * @param {import("./gameState.js").GameState} state
+ * @param {string} fromKey
+ * @param {string} toKey
+ * @returns {string[][]}
+ */
+function getTowerPathsToHex(state, fromKey, toKey) {
+    const maxSteps = getTowerMoveRange(state, fromKey);
+    if (maxSteps === 0) return [];
+
+    const paths = [];
+
+    /**
+     * Depth-first search that builds all valid tower paths from `currentKey` to `toKey`.
+     * `visited` prevents cycles within the current path.
+     *
+     * @param {string}      currentKey  - Hex key of the current position.
+     * @param {number}      stepsLeft   - Remaining movement steps.
+     * @param {string[]}    currentPath - Ordered hex keys visited so far (start-inclusive).
+     * @param {Set<string>} visited     - Set of hex keys already in the current path.
+     * @returns {void}
+     */
+    function dfs(currentKey, stepsLeft, currentPath, visited) {
+        if (currentKey === toKey) {
+            paths.push([...currentPath]);
+            return;
+        }
+        if (stepsLeft === 0) return;
+
+        for (const neighbor of getNeighbors(hexFromKey(currentKey))) {
+            if (!isOnBoard(neighbor)) continue;
+            const neighborKey = hexKey(neighbor);
+            if (visited.has(neighborKey)) continue;
+
+            const isDestination = neighborKey === toKey;
+            // Intermediates must be empty; destinations may be occupied
+            if (!isDestination && getController(state, neighborKey) !== null) continue;
+
+            currentPath.push(neighborKey);
+            visited.add(neighborKey);
+            dfs(neighborKey, stepsLeft - 1, currentPath, visited);
+            currentPath.pop();
+            visited.delete(neighborKey);
+        }
+    }
+
+    const visited = new Set([fromKey]);
+    dfs(fromKey, maxSteps, [fromKey], visited);
+    return paths;
+}
+
 // ---------------------------------------------------------------------------
 // 3.1a — getReachableHexes
 // ---------------------------------------------------------------------------
@@ -270,15 +330,21 @@ export function getShortestPathToHex(state, fromKey, toKey, actionType = "move-d
  * arrive. The UI uses this to determine the available push directions when
  * more than one approach exists.
  *
+ * Pass `actionType = "move-tower"` to use tower movement rules (range =
+ * getTowerMoveRange, only empty intermediates); defaults to single-die rules.
+ *
  * Returns an empty set if `toKey` is unreachable.
  *
  * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey
  * @param {string} toKey
+ * @param {"move-die"|"move-tower"} [actionType="move-die"]
  * @returns {Set<string>}  - set of hexKeys (last-step neighbors of toKey)
  */
-export function getApproachDirections(state, fromKey, toKey) {
-    const paths = getPathsToHex(state, fromKey, toKey);
+export function getApproachDirections(state, fromKey, toKey, actionType = "move-die") {
+    const paths = actionType === "move-tower"
+        ? getTowerPathsToHex(state, fromKey, toKey)
+        : getPathsToHex(state, fromKey, toKey);
     const directions = new Set();
     for (const path of paths) {
         if (path.length >= 2) {

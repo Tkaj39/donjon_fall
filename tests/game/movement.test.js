@@ -373,6 +373,58 @@ describe('getApproachDirections', () => {
         const uniqueSet = new Set(resultArray);
         expect(resultArray.length).toBe(uniqueSet.size);
     });
+
+    describe('move-tower', () => {
+        it('returns tower origin as approach direction when enemy is adjacent (range 1)', () => {
+            // Mixed tower: 2 red + 1 blue → own=2, enemy=1 → range = 2 - 1 = 1
+            // Only path to adjacent N1 is [CENTER, N1] → approach = CENTER
+            const state = makeState({
+                dice: {
+                    [CENTER]: [{ owner: 'blue', value: 1 }, { owner: 'red', value: 3 }, { owner: 'red', value: 4 }],
+                    [N1]: [{ owner: 'blue', value: 1 }],
+                },
+            });
+            const result = getApproachDirections(state, CENTER, N1, 'move-tower');
+            expect(result.size).toBe(1);
+            expect(result.has(CENTER)).toBe(true);
+        });
+
+        it('returns empty set when enemy is out of tower move range', () => {
+            // Tower with 1 own die − 1 enemy die → range = 1; enemy target is 2 steps away
+            const state = makeState({
+                dice: {
+                    [CENTER]: [{ owner: 'blue', value: 2 }, { owner: 'red', value: 3 }],
+                    [N1_N1]: [{ owner: 'blue', value: 1 }],
+                },
+            });
+            const result = getApproachDirections(state, CENTER, N1_N1, 'move-tower');
+            expect(result.size).toBe(0);
+        });
+
+        it('returns empty set when all paths to enemy are blocked by occupied intermediates', () => {
+            // Enemy is 2 steps away but N1 (the only intermediate on the direct path) is occupied
+            const state = makeState({
+                dice: {
+                    [CENTER]: [{ owner: 'red', value: 3 }, { owner: 'red', value: 2 }],
+                    [N1]: [{ owner: 'red', value: 1 }],   // own die blocks traversal
+                    [N1_N1]: [{ owner: 'blue', value: 1 }],
+                },
+            });
+            // All 6 neighbours of CENTER are occupied or off-board except the ones that
+            // lead back through N1; we block enough to leave no empty intermediate path.
+            // Add friendly blockers on the other two neighbours that could reach N1_N1 in 2 steps
+            const state2 = {
+                ...state,
+                dice: {
+                    ...state.dice,
+                    [N2]: [{ owner: 'red', value: 1 }],
+                    [N6]: [{ owner: 'red', value: 1 }],
+                },
+            };
+            const result = getApproachDirections(state2, CENTER, N1_N1, 'move-tower');
+            expect(result.size).toBe(0);
+        });
+    });
 });
 
 // ---------------------------------------------------------------------------
