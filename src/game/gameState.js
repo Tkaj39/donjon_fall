@@ -172,7 +172,7 @@ const DEFAULT_DIE_VALUE = 6;
  *                                    properties (see fieldProperties.js).
  * @returns {GameState}
  */
-export function createInitialState(players, boardFields, firstPlayer = null) {
+export function createInitialState(players, boardFields, firstPlayer = null, diceValues = null) {
     const dice = {};
     const focalPoints = {};
     const scores = {};
@@ -186,12 +186,19 @@ export function createInitialState(players, boardFields, firstPlayer = null) {
 
     // Place starting dice
     // Each player"s `startingField` hexes in boardFields define where their dice begin.
-    // All starting dice have value DEFAULT_DIE_VALUE.
+    // When diceValues is provided (quick play), the same values are applied to each
+    // player's dice in field-iteration order; otherwise DEFAULT_DIE_VALUE is used.
+    const playerDieIndex = {};
+    for (const player of players) playerDieIndex[player] = 0;
+
     for (const field of boardFields) {
         const startProp = field.properties.find(p => p.type === "startingField");
         if (startProp && players.includes(startProp.owner)) {
             const key = toHexKey(field.coords);
-            dice[key] = [{ owner: startProp.owner, value: DEFAULT_DIE_VALUE }];
+            const owner = startProp.owner;
+            const idx = playerDieIndex[owner]++;
+            const value = diceValues ? diceValues[idx % diceValues.length] : DEFAULT_DIE_VALUE;
+            dice[key] = [{ owner, value }];
         }
     }
 
