@@ -15,6 +15,15 @@
 
 | ID | Komponenta | Popis                                                                                                                                                                                    | Priorita | Stav | Řešení |
 |----|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|------|--------|
+| BUG-012 | game / movement | Při skoku kostky z věže by její bojová síla měla být navýšena na hodnotu bojové síly bývalé věže po první část skoku (do vzdálenosti pohybového dosahu věže: vlastní kostky − nepřátelské kostky, min 1); za touto vzdáleností se bojová síla vrátí na prostou hodnotu kostky | P2 | otevřená | — |
+| BUG-013 | game / movement | Když samostatná kostka prochází přes přátelskou kostku (za splnění podmínky bojové síly), zbytek jejího pohybu by měl být vyhodnocen jako skok z věže: bojová síla se navýší na hodnotu virtuální věže pro dalších (vlastní kostky − nepřátelské kostky, min 1) polí, poté se vrátí na prostou hodnotu kostky; zbývající pohyb využívá původní hodnotu kostky minus již provedené kroky (žádný bonusový pohyb se neuděluje) | P2 | otevřená | — |
+
+---
+
+## Vyřešené chyby
+
+| ID | Komponenta | Popis | Priorita | Stav | Řešení |
+|----|------------|-------|----------|------|--------|
 | BUG-001 | Game / PlayerHUD | Erby se zobrazují na špatných stranách — skóre červeného hráče se ukazuje na modrém erbu                                                                                                 | P2 | vyřešená | Chybu se nepodařilo reprodukovat — kód správně váže obrázek erbu, skóre i aktivní stav na playerId |
 | BUG-002 | Game / PlayerHUD | Indikátor aktivního hráče a přičítání bodů jsou prohozené — když hraje červený, na modrém erbu svítí aktivní stav a body dostává modrý; modrý hráč vyhrává body nasbíranými červeným     | P1 | vyřešená | Chybu se nepodařilo reprodukovat — indikátor aktivního hráče i přičítání bodů jsou správně vázány na aktuálního hráče |
 | BUG-003 | game / combat | Hráč může zaútočit na nepřátelskou kostku nebo věž se stejnou nebo vyšší silou útoku — útok by měl být povolen pouze pokud útočníkova síla striktně převyšuje obranu                     | P1 | vyřešená | Přidána ochrana canAttack v moveDie, jumpDie a moveTower; nedosažitelné cíle útoku odstraněny z dosažitelných polí v UI |
@@ -26,13 +35,4 @@
 | BUG-009 | game / combat | Vypočítaná síla útoku je nejspíš o +1 vyšší u obou stran — počet vlastních kostek by neměl zahrnovat samotnou útočící kostku                                                             | P2 | vyřešená | getAttackStrength opravena tak, aby nezahrnovala vrchní kostku do počtu vlastních kostek; canEnterTower aktualizována na použití hodnoty přesouvané kostky |
 | BUG-010 | game / combat | Zobrazují se a jsou volitelné neplatné směry souboje — směr by měl být nabídnut pouze tehdy, pokud útočník dokáže dosáhnout na pole obránce v rámci zbývajícího pohybového dosahu         | P2 | vyřešená | getApproachDirections nyní přijímá parametr actionType; přesuny věže používají getTowerPathsToHex (dosah věže + pouze prázdné mezilehlé hexáčky) místo jednokostkového getPathsToHex |
 | BUG-011 | Game / PlayerHUD | Zvýraznění tahu aktuálního hráče se někdy zobrazuje na špatné straně mapy — spolehlivě reprodukovatelné při procházení nastavením hráčů/mapy místo použití funkce přímé hry               | P2 | vyřešená | PlayerShield nyní odvozuje záři/odbarvení z prop isActive předané komponentou Game; žádný zastaralý stav indexu hráče se nepřenáší přes navigaci nastavení |
-| BUG-012 | game / movement | Při skoku kostky z věže by její bojová síla měla být navýšena na hodnotu bojové síly bývalé věže po první část skoku (do vzdálenosti pohybového dosahu věže: vlastní kostky − nepřátelské kostky, min 1); za touto vzdáleností se bojová síla vrátí na prostou hodnotu kostky | P2 | otevřená | — |
-| BUG-013 | game / movement | Když samostatná kostka prochází přes přátelskou kostku (za splnění podmínky bojové síly), zbytek jejího pohybu by měl být vyhodnocen jako skok z věže: bojová síla se navýší na hodnotu virtuální věže pro dalších (vlastní kostky − nepřátelské kostky, min 1) polí, poté se vrátí na prostou hodnotu kostky; zbývající pohyb využívá původní hodnotu kostky minus již provedené kroky (žádný bonusový pohyb se neuděluje) | P2 | otevřená | — |
-
----
-
-## Vyřešené chyby
-
-| ID | Komponenta | Popis | Priorita | Stav | Řešení |
-|----|------------|-------|----------|------|--------|
 | BUG-014 | game / movement | Přesun přátelské věže na jinou přátelskou věž se stejnou nebo vyšší bojovou silou je nesprávně přijat — animace proběhne, věž se vrátí na původní pozici, ale tah skončí jako by byla provedena akce. Příčina: reducer v gameReducer.js vždy vynucuje `actionTaken: true` po každé pohybové akci, čímž přepisuje ochranu před neplatnými tahy v `applyMoveTowerAction` (a dalších apply-funkcích), která jinak vrátí stav beze změny. | P1 | vyřešená | `getTowerReachableHexes` nyní kontroluje `canEnterTower` pro přátelské cíle a ty, které podmínku nesplní, vylučuje — neplatný cíl se nikdy nenabídne v UI |

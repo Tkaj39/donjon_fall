@@ -15,6 +15,15 @@
 
 | ID | Component | Description                                                                                                                                                                                                                                                                                                    | Priority | Status | Resolution |
 |----|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|--------|------------|
+| BUG-012 | game / movement | When a die jumps off a tower, its combat power should be boosted to the former tower's combat value for the first portion of the jump (up to the tower's movement range: own dice − enemy dice, min 1), then revert to the die's plain face value for any remaining hexes of the jump | P2 | open | — |
+| BUG-013 | game / movement | When a single die passes through a friendly die (combat power condition met), the remainder of its movement should be treated as a jump off a tower: combat power is boosted to the virtual tower's combat value for the next (own dice − enemy dice, min 1) hexes, then reverts to the die's plain face value; remaining movement uses the original face value minus steps already taken (no extra movement granted) | P2 | open | — |
+
+---
+
+## Resolved Bugs
+
+| ID | Component | Description | Priority | Status | Resolution |
+|----|-----------|-------------|----------|--------|------------|
 | BUG-001 | Game / PlayerHUD | Shields display on wrong sides — red player's score shown on blue shield                                                                                                                                                                                                                                       | P2 | resolved | Could not reproduce — code correctly keys shield image, score, and active state by playerId |
 | BUG-002 | Game / PlayerHUD | Active player indicator and score accumulation are inverted — when red plays, blue shield is highlighted as active and blue receives the points; blue player wins with red player's points                                                                                                                     | P1 | resolved | Could not reproduce — active player indicator and score accumulation correctly tied to current player |
 | BUG-003 | game / combat | Player can initiate attack on an enemy die or tower with equal or higher attack strength — attack should only be allowed when attacker's strength strictly exceeds defender's strength                                                                                                                         | P1 | resolved | canAttack guard added in moveDie, jumpDie, and moveTower; illegal attack destinations filtered from reachable hexes in the UI |
@@ -26,15 +35,6 @@
 | BUG-009 | game / combat | Computed attack strength is possibly off by +1 for both attacker and defender — own dice count should not include the attacking die itself                                                                                                                                                                     | P2 | resolved | getAttackStrength corrected to exclude the top die from own dice count; canEnterTower updated to use standalone face value for the moving die |
 | BUG-010 | game / combat | Illegal combat directions are shown and selectable — a direction should only be offered if the attacker can actually reach the defender's field within its remaining movement radius                                                                                                                           | P2 | resolved | getApproachDirections now accepts an actionType parameter; tower moves use getTowerPathsToHex (tower range + empty-only intermediates) instead of the single-die getPathsToHex |
 | BUG-011 | Game / PlayerHUD | Current player turn highlight sometimes displays on the wrong side of the map — reliably reproducible when navigating through player/map settings instead of using the Direct Play feature                                                                                                                     | P2 | resolved | PlayerShield now derives glow/grayscale from isActive prop passed by Game; no stale player-index state retained across setup navigation |
-| BUG-012 | game / movement | When a die jumps off a tower, its combat power should be boosted to the former tower's combat value for the first portion of the jump (up to the tower's movement range: own dice − enemy dice, min 1), then revert to the die's plain face value for any remaining hexes of the jump | P2 | open | — |
-| BUG-013 | game / movement | When a single die passes through a friendly die (combat power condition met), the remainder of its movement should be treated as a jump off a tower: combat power is boosted to the virtual tower's combat value for the next (own dice − enemy dice, min 1) hexes, then reverts to the die's plain face value; remaining movement uses the original face value minus steps already taken (no extra movement granted) | P2 | open | — |
-
----
-
-## Resolved Bugs
-
-| ID | Component | Description | Priority | Status | Resolution |
-|----|-----------|-------------|----------|--------|------------|
 | BUG-014 | game / movement | Moving a friendly tower onto another friendly tower with equal or higher combat power is incorrectly accepted — the animation plays, the tower returns to origin, but the turn ends as if an action was taken. Root cause: the game reducer unconditionally forces `actionTaken: true` after every movement action, overriding the illegal-move guard in `applyMoveTowerAction` (and other apply-functions) that returns state unchanged. | P1 | resolved | `getTowerReachableHexes` now checks `canEnterTower` for friendly destinations and excludes those that fail — the illegal target is never offered to the UI |
 
 ---
