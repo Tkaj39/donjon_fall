@@ -22,6 +22,7 @@ Nyní, když je základní část hry implementovaná (viz implementační-plán
     - otázka na ztrátu a ukončení hry?
   - ukončit hru
     - otázka na ztrátu a ukončení hry?
+  - nastavení
 - upravit trajektorii pohybu tak, aby brala v úvahu směr boje (když je zobrazen a přejíždí se směr boje)
 - umožnit zobrazení směru boje, zatímco je vybrána kostka/věž útočníka, nečekejte na výběr kostky/věže obránce
 - Když je kostka/věž vybrána pro akci, v tooltipnu hexu zobrazit další informace:

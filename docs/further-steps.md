@@ -30,6 +30,7 @@ Now that the core of the game is implemented (see implementation-plan.md), there
   - X when hex is unreachable
   - active focal point, potential +1 victory point
   - passive focal point, potential +0 victory point
+  - add another hex. left-attacker, right-defender. relationship between hexes should be displayed as a single character between the hexes.
 - while combat is selected, display only legal combat directions (considering movement radius)
 - allow die/tower deselect by clicking outside of movement/combat radius or just outside the board
 - keep the game state even after soft(F5)
