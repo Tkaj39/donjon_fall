@@ -14,6 +14,7 @@ import {
     applyCollapseAction,
     applyRerollAction,
 } from '../../src/game/movement.js';
+import { getAvailableCombatOptions } from '../../src/game/combat.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -372,6 +373,58 @@ describe('getApproachDirections', () => {
         const uniqueSet = new Set(resultArray);
         expect(resultArray.length).toBe(uniqueSet.size);
     });
+
+    describe('move-tower', () => {
+        it('returns tower origin as approach direction when enemy is adjacent (range 1)', () => {
+            // Mixed tower: 2 red + 1 blue → own=2, enemy=1 → range = 2 - 1 = 1
+            // Only path to adjacent N1 is [CENTER, N1] → approach = CENTER
+            const state = makeState({
+                dice: {
+                    [CENTER]: [{ owner: 'blue', value: 1 }, { owner: 'red', value: 3 }, { owner: 'red', value: 4 }],
+                    [N1]: [{ owner: 'blue', value: 1 }],
+                },
+            });
+            const result = getApproachDirections(state, CENTER, N1, 'move-tower');
+            expect(result.size).toBe(1);
+            expect(result.has(CENTER)).toBe(true);
+        });
+
+        it('returns empty set when enemy is out of tower move range', () => {
+            // Tower with 1 own die − 1 enemy die → range = 1; enemy target is 2 steps away
+            const state = makeState({
+                dice: {
+                    [CENTER]: [{ owner: 'blue', value: 2 }, { owner: 'red', value: 3 }],
+                    [N1_N1]: [{ owner: 'blue', value: 1 }],
+                },
+            });
+            const result = getApproachDirections(state, CENTER, N1_N1, 'move-tower');
+            expect(result.size).toBe(0);
+        });
+
+        it('returns empty set when all paths to enemy are blocked by occupied intermediates', () => {
+            // Enemy is 2 steps away but N1 (the only intermediate on the direct path) is occupied
+            const state = makeState({
+                dice: {
+                    [CENTER]: [{ owner: 'red', value: 3 }, { owner: 'red', value: 2 }],
+                    [N1]: [{ owner: 'red', value: 1 }],   // own die blocks traversal
+                    [N1_N1]: [{ owner: 'blue', value: 1 }],
+                },
+            });
+            // All 6 neighbours of CENTER are occupied or off-board except the ones that
+            // lead back through N1; we block enough to leave no empty intermediate path.
+            // Add friendly blockers on the other two neighbours that could reach N1_N1 in 2 steps
+            const state2 = {
+                ...state,
+                dice: {
+                    ...state.dice,
+                    [N2]: [{ owner: 'red', value: 1 }],
+                    [N6]: [{ owner: 'red', value: 1 }],
+                },
+            };
+            const result = getApproachDirections(state2, CENTER, N1_N1, 'move-tower');
+            expect(result.size).toBe(0);
+        });
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -477,7 +530,7 @@ describe('applyMoveAction', () => {
     it('records explicit approachDirection in combat when moving to enemy hex', () => {
         const state = makeState({
             dice: {
-                [CENTER]: [{ owner: 'red', value: 2 }],
+                [CENTER]: [{ owner: 'red', value: 3 }],
                 [N1_N1]: [{ owner: 'blue', value: 2 }],
             },
         });
@@ -486,11 +539,12 @@ describe('applyMoveAction', () => {
     });
 
     it('auto-resolves approachDirection when single approach direction exists', () => {
-        // Direct neighbor: only one approach (CENTER)
+        // Top die value 1 → range 1, so only direct 1-step approach (CENTER).
+        // Tower gives attack strength 1+1-0=2 > defender 1, so canAttack passes.
         const state = makeState({
             dice: {
-                [CENTER]: [{ owner: 'red', value: 1 }],
-                [N1]: [{ owner: 'blue', value: 2 }],
+                [CENTER]: [{ owner: 'red', value: 2 }, { owner: 'red', value: 1 }],
+                [N1]: [{ owner: 'blue', value: 1 }],
             },
         });
         const result = applyMoveAction(state, CENTER, N1);
@@ -502,7 +556,7 @@ describe('applyMoveAction', () => {
         const state = makeState({
             dice: {
                 [CENTER]: [{ owner: 'red', value: 2 }],
-                [N2]: [{ owner: 'blue', value: 2 }],
+                [N2]: [{ owner: 'blue', value: 1 }],
             },
         });
         const result = applyMoveAction(state, CENTER, N2);
@@ -780,7 +834,7 @@ describe('applyJumpAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 3 }],
             },
         });
         const result = applyJumpAction(state, CENTER, N1);
@@ -795,7 +849,7 @@ describe('applyJumpAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 3 }],
             },
         });
         const result = applyJumpAction(state, CENTER, N1);
@@ -803,11 +857,11 @@ describe('applyJumpAction', () => {
             { owner: 'red', value: 3 },
             { owner: 'red', value: 4 },
         ]);
-        expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 5 }]);
+        expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 3 }]);
     });
 
     it('sets combat with attackStrengthOverride equal to jumper face value only', () => {
-        // Jumper value 4 in a tower of 2 red dice: normal strength would be 4+2-0=6,
+        // Jumper value 4 in a tower of 2 red dice: normal strength would be 4+1-0=5,
         // but jump uses only face value = 4
         const state = makeState({
             dice: {
@@ -815,7 +869,7 @@ describe('applyJumpAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 3 }],
             },
         });
         const result = applyJumpAction(state, CENTER, N1);
@@ -829,7 +883,7 @@ describe('applyJumpAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 3 }],
             },
         });
         const result = applyJumpAction(state, CENTER, N1);
@@ -844,7 +898,7 @@ describe('applyJumpAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 3 }],
             },
         });
         const result = applyJumpAction(state, CENTER, N1);
@@ -858,7 +912,7 @@ describe('applyJumpAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1_N1]: [{ owner: 'blue', value: 5 }],
+                [N1_N1]: [{ owner: 'blue', value: 3 }],
             },
         });
         const result = applyJumpAction(state, CENTER, N1_N1, N1);
@@ -872,7 +926,7 @@ describe('applyJumpAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 3 }],
             },
         });
         const result = applyJumpAction(state, CENTER, N1);
@@ -1093,7 +1147,7 @@ describe('applyMoveTowerAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 4 }],
             },
         });
         const result = applyMoveTowerAction(state, CENTER, N1);
@@ -1101,18 +1155,18 @@ describe('applyMoveTowerAction', () => {
         expect(result.actionTaken).toBe(true);
     });
 
-    it('sets combat.options to push only when moving to enemy hex', () => {
+    it('sets combat.options to push and occupy when moving tower to single enemy die', () => {
         const state = makeState({
             dice: {
                 [CENTER]: [
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 4 }],
             },
         });
         const result = applyMoveTowerAction(state, CENTER, N1);
-        expect(result.combat.options).toEqual(['push']);
+        expect(getAvailableCombatOptions(result)).toEqual(['push', 'occupy']);
     });
 
     it('sets combat.attackerHex and combat.defenderHex when moving to enemy hex', () => {
@@ -1122,7 +1176,7 @@ describe('applyMoveTowerAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 4 }],
             },
         });
         const result = applyMoveTowerAction(state, CENTER, N1);
@@ -1137,7 +1191,7 @@ describe('applyMoveTowerAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 4 }],
             },
         });
         const result = applyMoveTowerAction(state, CENTER, N1);
@@ -1151,7 +1205,7 @@ describe('applyMoveTowerAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1_N1]: [{ owner: 'blue', value: 5 }],
+                [N1_N1]: [{ owner: 'blue', value: 4 }],
             },
         });
         const result = applyMoveTowerAction(state, CENTER, N1_N1, N1);
@@ -1165,7 +1219,7 @@ describe('applyMoveTowerAction', () => {
                     { owner: 'red', value: 3 },
                     { owner: 'red', value: 4 },
                 ],
-                [N1]: [{ owner: 'blue', value: 5 }],
+                [N1]: [{ owner: 'blue', value: 4 }],
             },
         });
         const result = applyMoveTowerAction(state, CENTER, N1);
@@ -1173,7 +1227,7 @@ describe('applyMoveTowerAction', () => {
             { owner: 'red', value: 3 },
             { owner: 'red', value: 4 },
         ]);
-        expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 5 }]);
+        expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 4 }]);
     });
 });
 

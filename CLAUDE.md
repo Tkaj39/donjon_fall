@@ -48,9 +48,9 @@ npm run preview   # Preview production build
 
 * **Move die** — move one of your dice up to its face value in hexes along any path (direction may change mid-move). 
   - Cannot pass through enemy dice. 
-  - Can pass through your own dice only if your die has higher attack strength on that field. 
+  - Can pass through your own dice only if your die has higher combat power on that field. 
   - Moving onto an empty field just moves there.
-  - Moving onto a friendly occupied field forms a tower, only if the moving die's attack strength exceeds the top die's attack strength on that field.
+  - Moving onto a friendly occupied field forms a tower, only if the moving die's combat power exceeds the tower's combat power on that field.
   - Moving onto an enemy field triggers either **Combat** or makes a **tower** (current player's choice). 
   - **Jump from tower**: a die on top of a tower may detach and jump up to (own dice in tower − enemy dice in tower, min 1) hexes; attack strength uses the jumping die's value alone.
 * **Tower collapse** — available when the tower has **3+ dice**.
@@ -58,7 +58,7 @@ npm run preview   # Preview production build
   - The **bottom** die is removed from the game. If it was an enemy die, you score 1 point.
 * **Move whole tower** — the player with the top die controls the tower. 
   - Range = own dice in tower − enemy dice in tower (min 1). 
-  - If destination has an enemy, triggers **Combat**; in that combat, only **push** is available.
+  - If destination has an enemy, triggers **Combat**; both **push** and **occupy** are available.
 * **Reroll** — choose one of your dice (standalone or tower top) and reroll it. 
   - If the new value is lower than the original, keep the original. 
   - Die value can only stay the same or increase.
@@ -67,12 +67,12 @@ npm run preview   # Preview production build
 
 Triggered when a move ends on an enemy-occupied field.
 
-- **Attack strength** = top die value + own dice count − enemy dice count.
-- Attack succeeds only if attack strength **strictly exceeds** the defense (same formula from defender's perspective, i.e., enemy's attack strength).
-- Cannot attack a field where the enemy is stronger.
+- **Combat power** = top die value + supporting own dice count − enemy dice count. For a standalone die, combat power equals its face value. For a tower, "supporting own dice" excludes the top die itself.
+- Attack succeeds only if attacker's combat power **strictly exceeds** the defender's combat power.
+- Cannot attack a field where the enemy has equal or higher combat power.
 
 **Phase 1 — Automatic consequences:** Attacker's die value decreases by 1. 
-  - Die with strength 1 cannot attack, so minimum value that the die can drop to from combat is 1.
+  - A die with combat power 1 cannot attack, so the minimum value a die can drop to from combat is 1.
 
 **Phase 2 — Attacker chooses one option:**
   - **Push** (free retreat path must exist): 
@@ -82,11 +82,11 @@ Triggered when a move ends on an enemy-occupied field.
     - Chain reaction: if another enemy formation is behind, each is pushed in turn; any formation that hits your own unit (see **Encirclement**) or the map edge (see **Off the map**) is **destroyed** (attacker scores points).
     - **Encirclement**: if your own unit blocks the retreat path, the pushed formation (last in the formation in the attack direction) cannot escape and is destroyed (one point per destroyed enemy die).
     - **Off the map**: pushed off the edge → destroyed, attacking player scores 1 point per enemy die destroyed.
-  - **Occupy**: attacker's die is placed on top of the enemy die, creating a **Mixed tower**. Control belongs to the player whose die is on top. Defender does **not** reroll.
+  - **Occupy**: attacker's formation is placed on top of the enemy formation, creating a **Mixed tower**. If the attacker was a single die, only that die moves; if the attacker moved as a whole tower, the entire tower moves onto the defender. Control belongs to the player whose die is on top. Defender does **not** reroll.
 
 ### Towers & Key Terms
 
-- **Tower**: 2+ dice on the same field. A new die can only be added if its **attack strength** strictly exceeds the current top die's attack strength. Control = player with top die.
+- **Tower**: 2+ dice on the same field. A new die can only be added if its **combat power** strictly exceeds the current tower's combat power. Control = player with top die.
 - **Mixed tower**: tower containing both players' dice. Controlled by the player with the top die — only that player can move it, attack from it, or jump from it.
 - **Base**: starting row; no special rules during play.
 

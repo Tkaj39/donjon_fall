@@ -20,7 +20,8 @@ export const VICTORY_POINTS = 5;
  * Advances the game to the next phase following the rules" phase order:
  *
  * ```
- * focal → action
+ * focal  → victory (when current player reached VICTORY_POINTS after focal scoring)
+ *        → action
  * action → combat  (when combat is pending in state.combat)
  *        → victory (when current player reached VICTORY_POINTS)
  *        → focal   (next player"s turn, via endTurn)
@@ -40,6 +41,9 @@ export const VICTORY_POINTS = 5;
 export function advancePhase(state) {
     switch (state.phase) {
         case "focal":
+            if ((state.scores[state.currentPlayer] ?? 0) >= VICTORY_POINTS) {
+                return { ...state, phase: "victory" };
+            }
             return { ...state, phase: "action" };
 
         case "action": {

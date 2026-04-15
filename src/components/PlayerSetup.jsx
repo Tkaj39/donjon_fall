@@ -142,7 +142,7 @@ export function PlayerSetup({ map, onConfirm, onBack }) {
 
     const [configs, setConfigs] = useState(
         /** @type {PlayerConfig[]} */ (
-            playerIds.map(id => ({ id, name: "", coatOfArms: ANIMAL_OPTIONS[0].id }))
+            playerIds.map(id => ({ id, name: PLAYER_COLOR[id]?.label ?? id, coatOfArms: ANIMAL_OPTIONS[0].id }))
         ),
     );
 

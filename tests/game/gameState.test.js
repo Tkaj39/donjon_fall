@@ -123,49 +123,49 @@ describe('getAttackStrength', () => {
         expect(getAttackStrength(makeState(), A)).toBe(0);
     });
 
-    it('lone die: strength equals its value (1 own, 0 enemy)', () => {
+    it('lone die: strength equals its value (0 supporting own, 0 enemy)', () => {
         const state = makeState({ dice: { [A]: [{ owner: 'red', value: 4 }] } });
-        // 4 + 1 - 0 = 5
-        expect(getAttackStrength(state, A)).toBe(5);
+        // 4 + 0 - 0 = 4
+        expect(getAttackStrength(state, A)).toBe(4);
     });
 
     it('friendly tower: adds own dice bonus', () => {
-        // red has 2 dice on top → 3 + 2 - 0 = 5
+        // top red(3), supporting: red(2) → 3 + 1 - 0 = 4
         const state = makeState({ dice: { [A]: [
             { owner: 'red', value: 2 },
             { owner: 'red', value: 3 },
         ]}});
-        expect(getAttackStrength(state, A)).toBe(5);
+        expect(getAttackStrength(state, A)).toBe(4);
     });
 
     it('mixed tower: subtracts enemy dice', () => {
-        // top is red(5), stack: [blue(2), red(5)]  → 5 + 1 - 1 = 5
+        // top is red(5), stack: [blue(2), red(5)] → 5 + 0 - 1 = 4
         const state = makeState({ dice: { [A]: [
             { owner: 'blue', value: 2 },
             { owner: 'red',  value: 5 },
         ]}});
-        expect(getAttackStrength(state, A)).toBe(5);
+        expect(getAttackStrength(state, A)).toBe(4);
     });
 
     it('mixed tower with more enemies: can produce a lower value', () => {
-        // top is red(4), stack: [blue(3), blue(2), red(4)] → 4 + 1 - 2 = 3
+        // top is red(4), stack: [blue(3), blue(2), red(4)] → 4 + 0 - 2 = 2
         const state = makeState({ dice: { [A]: [
             { owner: 'blue', value: 3 },
             { owner: 'blue', value: 2 },
             { owner: 'red',  value: 4 },
         ]}});
-        expect(getAttackStrength(state, A)).toBe(3);
+        expect(getAttackStrength(state, A)).toBe(2);
     });
 
     it('with jumped option: solo die returns only its face value', () => {
         const state = makeState({ dice: { [A]: [{ owner: 'red', value: 4 }] } });
-        // Without jumped: 4 + 1 - 0 = 5, with jumped: just 4
+        // Without jumped: 4 + 0 - 0 = 4, with jumped: just 4 (same for lone die)
         expect(getAttackStrength(state, A, { jumped: true })).toBe(4);
     });
 
     it('with jumped option: mixed tower returns only top die face value, ignoring tower bonus', () => {
         // top is red(5), stack: [blue(2), red(3), red(5)]
-        // Without jumped: 5 + 2 - 1 = 6, with jumped: just 5
+        // Without jumped: 5 + 1 - 1 = 5, with jumped: just 5 (same here, but differs for larger towers)
         const state = makeState({ dice: { [A]: [
             { owner: 'blue', value: 2 },
             { owner: 'red',  value: 3 },

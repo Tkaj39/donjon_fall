@@ -1,11 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
     BOARD_HEXES,
+    BOARD_FIELDS,
     FOCAL_POINT_HEXES,
-    FOCAL_POINT_KEYS,
-    FOCAL_CENTER_KEY,
-    FOCAL_LEFT_KEY,
-    FOCAL_RIGHT_KEY,
 } from '../../src/hex/boardConstants';
 
 describe('BOARD_HEXES', () => {
@@ -31,40 +28,35 @@ describe('FOCAL_POINT_HEXES', () => {
         expect(FOCAL_POINT_HEXES).toHaveLength(3);
     });
 
-    it('all 3 are within board radius 4', () => {
-        FOCAL_POINT_HEXES.forEach(({q, r, s}) => {
-            expect(Math.max(Math.abs(q), Math.abs(r), Math.abs(s))).toBeLessThanOrEqual(4);
-        });
-    });
-
     it('all have r === 0 (middle row)', () => {
         FOCAL_POINT_HEXES.forEach(({r}) => {
             expect(r).toBe(0);
         });
     });
 
-    it('left at q=-2, center at q=0, right at q=2', () => {
-        const qs = FOCAL_POINT_HEXES.map(h => h.q).sort((a, b) => a - b);
-        expect(qs).toEqual([-2, 0, 2]);
+    it('all satisfy q + r + s === 0', () => {
+        FOCAL_POINT_HEXES.forEach(({q, r, s}) => {
+            expect(q + r + s).toBe(0);
+        });
+    });
+
+    it('all are present in BOARD_HEXES', () => {
+        const boardSet = new Set(BOARD_HEXES.map(({q, r, s}) => `${q},${r},${s}`));
+        FOCAL_POINT_HEXES.forEach(({q, r, s}) => {
+            expect(boardSet.has(`${q},${r},${s}`)).toBe(true);
+        });
     });
 });
 
-describe('focal point key constants', () => {
-    it('FOCAL_CENTER_KEY === "0,0,0"', () => {
-        expect(FOCAL_CENTER_KEY).toBe('0,0,0');
+describe('BOARD_FIELDS focal points', () => {
+    const focalFields = BOARD_FIELDS.filter(f => f.properties.some(p => p.type === 'focalPoint'));
+
+    it('has exactly 3 focal point fields', () => {
+        expect(focalFields).toHaveLength(3);
     });
 
-    it('FOCAL_LEFT_KEY === "-2,0,2"', () => {
-        expect(FOCAL_LEFT_KEY).toBe('-2,0,2');
-    });
-
-    it('FOCAL_RIGHT_KEY === "2,0,-2"', () => {
-        expect(FOCAL_RIGHT_KEY).toBe('2,0,-2');
-    });
-
-    it('all 3 are in FOCAL_POINT_KEYS', () => {
-        expect(FOCAL_POINT_KEYS).toContain(FOCAL_CENTER_KEY);
-        expect(FOCAL_POINT_KEYS).toContain(FOCAL_LEFT_KEY);
-        expect(FOCAL_POINT_KEYS).toContain(FOCAL_RIGHT_KEY);
+    it('exactly one focal point is active at game start', () => {
+        const activeCount = focalFields.filter(f => f.properties.some(p => p.type === 'focalPoint' && p.active)).length;
+        expect(activeCount).toBe(1);
     });
 });
