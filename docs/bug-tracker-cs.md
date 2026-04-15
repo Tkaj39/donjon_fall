@@ -26,6 +26,7 @@
 | BUG-009 | game / combat | Vypočítaná síla útoku je nejspíš o +1 vyšší u obou stran — počet vlastních kostek by neměl zahrnovat samotnou útočící kostku                                                             | P2 | vyřešená | getAttackStrength opravena tak, aby nezahrnovala vrchní kostku do počtu vlastních kostek; canEnterTower aktualizována na použití hodnoty přesouvané kostky |
 | BUG-010 | game / combat | Zobrazují se a jsou volitelné neplatné směry souboje — směr by měl být nabídnut pouze tehdy, pokud útočník dokáže dosáhnout na pole obránce v rámci zbývajícího pohybového dosahu         | P2 | vyřešená | getApproachDirections nyní přijímá parametr actionType; přesuny věže používají getTowerPathsToHex (dosah věže + pouze prázdné mezilehlé hexáčky) místo jednokostkového getPathsToHex |
 | BUG-011 | Game / PlayerHUD | Zvýraznění tahu aktuálního hráče se někdy zobrazuje na špatné straně mapy — spolehlivě reprodukovatelné při procházení nastavením hráčů/mapy místo použití funkce přímé hry               | P2 | vyřešená | PlayerShield nyní odvozuje záři/odbarvení z prop isActive předané komponentou Game; žádný zastaralý stav indexu hráče se nepřenáší přes navigaci nastavení |
+| BUG-012 | game / movement | Při skoku kostky z věže by její bojová síla měla být navýšena na hodnotu bojové síly bývalé věže po první část skoku (do vzdálenosti pohybového dosahu věže: vlastní kostky − nepřátelské kostky, min 1); za touto vzdáleností se bojová síla vrátí na prostou hodnotu kostky | P2 | otevřená | — |
 
 ---
 
