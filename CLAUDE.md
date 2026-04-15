@@ -48,7 +48,7 @@ npm run preview   # Preview production build
 
 * **Move die** — move one of your dice up to its face value in hexes along any path (direction may change mid-move). 
   - Cannot pass through enemy dice. 
-  - Can pass through your own dice only if your die has higher combat power on that field. 
+  - Can pass through your own dice only if your die has higher combat power on that field. Passing through a friendly die is treated as forming a temporary tower at that point: the remaining movement continues as if jumping off that tower — combat power is boosted to the virtual tower's combat value for the next (own dice − enemy dice, min 1) hexes, then reverts to the die's plain face value. No extra movement is granted; steps already taken count against the die's face value.
   - Moving onto an empty field just moves there.
   - Moving onto a friendly occupied field forms a tower, only if the moving die's combat power exceeds the tower's combat power on that field.
   - Moving onto an enemy field triggers either **Combat** or makes a **tower** (current player's choice). 

@@ -48,7 +48,7 @@ npm run preview   # Náhled produkčního sestavení
 
 * **Pohyb kostky** — pohni jednou ze svých kostek až o tolik polí, kolik je její hodnota, po libovolné trase (směr se může měnit uprostřed pohybu).
   - Nemůže procházet přes nepřátelské kostky.
-  - Může procházet přes vlastní kostky pouze pokud má pohybující se kostka vyšší bojovou sílu na daném poli.
+  - Může procházet přes vlastní kostky pouze pokud má pohybující se kostka vyšší bojovou sílu na daném poli. Průchod přes přátelskou kostku je vyhodnocen jako vytvoření dočasné věže v daném bodě: zbývající pohyb pokračuje jako skok z věže — bojová síla se navýší na hodnotu virtuální věže pro dalších (vlastní kostky − nepřátelské kostky, min 1) polí, poté se vrátí na prostou hodnotu kostky. Žádný bonusový pohyb se neuděluje; již provedené kroky se odečítají od hodnoty kostky.
   - Pohyb na prázdné pole kostku prostě přesune.
   - Pohyb na přátelsky obsazené pole vytvoří věž, pouze pokud bojová síla pohybující se kostky překročí bojovou sílu věže na daném poli.
   - Pohyb na nepřátelské pole spustí buď **Souboj**, nebo vytvoří **věž** (volba aktuálního hráče).
