@@ -9,21 +9,22 @@ Now that the core of the game is implemented (see implementation-plan.md), there
 ## Small Tasks
 
 ### Menu
-- Add clear game rules and general how-to
-- Organize menu buttons to the right
+- Add clear game rules and general how-to to the central part of the screen
 - Add "authors" button
 
 ### In-Game
 - Add a hint that represents the opponent's last turn; remove it instantly after any interaction is made
 - Add keyboard shortcuts for die/tower movement, die reroll
 - Add next move hint (using AI/algorithm bot knowledge)
-- Add hint about tower structure (each die value visible)
+- Add hint about tower structure (each die value visible, left of the board for now)
 - Hamburger menu to the top-right corner:
   - new game
     - lose and end game question?
   - end game
     - lose and end game question?
+  - settings 
 - modify move trajectory so it considers combat direction (when combat direction is displayed and hovered over)
+- enable combat direction while attacker has a die/tower selected, don't wait for the defender die/tower selection
 - While a die/tower is selected for action, in the hex tooltip, display additional information:
   - combat bonus if a die goes from a tower/moves over a single die/tower in the tower radius
   - X when hex is unreachable
@@ -31,7 +32,8 @@ Now that the core of the game is implemented (see implementation-plan.md), there
   - passive focal point, potential +0 victory point
 - while combat is selected, display only legal combat directions (considering movement radius)
 - allow die/tower deselect by clicking outside of movement/combat radius or just outside the board
-- keep the game state even after soft(F5)/hard(ctrl+F5) reload
+- keep the game state even after soft(F5)
+- research: keep game state on the server or on clients?
 
 ### Winning screen
 - Add information about victory (5 points reached/opponent's sudden death with no legal move)
@@ -44,9 +46,11 @@ Now that the core of the game is implemented (see implementation-plan.md), there
 ### Other
 - learn about localization techniques/libraries
 - process the game texts correctly for EN/CS localization
-- Localization for other languages question? Which ones question?
+- Localization CS and EN for now, other languages later
 - define winning points amount for each map, currently hardcoded for default map (currently separate from the map/board definition)
+- other win/lose conditions? defend the king etc...
 - easter eggs question? Donjonský Vodopád is a nice one!
+- full keyboard coverage for shortcuts, some of it may be easter eggs!
 - deal with style guide component: http://localhost:5173/?style-guide 
 
 ## Responsivity

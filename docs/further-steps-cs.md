@@ -9,8 +9,7 @@ Nyní, když je základní část hry implementovaná (viz implementační-plán
 ## Malé úkoly
 
 ### Menu
-- Přidat jasná herní pravidla a obecný průvodce
-- Uspořádat tlačítka menu doprava
+- Přidat jasná herní pravidla a obecný průvodce do středu obrazovky
 - Přidat tlačítko "autoři"
 
 ### V průběhu hry
@@ -24,6 +23,7 @@ Nyní, když je základní část hry implementovaná (viz implementační-plán
   - ukončit hru
     - otázka na ztrátu a ukončení hry?
 - upravit trajektorii pohybu tak, aby brala v úvahu směr boje (když je zobrazen a přejíždí se směr boje)
+- umožnit zobrazení směru boje, zatímco je vybrána kostka/věž útočníka, nečekejte na výběr kostky/věže obránce
 - Když je kostka/věž vybrána pro akci, v tooltipnu hexu zobrazit další informace:
   - bonusový boj, pokud se kostka přesune z věže/posune přes jednu kostku/věž v poloměru věže
   - X když je hex nedostupný
@@ -31,7 +31,8 @@ Nyní, když je základní část hry implementovaná (viz implementační-plán
   - pasivní ohnisko, potenciální +0 bodů vítězství
 - během vybraného boje zobrazit pouze právní směry boje (vzhledem k poloměru pohybu)
 - umožnit zrušit výběr kostky/věže kliknutím mimo poloměr pohybu/boje nebo jen mimo desku
-- zachovat stav hry i po měkký (F5) / tvrdý (ctrl+F5) reload
+- zachovat stav hry i po měkký (F5) reload
+- výzkum: zachovat stav hry na serveru nebo na klientech?
 
 ### Obrazovka výhry
 - Přidat informace o vítězství (dosaženo 5 bodů / náhlá smrt soupeře bez právního tahu)
@@ -44,20 +45,21 @@ Nyní, když je základní část hry implementovaná (viz implementační-plán
 ### Ostatní
 - seznámit se s technikami/knihovnami lokalizace
 - správně zpracovat texty hry pro lokalizaci EN/CS
-- Lokalizace pro další jazyky? Které? Otázka?
+- Lokalizace CS a EN prozatím, další jazyky později
 - definovat výši výherního bodu pro každou mapu, v současné době je pevně zakódována pro výchozí mapu (v současné době oddělená od definice mapy/desky)
-- velikonoční vejce? Donjonský Vodopád je pěkné!
+- další podmínky výhry/prohry? chránit krále atd...
+- otázka na velikonoční vejce? Donjonský Vodopád je pěkné!
+- úplné pokrytí klávesnice pro zkratky, některé z nich mohou být easter eggs!
 - vypořádat se s komponentou průvodce stylem: http://localhost:5173/?style-guide 
 
 ## Odezva
-
 Zajistěte, aby hra byla responzivní pro mobilní zařízení a větší obrazovky.
 
----
+## AI Opponent
 
-## Umělý inteligentní protivník
-
-Počítačem řízený hráč, který může zaujmout libovolný slot hráče. Všichni boti sdílí společné rozhraní, takže herní smyčka je s nimi zachází stejně jako s lidskými hráči.
+Prioritizovat. Počítačem řízený hráč, který může zaujmout libovolný slot hráče. Všichni boti sdílí společné rozhraní, takže herní smyčka je s nimi zachází stejně jako s lidskými hráči.
+Implementujte nějakou formu A* algoritmu, přidejte nějakou jednoduchou možnost sebeučení. Nebo konzultujte Claude/web pro jiné, lepší algoritmy, které by lépe vyhovaly, ale stále by byly poměrně jednoduché.
+Používejte pro batch testování a další vyvažování herních pravidel.
 
 ### 1 Rozhraní AI hráče
 - `AIPlayer { id: string, getAction(state): Promise<GameAction> }` — abstraktní rozhraní, které všichni boti implementují
@@ -178,7 +180,7 @@ BoardCreatorState {
 
 ## Online multiplayer
 
-Online multiplayer umožňuje hráčům hrát si proti sobě přes internet. Tato fáze zavádí backend poprvé. Režim místní jednoho se v jednom sedle plně zachovává vedle online hraní.
+Online multiplayer umožňuje hráčům hrát si proti sobě přes internet. Tato fáze zavádí backend poprvé. Režim jednoho sedu místně zůstává plně funkční při hraní online.
 
 ### 1 Backend a přenos
 - Lehký server Node.js (např. Express + `ws` nebo Socket.IO) spravující herní místnosti a přenos zpráv v reálném čase
