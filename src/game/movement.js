@@ -11,6 +11,7 @@
 import { hexKey, hexFromKey, getNeighbors, hexesDistance } from "../hex/hexUtils.js";
 import { isOnBoard } from "../hex/boardUtils.js";
 import { getDiceAt, getTopDie, getController, canEnterTower, getAttackStrength } from "./gameState.js";
+import { canAttack } from "./combat.js";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -33,6 +34,66 @@ function canTraverseThrough(state, moverDie, neighborKey) {
     if (controller === null) return true;
     if (controller === moverDie.owner) return canEnterTower(state, moverDie, neighborKey);
     return false; // enemy hex — cannot pass through
+}
+
+/**
+ * Returns all valid tower-movement paths from `fromKey` to `toKey`.
+ *
+ * Tower traversal rules (mirrors getTowerReachableHexes):
+ * - Range = getTowerMoveRange (own − enemy dice count in tower).
+ * - Intermediate hexes must be empty; occupied hexes (own or enemy) are
+ *   valid destinations only, not traversable.
+ *
+ * Returns an empty array if `toKey` is unreachable by the tower.
+ *
+ * @param {import("./gameState.js").GameState} state
+ * @param {string} fromKey
+ * @param {string} toKey
+ * @returns {string[][]}
+ */
+function getTowerPathsToHex(state, fromKey, toKey) {
+    const maxSteps = getTowerMoveRange(state, fromKey);
+    if (maxSteps === 0) return [];
+
+    const paths = [];
+
+    /**
+     * Depth-first search that builds all valid tower paths from `currentKey` to `toKey`.
+     * `visited` prevents cycles within the current path.
+     *
+     * @param {string}      currentKey  - Hex key of the current position.
+     * @param {number}      stepsLeft   - Remaining movement steps.
+     * @param {string[]}    currentPath - Ordered hex keys visited so far (start-inclusive).
+     * @param {Set<string>} visited     - Set of hex keys already in the current path.
+     * @returns {void}
+     */
+    function dfs(currentKey, stepsLeft, currentPath, visited) {
+        if (currentKey === toKey) {
+            paths.push([...currentPath]);
+            return;
+        }
+        if (stepsLeft === 0) return;
+
+        for (const neighbor of getNeighbors(hexFromKey(currentKey))) {
+            if (!isOnBoard(neighbor)) continue;
+            const neighborKey = hexKey(neighbor);
+            if (visited.has(neighborKey)) continue;
+
+            const isDestination = neighborKey === toKey;
+            // Intermediates must be empty; destinations may be occupied
+            if (!isDestination && getController(state, neighborKey) !== null) continue;
+
+            currentPath.push(neighborKey);
+            visited.add(neighborKey);
+            dfs(neighborKey, stepsLeft - 1, currentPath, visited);
+            currentPath.pop();
+            visited.delete(neighborKey);
+        }
+    }
+
+    const visited = new Set([fromKey]);
+    dfs(fromKey, maxSteps, [fromKey], visited);
+    return paths;
 }
 
 // ---------------------------------------------------------------------------
@@ -269,15 +330,21 @@ export function getShortestPathToHex(state, fromKey, toKey, actionType = "move-d
  * arrive. The UI uses this to determine the available push directions when
  * more than one approach exists.
  *
+ * Pass `actionType = "move-tower"` to use tower movement rules (range =
+ * getTowerMoveRange, only empty intermediates); defaults to single-die rules.
+ *
  * Returns an empty set if `toKey` is unreachable.
  *
  * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey
  * @param {string} toKey
+ * @param {"move-die"|"move-tower"} [actionType="move-die"]
  * @returns {Set<string>}  - set of hexKeys (last-step neighbors of toKey)
  */
-export function getApproachDirections(state, fromKey, toKey) {
-    const paths = getPathsToHex(state, fromKey, toKey);
+export function getApproachDirections(state, fromKey, toKey, actionType = "move-die") {
+    const paths = actionType === "move-tower"
+        ? getTowerPathsToHex(state, fromKey, toKey)
+        : getPathsToHex(state, fromKey, toKey);
     const directions = new Set();
     for (const path of paths) {
         if (path.length >= 2) {
@@ -361,6 +428,7 @@ export function applyMoveAction(state, fromKey, toKey, approachDirection = null)
     }
 
     // --- Enemy die: set up combat (die does NOT move yet) ---
+    if (!canAttack(state, fromKey, toKey)) return state;
     let resolvedDirection = approachDirection;
     if (!resolvedDirection) {
         const dirs = getApproachDirections(state, fromKey, toKey);
@@ -489,6 +557,10 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
     }
 
     // Enemy — set up combat (jump variant: face value only)
+    const jumperStrength = getAttackStrength(state, towerKey, { jumped: true });
+    const defenseStrength = getAttackStrength(state, targetKey);
+    if (jumperStrength <= defenseStrength) return state;
+
     let resolvedDirection = approachDirection;
     if (!resolvedDirection) {
         // If target is adjacent (1 step), there is exactly one approach direction: the source.
@@ -500,8 +572,6 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
             if (dirs.size === 1) resolvedDirection = [...dirs][0];
         }
     }
-
-    const jumperStrength = getAttackStrength(state, towerKey, { jumped: true });
 
     return {
         ...state,
@@ -546,6 +616,7 @@ export function getTowerMoveRange(state, towerKey) {
  * - Range = getTowerMoveRange.
  * - The entire tower moves as one unit — can only traverse empty hexes.
  * - Can land on enemy hex (triggers combat — push only).
+ * - Can land on friendly hex (forms a tower if top die's combat power exceeds destination's).
  * - Cannot return to the source hex.
  *
  * @param {import("./gameState.js").GameState} state
@@ -627,7 +698,19 @@ export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = 
         return { ...state, dice: newDice, actionTaken: true, phase: "action" };
     }
 
+    // Friendly destination — stack on top if the moving tower's top die can enter
+    if (ctrl === state.currentPlayer) {
+        const topDie = getTopDie(state, fromKey);
+        if (!canEnterTower(state, topDie, toKey)) return state;
+        const newDice = { ...state.dice };
+        delete newDice[fromKey];
+        newDice[toKey] = [...getDiceAt(state, toKey), ...stack];
+        return { ...state, dice: newDice, actionTaken: true, phase: "action" };
+    }
+
     // Enemy destination — combat, push only
+    if (!canAttack(state, fromKey, toKey)) return state;
+
     let resolvedDirection = approachDirection;
     if (!resolvedDirection) {
         if (hexesDistance(hexFromKey(fromKey), hexFromKey(toKey)) === 1) {
@@ -644,7 +727,7 @@ export function applyMoveTowerAction(state, fromKey, toKey, approachDirection = 
             attackerHex: fromKey,
             defenderHex: toKey,
             approachDirection: resolvedDirection,
-            options: ["push"], // occupy not available for whole-tower moves
+            towerMove: true,
         },
     };
 }

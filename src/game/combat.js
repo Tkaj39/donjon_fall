@@ -87,13 +87,8 @@ export function canAttack(state, attackerHex, defenderHex) {
  *
  * Rules:
  * - **Push** is always an option.
- * - **Occupy** is available only when the attacker is a lone die (no tower) and when
- *   the target is also a lone die or is an enemy-only tower — i.e. the result would be
- *   a valid mixed tower (attacker"s die on top with higher attack strength than the
- *   current formation). When Move Whole Tower triggered the combat, occupy is never
- *   available (push only).
- *
- * Per plan section 5.1: tower-vs-tower move allows push only.
+ * - **Occupy** is available unless both the attacker and defender are towers
+ *   (tower-vs-tower: push only).
  *
  * @param {import("./gameState.js").GameState} state
  * @returns {Array<"push"|"occupy">}
@@ -103,9 +98,6 @@ export function getAvailableCombatOptions(state) {
     if (!combat) return [];
 
     const { attackerHex, defenderHex } = combat;
-
-    // If the combat was initiated by a whole-tower move, push only.
-    if (combat.towerMove) return ["push"];
 
     const attackerSize = getTowerSize(state, attackerHex);
     const defenderSize = getTowerSize(state, defenderHex);
@@ -302,7 +294,7 @@ export function applyPush(state, rerollValue) {
         }
     }
 
-    // Attacker"s top die decreases by 1 (minimum = MIN_DIE_VALUE)
+    // Attacker"s top die decreases by 1 (minimum = MIN_DIE_VALUE), then move to defenderHex
     const attackerStack = getDiceAt({ ...state, dice }, attackerHex);
     if (attackerStack.length > 0) {
         const topIdx = attackerStack.length - 1;
@@ -310,7 +302,8 @@ export function applyPush(state, rerollValue) {
         const newAttackerStack = attackerStack.map((d, idx) =>
             idx === topIdx ? { ...d, value: newValue } : d
         );
-        dice = setStack(dice, attackerHex, newAttackerStack);
+        dice = setStack(dice, attackerHex, []);
+        dice = setStack(dice, defenderHex, newAttackerStack);
     }
 
     return {
@@ -342,17 +335,26 @@ export function applyPush(state, rerollValue) {
 export function applyOccupy(state) {
     const { attackerHex, defenderHex } = state.combat;
 
-    // Move attacker"s top die onto the defender"s stack
     const attackerStack = getDiceAt(state, attackerHex);
     if (attackerStack.length === 0) return state;
 
     const topDie = attackerStack[attackerStack.length - 1];
     const newValue = Math.max(MIN_DIE_VALUE, topDie.value - 1);
-    const movedDie = { ...topDie, value: newValue };
+    const movedTopDie = { ...topDie, value: newValue };
 
-    const newAttackerStack = attackerStack.slice(0, -1);
     const defenderStack = getDiceAt(state, defenderHex);
-    const newDefenderStack = [...defenderStack, movedDie];
+
+    // Whole-tower move: entire attacker stack moves on top of the defender.
+    // Single-die move: only the top die moves, leaving the rest of the tower behind.
+    let newAttackerStack, newDefenderStack;
+    if (state.combat.towerMove) {
+        const supportingDice = attackerStack.slice(0, -1);
+        newAttackerStack = [];
+        newDefenderStack = [...defenderStack, ...supportingDice, movedTopDie];
+    } else {
+        newAttackerStack = attackerStack.slice(0, -1);
+        newDefenderStack = [...defenderStack, movedTopDie];
+    }
 
     let dice = { ...state.dice };
     dice = setStack(dice, attackerHex, newAttackerStack);

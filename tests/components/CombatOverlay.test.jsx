@@ -46,15 +46,15 @@ describe('CombatOverlay', () => {
     });
 
     test('displays attacker strength', () => {
-        // single die value 5 → strength = 5 + 1 own − 0 enemy = 6
+        // single die value 5 → strength = 5 + 0 supporting − 0 enemy = 5
         render(<CombatOverlay state={makeState({ attackerValue: 5 })} options={['push']} onChoose={() => {}} />);
-        expect(screen.getByTestId('attacker-strength')).toHaveTextContent('6');
+        expect(screen.getByTestId('attacker-strength')).toHaveTextContent('5');
     });
 
     test('displays defender strength', () => {
-        // single die value 3 → strength = 3 + 1 own − 0 enemy = 4
+        // single die value 3 → strength = 3 + 0 supporting − 0 enemy = 3
         render(<CombatOverlay state={makeState({ defenderValue: 3 })} options={['push']} onChoose={() => {}} />);
-        expect(screen.getByTestId('defender-strength')).toHaveTextContent('4');
+        expect(screen.getByTestId('defender-strength')).toHaveTextContent('3');
     });
 
     test('renders push and occupy buttons when both options available', () => {
@@ -84,14 +84,14 @@ describe('CombatOverlay', () => {
     });
 
     test('attacker strength accounts for tower size', () => {
-        // Attacker has 2 own dice on same hex → strength = value + 2 own - 0 enemy = value + 2
+        // Attacker tower: top red(3), supporting red(2) → strength = 3 + 1 - 0 = 4
         const state = makeState({ attackerValue: 3 });
         state.dice[ATTACKER_HEX] = [
             { owner: 'red', value: 2 },
             { owner: 'red', value: 3 },
         ];
         render(<CombatOverlay state={state} options={['push']} onChoose={() => {}} />);
-        // top die value 3, own 2, enemy 0 → strength = 3 + 2 - 0 = 5
-        expect(screen.getByTestId('attacker-strength')).toHaveTextContent('5');
+        // top die value 3, 1 supporting own, 0 enemy → strength = 3 + 1 - 0 = 4
+        expect(screen.getByTestId('attacker-strength')).toHaveTextContent('4');
     });
 });

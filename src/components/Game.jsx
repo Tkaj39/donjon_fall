@@ -19,7 +19,7 @@
  */
 
 import {useState, useMemo, useEffect, useRef} from "react";
-import {getAvailableCombatOptions} from "../game/combat.js";
+import {getAvailableCombatOptions, canAttack} from "../game/combat.js";
 import {getController, getTopDie, getTowerSize, canEnterTower, getAttackStrength} from "../game/gameState.js";
 import {
     getReachableHexes,
@@ -316,11 +316,21 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
             for (const key of all) {
                 const ctrl = getController(state, key);
                 if (ctrl === state.currentPlayer && !canEnterTower(state, moverDie, key)) continue;
+                if (ctrl !== null && ctrl !== state.currentPlayer && !canAttack(state, selectedHex, key)) continue;
                 filtered.add(key);
             }
             return filtered;
         }
-        if (activeAction === "move-tower") return getTowerReachableHexes(state, selectedHex);
+        if (activeAction === "move-tower") {
+            const all = getTowerReachableHexes(state, selectedHex);
+            const filtered = new Set();
+            for (const key of all) {
+                const ctrl = getController(state, key);
+                if (ctrl !== null && ctrl !== state.currentPlayer && !canAttack(state, selectedHex, key)) continue;
+                filtered.add(key);
+            }
+            return filtered;
+        }
         return new Set();
     })();
 
@@ -339,7 +349,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
         const dest = trajectoryPath[trajectoryPath.length - 1];
         const ctrl = getController(state, dest);
         if (ctrl === null || ctrl === state.currentPlayer) return null;
-        const dirs = getApproachDirections(state, selectedHex, dest);
+        const dirs = getApproachDirections(state, selectedHex, dest, activeAction);
         return dirs.size > 1 ? dest : null;
     })();
 
@@ -348,7 +358,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      * Empty when the picker is not active.
      */
     const pickerApproachDirs = pickerEnemyKey && selectedHex
-        ? getApproachDirections(state, selectedHex, pickerEnemyKey)
+        ? getApproachDirections(state, selectedHex, pickerEnemyKey, activeAction)
         : new Set();
 
     /**
@@ -597,28 +607,6 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
         <div
             className="relative h-dvh flex flex-col bg-stone-900/60 text-[var(--color-text,#f1f5f9)] box-border overflow-hidden"
         >
-            {/* ── Active player edge glow ─────────────────────── */}
-            {(() => {
-                const idx = state.players.indexOf(state.currentPlayer);
-                const edge = PLAYER_GLOW_EDGE[idx] ?? "bottom";
-                const color = PLAYER_GLOW[state.currentPlayer] ?? "#94a3b8";
-                const grad = edge === "top"
-                    ? `linear-gradient(to bottom, ${color}, transparent)`
-                    : `linear-gradient(to top,    ${color}, transparent)`;
-                return (
-                    <div
-                        aria-hidden="true"
-                        className="pointer-events-none fixed left-0 right-0 transition-all duration-500"
-                        style={{
-                            [edge]: 0,
-                            height: 200,
-                            background: grad,
-                            opacity: 0.55,
-                            zIndex: -1,
-                        }}
-                    />
-                );
-            })()}
             {/* ── Header ──────────────────────────────────────────── */}
             <header className="flex items-center justify-between px-4 py-2 shrink-0">
                 <Logo className="w-64" />
