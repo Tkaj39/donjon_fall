@@ -33,10 +33,10 @@ const APP_VERSION = "v0.1.0";
  */
 function MenuButton({ label, onClick, disabled = false, hasSubmenu = false, isOpen = false }) {
     /** Base classes shared by all states. */
-    const base = "w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-colors flex items-center justify-between";
+    const base = "btn-frame w-full text-center px-6 py-6 text-3xl font-semibold tracking-wide transition-colors flex items-center justify-center";
 
     /** Enabled interactive style. */
-    const enabled = "hover:bg-stone-700 text-stone-200 cursor-pointer";
+    const enabled = "hover:bg-stone-700 text-stone-400 cursor-pointer";
 
     /** Disabled (greyed-out) style for unimplemented features. */
     const disabledStyle = "text-stone-600 cursor-not-allowed";
@@ -48,14 +48,6 @@ function MenuButton({ label, onClick, disabled = false, hasSubmenu = false, isOp
             className={`${base} ${disabled ? disabledStyle : enabled}`}
         >
             <span>{label}</span>
-            {hasSubmenu && (
-                <span
-                    className={`text-[0.65rem] transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}
-                    aria-hidden="true"
-                >
-                    ▶
-                </span>
-            )}
         </button>
     );
 }
@@ -84,16 +76,16 @@ export function MainMenu({ onPlay, onDirectPlay }) {
     }
 
     return (
-        <div className="flex min-h-screen bg-stone-900 text-white">
+        <div className="flex min-h-screen text-white">
             {/* ── Sidebar ─────────────────────────────────────── */}
-            <nav className="flex flex-col w-72 shrink-0 bg-stone-900/95 border-r border-stone-700">
+            <nav className="flex flex-col w-72 shrink-0 bg-black/70 border-r-4 border-double border-stone-500">
                 {/* Logo */}
                 <div className="flex justify-center pt-6 pb-4">
                     <Logo className="w-36 h-36" />
                 </div>
 
                 {/* Menu items */}
-                <div className="flex flex-col gap-1 px-3 overflow-y-auto grow">
+                <div className="flex flex-col gap-4 px-3 overflow-y-auto grow">
                     {/* ── Start (submenu) ── */}
                     <MenuButton
                         label="Start"
@@ -105,22 +97,20 @@ export function MainMenu({ onPlay, onDirectPlay }) {
                         <div className="flex flex-col gap-1 pl-4">
                             <MenuButton label="Quick Start" onClick={onDirectPlay} />
                             <MenuButton label="Start" onClick={onPlay} />
-                            <MenuButton label="Start vs Bot" disabled />
-                            <MenuButton label="Online" disabled />
-                            <MenuButton label="Daily Challenge" disabled />
-                            <MenuButton label="Campaign" disabled />
                         </div>
                     )}
 
                     <MenuButton label="Continue" disabled />
                     <MenuButton label="Tutorial" disabled />
                     <MenuButton label="Rules" onClick={() => setRulesOpen(true)} />
-                    <MenuButton label="Statistics" disabled />
-                    <MenuButton label="Leaderboard" disabled />
-                    <MenuButton label="Achievements" disabled />
-                    <MenuButton label="Settings" disabled hasSubmenu />
-                    <MenuButton label="Map Editor" disabled />
-                    <MenuButton label="Credits" disabled />
+                    <div className="hidden">
+                        <MenuButton label="Statistics" disabled />
+                        <MenuButton label="Leaderboard" disabled />
+                        <MenuButton label="Achievements" disabled />
+                        <MenuButton label="Settings" disabled hasSubmenu />
+                        <MenuButton label="Map Editor" disabled />
+                        <MenuButton label="Credits" disabled />
+                    </div>
                 </div>
 
                 {/* Footer */}
@@ -141,7 +131,7 @@ export function MainMenu({ onPlay, onDirectPlay }) {
             </nav>
 
             {/* ── Canvas (right area) ─────────────────────────── */}
-            <main className="flex flex-col items-center justify-center grow bg-stone-800/50">
+            <main className="flex flex-col items-center justify-center grow">
                 <p className="text-stone-500 text-lg uppercase tracking-widest">
                     Donjon Fall
                 </p>
