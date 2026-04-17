@@ -51,6 +51,28 @@ img {
     );
 }
 
+/**
+ * Larger panel variant of btn-frame — used for Tutorial and similar overlays.
+ * Same border-image corners, dark brown background instead of texture.
+ */
+.frame-panel {
+    position: relative;
+    border-style: solid;
+    border-image: url('/src/assets/border-frame.png') 270 270 / 40px 40px / 0 stretch;
+    background-image: linear-gradient(rgba(24,14,8,0.75), rgba(24,14,8,0.75)), url('/src/assets/background-frame.png');
+    background-size: 100% 100%;
+    clip-path: polygon(
+        36px 0%,
+        calc(100% - 36px) 0%,
+        100% 36px,
+        100% calc(100% - 36px),
+        calc(100% - 36px) 100%,
+        36px 100%,
+        0% calc(100% - 36px),
+        0% 36px
+    );
+}
+
 .btn-frame::after {
     content: '';
     position: absolute;

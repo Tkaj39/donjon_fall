@@ -9,6 +9,7 @@
 import { useState } from "react";
 import { Logo } from "./Logo.jsx";
 import { RulesViewer } from "./RulesViewer.jsx";
+import { Tutorial } from "./Tutorial.jsx";
 
 /** Application version shown in the sidebar footer. */
 const APP_VERSION = "v0.1.0";
@@ -62,6 +63,7 @@ function MenuButton({ label, onClick, disabled = false, hasSubmenu = false, isOp
  */
 export function MainMenu({ onPlay, onDirectPlay }) {
     const [rulesOpen, setRulesOpen] = useState(false);
+    const [tutorialOpen, setTutorialOpen] = useState(false);
     /** @type {[Submenu, Function]} */
     const [openSubmenu, setOpenSubmenu] = useState(null);
 
@@ -101,7 +103,7 @@ export function MainMenu({ onPlay, onDirectPlay }) {
                     )}
 
                     <MenuButton label="Continue" disabled />
-                    <MenuButton label="Tutorial" disabled />
+                    <MenuButton label="Tutorial" onClick={() => setTutorialOpen(true)} />
                     <MenuButton label="Rules" onClick={() => setRulesOpen(true)} />
                     <div className="hidden">
                         <MenuButton label="Statistics" disabled />
@@ -141,6 +143,7 @@ export function MainMenu({ onPlay, onDirectPlay }) {
             </main>
 
             {rulesOpen && <RulesViewer onClose={() => setRulesOpen(false)} />}
+            {tutorialOpen && <Tutorial onClose={() => setTutorialOpen(false)} />}
         </div>
     );
 }

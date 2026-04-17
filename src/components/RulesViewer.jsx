@@ -196,16 +196,16 @@ export function RulesViewer({ onClose }) {
             role="dialog"
             aria-modal="true"
             aria-label="Rules viewer"
-            className="fixed inset-0 flex items-center justify-center bg-[rgba(0,0,0,0.75)] z-[300] p-4"
+            className="fixed inset-0 flex items-center justify-center z-[300] p-4"
             onClick={(e) => {
                 // Close when clicking the backdrop (not the panel)
                 if (e.target === e.currentTarget) onClose();
             }}
         >
             {/* Panel */}
-            <div className="bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-2xl w-full max-w-[36rem] max-h-[85vh] flex flex-col shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden">
+            <div className="frame-panel w-full max-w-[36rem] max-h-[85vh] flex flex-col overflow-hidden px-4 py-4">
                 {/* Header */}
-                <div className="flex justify-between items-center pt-4 pb-3 px-5 border-b border-white/10 shrink-0">
+                <div className="flex justify-between items-center pt-6 pb-3 px-8 border-b border-white/10 shrink-0">
                     <h2 className="m-0 text-[1.15rem] font-bold text-[#f1f5f9]">
                         Game Rules
                     </h2>
@@ -214,14 +214,14 @@ export function RulesViewer({ onClose }) {
                         <button
                             data-testid="expand-all-btn"
                             onClick={expandAll}
-                            className="py-1 px-[0.65rem] rounded-[0.4rem] border border-white/20 bg-white/[0.07] text-[rgba(241,245,249,0.75)] text-xs cursor-pointer"
+                            className="py-[0.2rem] px-[0.55rem] rounded-[0.4rem] border border-white/20 bg-white/[0.07] text-[rgba(241,245,249,0.75)] text-[1.1rem] cursor-pointer"
                         >
                             Expand all
                         </button>
                         <button
                             data-testid="collapse-all-btn"
                             onClick={collapseAll}
-                            className="py-1 px-[0.65rem] rounded-[0.4rem] border border-white/20 bg-white/[0.07] text-[rgba(241,245,249,0.75)] text-xs cursor-pointer"
+                            className="py-[0.2rem] px-[0.55rem] rounded-[0.4rem] border border-white/20 bg-white/[0.07] text-[rgba(241,245,249,0.75)] text-[1.1rem] cursor-pointer"
                         >
                             Collapse all
                         </button>
@@ -237,7 +237,7 @@ export function RulesViewer({ onClose }) {
                 </div>
 
                 {/* Scrollable body */}
-                <div className="overflow-y-auto px-5 grow">
+                <div className="overflow-y-auto px-8 pb-6 grow">
                     {SECTIONS.map((section) => (
                         <RulesSection
                             key={section.id}
