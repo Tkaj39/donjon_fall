@@ -733,15 +733,22 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
 
             {/* ── Action panel + End turn ──────────────────────── */}
             <div className="flex flex-col items-center gap-2 shrink-0 pb-4 px-4">
-                <div style={{visibility: showActionPanel ? "visible" : "hidden"}}>
-                    <ActionPanel
-                        currentPlayer={state.currentPlayer}
-                        availableActions={availableActions}
-                        activeAction={activeAction}
-                        onActionSelect={handleActionSelect}
-                    />
+                <div className="flex items-center justify-center">
+                    {showActionPanel ? (
+                        <ActionPanel
+                            currentPlayer={state.currentPlayer}
+                            availableActions={availableActions}
+                            activeAction={activeAction}
+                            onActionSelect={handleActionSelect}
+                        />
+                    ) : state.phase === "action" && !state.actionTaken ? (
+                        <div className="action-bar px-2 py-2">
+                            <button disabled className="text-stone-500 text-sm tracking-wide px-6 py-7 cursor-not-allowed">
+                                Označ svou kostku
+                            </button>
+                        </div>
+                    ) : <div className="action-bar opacity-0 px-6 py-7 pointer-events-none">‎</div>}
                 </div>
-
             </div>
 
             {/* ── Victory screen ──────────────────────────────────── */}

@@ -52,6 +52,20 @@ img {
 }
 
 /**
+ * Slim action bar container — double border, clipped corners, no texture.
+ * Used in ActionPanel to wrap the action buttons.
+ */
+.action-bar {
+    border-style: double;
+    border-width: 4px;
+    border-color: var(--color-stone-500, #78716c);
+    background-color: color-mix(in oklab, black 70%, transparent);
+    padding: 0.5rem 0.75rem;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+/**
  * Larger panel variant of btn-frame — used for Tutorial and similar overlays.
  * Same border-image corners, dark brown background instead of texture.
  */
