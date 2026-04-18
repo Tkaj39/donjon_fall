@@ -10,13 +10,15 @@ import { useState } from "react";
  * @type {{ caption: string, image?: string }[]}
  */
 const STEPS = [
-    { caption: "Herní deska — 61 šestiúhelníkových polí" },
-    { caption: "Pohyb kostky — až o tolik polí, kolik ukazuje hodnota" },
-    { caption: "Věže — více kostek na jednom poli" },
-    { caption: "Boj — útok uspěje jen při vyšší bojové síle" },
-    { caption: "Ohniskové body — drž je pro vítězné body" },
-    { caption: "Vítězství — získej 5 bodů jako první" },
-];
+    { caption: "Klikni na svou kostku. Můžeš ji posunout až o tolik polí, kolik ukazuje její hodnota — a to je zároveň její bojové číslo. Nemůžeš ale projít přes soupeřovy kostky ani přes vlastní kostky s vyšší hodnotou." },
+    { caption: "Útok: Zautočit můžeš, pokud máš vyšší hodnotu než soupeř. Vybereš si, jestli chceš skočit na kostku (obsadit pole), nebo ji podunout (odstrčit). Po útoku má útočník vždy -1 k hodnotě své kostky. Při posunu se obráncova kostka přehodí, ale nemůže být vyšší než původní." },
+    { caption: "Získávání bodů: Body získáš za zničení soupeřovy kostky (například vysunutím z herního plánu) nebo za udržení aktivního ohniska až do začátku svého příštího tahu. Cílem je získat 5 bodů jako první!" },
+    { caption: "Tvorba věže: Pokud má tvoje nebo soupeřova kostka na poli nižší hodnotu, můžeš při pohybu umístit svou kostku na ni a vytvořit věž." },
+    { caption: "Pohyb věže: Věž můžeš přesunout, pokud máš na jejím vrcholu svou kostku a máš převahu. Věž se pohybuje o počet tvých kostek v ní mínus počet soupeřových, minimálně o jedna." },
+    { caption: "Útok věže: Věž může útočit na jiné věže nebo kostky, pokud má vyšší bojovou sílu. Bojová síla věže je hodnota vrchní kostky plus +1 za každou svou kostku pod ní a -1 za každou soupeřovu kostku pod ní. Vyhodnocení boje je stejné jako u kostek, ale věž může soupeře pouze vysunout z políčka (nemůže pole obsadit)." },
+    { caption: "Skok kostky z věže: Kostka na vrcholu věže může seskočit na jiné pole. Může jít až o tolik polí, kolik je její hodnota, ale ne dál než by mohla věž. Při útoku má bonus jako celá věž (počítá se bojová síla věže)." },
+        { caption: "Ohniska: Některá pole jsou ohniska, která dávají bod za udržení aktivního ohniska do začátku tvého tahu. Když získáš bod z ohniska, kostka se přehodí a její nová hodnota je minimálně o 1 nižší než původní. (Fokusní body a speciální schopnosti nejsou v této verzi hry.)" }
+    ];
 
 /**
  * @param {{ onClose: () => void }} props
