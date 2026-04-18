@@ -44,6 +44,9 @@ export function App() {
     /** @type {[{ players: string[], boardFields: import("./hex/fieldProperties.js").HexField[] }|null, Function]} */
     const [gameSetup, setGameSetup] = useState(null);
 
+    /** Initial sub-screen for MainMenu — "main" normally, "settings" when navigating from in-game settings. */
+    const [menuInitialScreen, setMenuInitialScreen] = useState("main");
+
     /**
      * Transitions the app to the given screen.
      *
@@ -61,6 +64,7 @@ export function App() {
             return (
                 <MainMenu
                     onPlay={() => navigate("mapSelection")}
+                    initialScreen={menuInitialScreen}
                     onDirectPlay={() => {
                         const randomAnimal = () => ANIMAL_OPTIONS[Math.floor(Math.random() * ANIMAL_OPTIONS.length)].id;
                         setSelectedMap(DEFAULT_MAP);
@@ -100,9 +104,9 @@ export function App() {
             );
         case "game":
             return gameSetup
-                ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} playerConfigs={playerConfigs ?? []} />
-                : <Game />;
+                ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} playerConfigs={playerConfigs ?? []} onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />
+                : <Game onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />;
         default:
-            return <Game />;
+            return <Game onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />;
     }
 }

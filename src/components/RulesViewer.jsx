@@ -114,8 +114,7 @@ function RulesSection({ id, title, items, isOpen, onToggle }) {
                 {title}
                 <span
                     aria-hidden="true"
-                    className="transition-transform duration-200 opacity-60 text-[0.75rem] shrink-0 ml-2"
-                    style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                    className={`transition-transform duration-200 opacity-60 text-[0.75rem] shrink-0 ml-2 ${isOpen ? "rotate-180" : ""}`}
                 >
                     ▼
                 </span>
@@ -237,7 +236,7 @@ export function RulesViewer({ onClose }) {
                 </div>
 
                 {/* Scrollable body */}
-                <div className="overflow-y-auto px-8 pb-6 grow">
+                <div className="overflow-y-auto scrollbar-stone px-8 pb-6 grow">
                     {SECTIONS.map((section) => (
                         <RulesSection
                             key={section.id}

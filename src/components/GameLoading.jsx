@@ -49,11 +49,11 @@ export function GameLoading({ playerConfigs, map, onDone }) {
         return (
             <div key={config.id} className="flex items-center gap-4">
                 {/* Coat of arms: shield + animal */}
-                <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                <div className="relative w-28 h-28 shrink-0">
                     <img
                         src={SHIELD_BY_PLAYER[config.id] ?? SHIELD_BY_PLAYER.blue}
                         alt=""
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-contain"
                     />
                     <img
                         src={ANIMAL_OPTIONS.find(a => a.id === config.coatOfArms)?.href ?? ANIMAL_OPTIONS[0].href}
@@ -72,7 +72,7 @@ export function GameLoading({ playerConfigs, map, onDone }) {
     return (
         <>
             <Logo className="fixed top-16 left-1/2 -translate-x-1/2"/>
-            <div className="flex items-center justify-around min-h-screen bg-stone-900/60 text-white p-8">
+            <div className="flex items-center justify-center gap-16 min-h-screen bg-stone-900/60 text-white px-12 py-8">
                 {shields[0]}
                 <div className="flex flex-col items-center gap-8">
                     <p className="text-stone-400 text-sm uppercase tracking-widest">Get ready…</p>

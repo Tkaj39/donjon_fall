@@ -62,11 +62,11 @@ function MenuButton({ label, onClick, disabled = false, hasSubmenu = false, isOp
  * @returns {React.JSX.Element}
  */
 /** @param {{ onPlay: () => void, onDirectPlay: () => void }} props */
-export function MainMenu({ onPlay, onDirectPlay }) {
+export function MainMenu({ onPlay, onDirectPlay, initialScreen = "main" }) {
     const [rulesOpen, setRulesOpen] = useState(false);
     const [tutorialOpen, setTutorialOpen] = useState(false);
     /** @type {[Screen, Function]} */
-    const [screen, setScreen] = useState("main");
+    const [screen, setScreen] = useState(initialScreen);
 
     if (screen === "start") {
         return (

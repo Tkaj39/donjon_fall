@@ -336,10 +336,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                         points={points}
                         fill={fill}
                         stroke="none"
-                        style={{
-                            animation:     `combat-flash 0.8s ease-in-out ${delay} infinite`,
-                            pointerEvents: "none",
-                        }}
+                        className={delay === "0s" ? "combat-flash-attacker" : "combat-flash-defender"}
                     />
                 );
             })}

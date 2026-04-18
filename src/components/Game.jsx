@@ -87,7 +87,7 @@ function rollD6() {
  * }} props
  * @returns {JSX.Element}
  */
-export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null}) {
+export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null, onExit, onSettings}) {
     const {state, dispatch, recordedActions, initialState} = useGameState(players, boardFields, firstPlayer);
 
     // -----------------------------------------------------------------------
@@ -105,6 +105,14 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
 
     /** Whether the rules modal is open. */
     const [showRules, setShowRules] = useState(false);
+
+    /** Whether the hamburger menu dropdown is open. */
+    const [showMenu, setShowMenu] = useState(false);
+
+    /** Whether the in-game settings overlay is open. */
+    const [showSettings, setShowSettings] = useState(false);
+    const [settingSound, setSettingSound] = useState(true);
+    const [settingAnimations, setSettingAnimations] = useState(true);
 
     /** Whether the Phase 14.1 debug overlay is visible (toggled by Ctrl+D). */
     const [debugMode, setDebugMode] = useState(false);
@@ -613,13 +621,26 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
             {/* ── Header ──────────────────────────────────────────── */}
             <header className="flex items-center justify-between px-4 py-2 shrink-0">
                 <Logo className="w-64" />
-                <button
-                    aria-label="Open rules"
-                    onClick={() => setShowRules(true)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full border border-stone-600 text-stone-300 hover:text-white hover:border-stone-400 transition-colors text-sm"
-                >
-                    ?
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        aria-label="Open rules"
+                        onClick={() => setShowRules(true)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-stone-600 text-stone-300 hover:text-white hover:border-stone-400 transition-colors text-sm"
+                    >
+                        ?
+                    </button>
+                    <div className="relative">
+                        <button
+                            aria-label="Game menu"
+                            onClick={() => setShowMenu(m => !m)}
+                            className="w-8 h-8 flex flex-col items-center justify-center gap-[5px] rounded-full border border-stone-600 text-stone-300 hover:text-white hover:border-stone-400 transition-colors"
+                        >
+                            <span className="w-4 h-[2px] bg-current rounded" />
+                            <span className="w-4 h-[2px] bg-current rounded" />
+                            <span className="w-4 h-[2px] bg-current rounded" />
+                        </button>
+                    </div>
+                </div>
                 {debugMode && (
                     <span
                         className="text-[0.75rem] font-mono bg-yellow-400 text-black rounded px-2 py-[0.1rem] select-none">
@@ -762,6 +783,88 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
             {/* ── Rules viewer ────────────────────────────────────── */}
             {showRules && (
                 <RulesViewer onClose={() => setShowRules(false)}/>
+            )}
+
+            {/* ── Game menu modal ──────────────────────────────────── */}
+            {showMenu && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+                    onClick={() => setShowMenu(false)}
+                >
+                    <div
+                        className="frame-panel flex flex-col items-stretch min-w-[240px] py-6 px-2 gap-1"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <h2 className="text-center text-lg font-bold tracking-widest uppercase text-stone-300 mb-3 px-6">
+                            Pauza
+                        </h2>
+                        <button
+                            onClick={() => { setShowMenu(false); handleNewGame(); }}
+                            className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer"
+                        >
+                            Nový start
+                        </button>
+                        <button
+                            onClick={() => { setShowMenu(false); setShowSettings(true); }}
+                            className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer"
+                        >
+                            Nastavení
+                        </button>
+                        <button
+                            onClick={() => { setShowMenu(false); onExit?.(); }}
+                            className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer"
+                        >
+                            Opustit hru
+                        </button>
+                        <button
+                            onClick={() => setShowMenu(false)}
+                            className="mt-2 px-6 py-2 text-sm text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
+                        >
+                            Zpět do hry
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Settings overlay ─────────────────────────────────── */}
+            {showSettings && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+                    onClick={() => setShowSettings(false)}
+                >
+                    <div
+                        className="frame-panel flex flex-col gap-5 w-80 px-10 py-8"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <h2 className="text-2xl font-bold tracking-widest text-stone-300 uppercase text-center">
+                            Nastavení
+                        </h2>
+                        <div className="flex items-center justify-between border-b border-stone-700 pb-4">
+                            <span className="text-stone-300 tracking-wide">Zvuk</span>
+                            <button
+                                onClick={() => setSettingSound(v => !v)}
+                                className={`w-14 h-7 rounded-full transition-colors cursor-pointer relative ${settingSound ? "bg-stone-400" : "bg-stone-700"}`}
+                            >
+                                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${settingSound ? "left-8" : "left-1"}`} />
+                            </button>
+                        </div>
+                        <div className="flex items-center justify-between border-b border-stone-700 pb-4">
+                            <span className="text-stone-300 tracking-wide">Animace</span>
+                            <button
+                                onClick={() => setSettingAnimations(v => !v)}
+                                className={`w-14 h-7 rounded-full transition-colors cursor-pointer relative ${settingAnimations ? "bg-stone-400" : "bg-stone-700"}`}
+                            >
+                                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${settingAnimations ? "left-8" : "left-1"}`} />
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => setShowSettings(false)}
+                            className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer mt-2"
+                        >
+                            Zpět do hry
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -37,8 +37,7 @@ export function PlayerShield({playerId, cfg, score, isActive}) {
                 <div className={`absolute ${playerId === "red" ? "-left-6" : "-right-6"} top-1/2 -translate-y-1/2 w-16 h-16 z-0`}>
                     <img src={shieldHref} alt="" className="w-full h-full object-contain"/>
                     <span
-                        className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-stone-100/70"
-                        style={{textShadow: "0 0 4px #000, 0 0 8px #000, 1px 1px 2px #000"}}
+                        className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-stone-100/70 score-text-shadow"
                     >
                         {score}
                     </span>

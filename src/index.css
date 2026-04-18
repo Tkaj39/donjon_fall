@@ -110,6 +110,42 @@ img {
         0% 16px
     );}
 
+/* ── Custom scrollbar ────────────────────────────────────────────────────── */
+
+.scrollbar-stone::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollbar-stone::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 3px;
+}
+
+.scrollbar-stone::-webkit-scrollbar-thumb {
+    background: rgba(120, 113, 108, 0.55);
+    border-radius: 3px;
+}
+
+.scrollbar-stone::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 162, 158, 0.75);
+}
+
+/* ── Migrated inline styles ───────────────────────────────────────────────── */
+
+.score-text-shadow {
+    text-shadow: 0 0 4px #000, 0 0 8px #000, 1px 1px 2px #000;
+}
+
+.combat-flash-attacker {
+    animation: combat-flash 0.8s ease-in-out 0s infinite;
+    pointer-events: none;
+}
+
+.combat-flash-defender {
+    animation: combat-flash 0.8s ease-in-out 0.4s infinite;
+    pointer-events: none;
+}
+
 :root {
     /* Hex fill colours */
     --color-hex-default:        #e8e677;

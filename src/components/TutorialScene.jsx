@@ -74,7 +74,7 @@ export function TutorialScene({ frames, choices }) {
                 </span>
             )}
 
-            <svg viewBox={`0 0 ${vw} ${vh}`} className="w-full" style={{ maxHeight: 260 }}>
+            <svg viewBox={`0 0 ${vw} ${vh}`} className="w-full max-h-[260px]">
                 <defs>
                     <marker id="ta" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
                         <path d="M0,0 L0,6 L7,3z" fill="rgba(255,240,130,0.92)" />
