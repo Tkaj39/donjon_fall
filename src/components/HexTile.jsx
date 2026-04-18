@@ -17,7 +17,7 @@ const HIGHLIGHT_FILL = {
 };
 
 /** Focal point marker circle radius as a fraction of hex size. */
-const HEX_STROKE_WIDTH = 1.5;
+const HEX_STROKE_WIDTH = 2.5;
 const FOCAL_MARKER_RATIO = 0.18;
 
 /** Vertical spacing between stacked dice as a fraction of hex size. */
@@ -62,15 +62,14 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
     const startingProp = fieldProperties.find(p => p.type === "startingField");
     const isFocalPoint = fieldProperties.some(p => p.type === "focalPoint");
 
-    // Use image texture whenever available; override with colour only for highlights/selected.
-    const hasTexture = themeImageHref && !highlight && !isSelected;
+    // Always show texture if available, highlight overlays are drawn above.
+    const hasTexture = !!themeImageHref;
 
     let fill = "var(--color-hex-default)";
     if (startingProp) fill = playerColors[startingProp.owner]?.tint ?? "var(--color-hex-starting)";
     if (isFocalPoint) fill = "var(--color-hex-focal)";
-    if (highlight)    fill = HIGHLIGHT_FILL[highlight] ?? fill;
     if (isSelected)   fill = "var(--color-hex-selected)";
-    // When texture is active, polygon serves only as stroke border.
+    // For highlight overlays, base fill is always transparent (texture shows), overlay is drawn above.
     const polygonFill = hasTexture ? "transparent" : fill;
 
     const clipId = `hex-clip-${hexKey(coords)}`;
@@ -119,6 +118,15 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     fill="none"
                     stroke="var(--color-hex-stroke)"
                     strokeWidth={HEX_STROKE_WIDTH}
+                    style={{ pointerEvents: "none" }}
+                />
+            )}
+            {/* Highlight overlay always above texture, 0.5 opacity */}
+            {highlight && (
+                <polygon
+                    points={points}
+                    fill={HIGHLIGHT_FILL[highlight]}
+                    opacity={0.5}
                     style={{ pointerEvents: "none" }}
                 />
             )}

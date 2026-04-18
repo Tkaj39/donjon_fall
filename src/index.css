@@ -26,13 +26,91 @@ img {
     100% { transform: scale(1); }
 }
 
+/* ── Button frame (border-image) ──────────────────────────────────────────── */
+
+/**
+ * Rusty metal octagonal frame applied to main-menu buttons.
+ * border-image slices at 270px (out of 790px) to preserve the diagonal corners.
+ * The transparent center lets background-color show through.
+ */
+.btn-frame {
+    position: relative;
+    border-style: solid;
+    border-image: url('/src/assets/border-frame.png') 270 270 / 30px 30px / 0 stretch;
+    background-image: url('/src/assets/background-frame.png');
+    background-size: 100% ;
+    clip-path: polygon(
+        24px 0%,
+        calc(100% - 24px) 0%,
+        100% 24px,
+        100% calc(100% - 24px),
+        calc(100% - 24px) 100%,
+        24px 100%,
+        0% calc(100% - 24px),
+        0% 24px
+    );
+}
+
+/**
+ * Slim action bar container — double border, clipped corners, no texture.
+ * Used in ActionPanel to wrap the action buttons.
+ */
+.action-bar {
+    border-style: double;
+    border-width: 4px;
+    border-color: var(--color-stone-500, #78716c);
+    background-color: color-mix(in oklab, black 70%, transparent);
+    padding: 0.5rem 0.75rem;
+    border-radius: 1.8rem;
+    corner-shape: bevel;
+    overflow: hidden;
+}
+
+/**
+ * Larger panel variant of btn-frame — used for Tutorial and similar overlays.
+ * Same border-image corners, dark brown background instead of texture.
+ */
+.frame-panel {
+    position: relative;
+    border-style: solid;
+    border-image: url('/src/assets/border-frame.png') 270 270 / 40px 40px / 0 stretch;
+    background-image: linear-gradient(rgba(24,14,8,0.75), rgba(24,14,8,0.75)), url('/src/assets/background-frame.png');
+    background-size: 100% 100%;
+    clip-path: polygon(
+        36px 0%,
+        calc(100% - 36px) 0%,
+        100% 36px,
+        100% calc(100% - 36px),
+        calc(100% - 36px) 100%,
+        36px 100%,
+        0% calc(100% - 36px),
+        0% 36px
+    );
+}
+
+.btn-frame::after {
+    content: '';
+    position: absolute;
+    inset: 8px 8px;
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
+    pointer-events: none;    clip-path: polygon(
+        16px 0%,
+        calc(100% - 16px) 0%,
+        100% 16px,
+        100% calc(100% - 16px),
+        calc(100% - 16px) 100%,
+        16px 100%,
+        0% calc(100% - 16px),
+        0% 16px
+    );}
+
 :root {
     /* Hex fill colours */
     --color-hex-default:        #e8e677;
     --color-hex-starting:       #9b9ad4;
     --color-hex-focal:          #c4b5fd;
     --color-hex-selected:       #f59e0b;
-    --color-hex-stroke:         #7c5c2a;
+    --color-hex-stroke:         #50473c;
 
     /* Movement highlight overlays */
     --color-hex-reachable:      #86efac;

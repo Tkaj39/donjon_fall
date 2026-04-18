@@ -42,7 +42,7 @@ export function ActionPanel({ currentPlayer, availableActions, activeAction, onA
         <div
             role="toolbar"
             aria-label="Action panel"
-            className="flex gap-2 bg-[var(--color-panel-bg,#1e293b)] border-2 border-[var(--color-panel-border,#475569)] rounded-xl py-[0.6rem] px-[0.8rem] text-[var(--color-panel-text,#f1f5f9)] shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+            className="action-bar flex gap-3"
         >
             {visibleActions.map((actionKey) => {
                 const isActive   = actionKey === activeAction;
@@ -55,30 +55,24 @@ export function ActionPanel({ currentPlayer, availableActions, activeAction, onA
                         disabled={isDisabled}
                         aria-pressed={isActive}
                         onClick={() => !isDisabled && onActionSelect(actionKey)}
+                        className={`btn-frame px-6 py-7 text-sm font-semibold tracking-wide transition-all cursor-pointer
+                            ${isDisabled  ? "text-stone-600 cursor-not-allowed opacity-50" : ""}
+                            ${isActive    ? "text-stone-100" : !isDisabled ? "text-stone-300" : ""}
+                        `}
                         style={{
-                            padding:       "0.45rem 1rem",
-                            borderRadius:  "0.5rem",
-                            border:        isActive
-                                ? "2px solid var(--color-accent, #f59e0b)"
-                                : "2px solid transparent",
-                            background:    isActive
-                                ? "var(--color-accent-dim, rgba(245,158,11,0.18))"
-                                : isDisabled
-                                    ? "rgba(255,255,255,0.04)"
-                                    : "rgba(255,255,255,0.08)",
-                            color:         isDisabled
-                                ? "rgba(255,255,255,0.25)"
-                                : isActive
-                                    ? "var(--color-accent, #f59e0b)"
-                                    : "var(--color-panel-text, #f1f5f9)",
-                            fontWeight:    isActive ? 700 : 500,
-                            fontSize:      "0.875rem",
-                            cursor:        isDisabled ? "not-allowed" : "pointer",
-                            transition:    "background 0.12s, border-color 0.12s, color 0.12s",
-                            whiteSpace:    "nowrap",
+                            filter: isActive
+                                ? "drop-shadow(0 0 4px rgba(245,158,11,1)) drop-shadow(0 0 8px rgba(245,158,11,0.8)) brightness(0.75)"
+                                : "none",
+                            transition: "filter 0.15s",
                         }}
                     >
-                        {ACTION_LABELS[actionKey]}
+                        <span style={{
+                            display: "inline-block",
+                            transform: isActive ? "translateY(2px)" : "none",
+                            transition: "transform 0.15s",
+                        }}>
+                            {ACTION_LABELS[actionKey]}
+                        </span>
                     </button>
                 );
             })}

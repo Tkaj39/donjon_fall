@@ -4,6 +4,7 @@
  *
  * Screen flow:
  *   splash → mainMenu → mapSelection → playerSetup → gameLoading → game
+ *   ?style-guide URL param → styleGuide (dev helper page)
  */
 
 import { useState } from "react";
@@ -13,11 +14,12 @@ import { MainMenu } from "./components/MainMenu.jsx";
 import { MapSelection } from "./components/MapSelection.jsx";
 import { PlayerSetup } from "./components/PlayerSetup.jsx";
 import { GameLoading } from "./components/GameLoading.jsx";
+import { StyleGuide } from "./components/StyleGuide.jsx";
 import { DEFAULT_MAP } from "./game/boardDefinition.js";
 import { ANIMAL_OPTIONS } from "./styles/themes/default.js";
 
 /**
- * @typedef {"splash"|"mainMenu"|"mapSelection"|"playerSetup"|"gameLoading"|"game"} Screen
+ * @typedef {"splash"|"mainMenu"|"mapSelection"|"playerSetup"|"gameLoading"|"game"|"styleGuide"} Screen
  */
 
 /**
@@ -26,8 +28,12 @@ import { ANIMAL_OPTIONS } from "./styles/themes/default.js";
  * @returns {JSX.Element}
  */
 export function App() {
+    const initialScreen = new URLSearchParams(window.location.search).has("style-guide")
+        ? "styleGuide"
+        : "splash";
+
     /** @type {[Screen, Function]} */
-    const [screen, setScreen] = useState("splash");
+    const [screen, setScreen] = useState(initialScreen);
 
     /** @type {[import("./game/boardDefinition.js").BoardDefinition|null, Function]} */
     const [selectedMap, setSelectedMap] = useState(null);
@@ -47,6 +53,8 @@ export function App() {
     const navigate = (target) => setScreen(target);
 
     switch (screen) {
+        case "styleGuide":
+            return <StyleGuide onBack={() => navigate("mainMenu")} />;
         case "splash":
             return <SplashScreen onDone={() => navigate("mainMenu")} />;
         case "mainMenu":
