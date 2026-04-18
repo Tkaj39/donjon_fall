@@ -61,7 +61,8 @@ img {
     border-color: var(--color-stone-500, #78716c);
     background-color: color-mix(in oklab, black 70%, transparent);
     padding: 0.5rem 0.75rem;
-    border-radius: 1rem;
+    border-radius: 1.8rem;
+    corner-shape: bevel;
     overflow: hidden;
 }
 
@@ -109,7 +110,7 @@ img {
     --color-hex-starting:       #9b9ad4;
     --color-hex-focal:          #c4b5fd;
     --color-hex-selected:       #f59e0b;
-    --color-hex-stroke:         #7c5c2a;
+    --color-hex-stroke:         #50473c;
 
     /* Movement highlight overlays */
     --color-hex-reachable:      #86efac;
