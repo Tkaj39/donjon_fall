@@ -36,7 +36,7 @@ import {useGameState} from "../hooks/useGameState.js";
 import {ActionPanel} from "./ActionPanel.jsx";
 import {ActionReplay} from "./ActionReplay.jsx";
 import {ACTION_ORDER} from "./actionConstants.js";
-import {Board, MOVE_ANIMATION_MS, SVG_WIDTH} from "./Board.jsx";
+import {Board, moveAnimationMs, SVG_WIDTH} from "./Board.jsx";
 import {CombatOverlay} from "./CombatOverlay.jsx";
 import {CombatPowerTooltip} from "./CombatPowerTooltip.jsx";
 import {Logo} from "./Logo.jsx";
@@ -226,7 +226,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                 approachDirection: pendingMove.approachDirection,
             });
             setPendingMove(null);
-        }, MOVE_ANIMATION_MS);
+        }, pendingMove.animationMs ?? 260);
         return () => clearTimeout(id);
     }, [pendingMove, dispatch]);
 
@@ -521,11 +521,14 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                 // Queue as a pending animation (Phase 12.6); the reducer fires
                 // after MOVE_ANIMATION_MS once the die reaches its destination.
                 const actionType = activeAction === "move-die" ? "MOVE_DIE" : "MOVE_TOWER";
+                const path = trajectoryPath;
                 setPendingMove({
                     fromKey: selectedHex,
                     toKey: clickedKey,
                     actionType,
                     approachDirection: effectiveApproachKey,
+                    path,
+                    animationMs: moveAnimationMs(Math.max(1, path.length - 1)),
                 });
                 deselect();
             } else {

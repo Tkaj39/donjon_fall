@@ -107,6 +107,11 @@ const FIELD_PROPS_BY_KEY = Object.fromEntries(
  */
 export const MOVE_ANIMATION_MS = 260;
 
+/** Returns total animation duration in ms for a path of given step count. */
+export function moveAnimationMs(steps) {
+    return Math.min(110 * Math.max(steps, 1), 880);
+}
+
 /** Vertical die-stack spacing as a fraction of hex size (mirrors HexTile). */
 const STACK_OFFSET_RATIO = 0.22;
 
@@ -131,34 +136,38 @@ const STACK_OFFSET_RATIO = 0.22;
  *   Owner ID → colour pair; controls die body colour.
  * @returns {JSX.Element}
  */
-function MovingDie({ fromX, fromY, toX, toY, diceStack, hexSize, playerColors }) {
-    const [cx, setCx] = useState(fromX);
-    const [cy, setCy] = useState(fromY);
+function MovingDie({ waypoints, animationMs, diceStack, hexSize, playerColors }) {
+    const [cx, setCx] = useState(waypoints[0].x);
+    const [cy, setCy] = useState(waypoints[0].y);
 
     useEffect(() => {
         const startTime = performance.now();
+        const segCount  = waypoints.length - 1;
+        const segMs     = animationMs / segCount;
         let raf;
 
-        /**
-         * Advances the animation one frame using cubic ease-in-out interpolation.
-         *
-         * @returns {void}
-         */
+        function easeInOut(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
         function step() {
-            const elapsed = performance.now() - startTime;
-            const t       = Math.min(elapsed / MOVE_ANIMATION_MS, 1);
-            // Cubic ease-in-out
-            const ease    = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-            setCx(fromX + (toX - fromX) * ease);
-            setCy(fromY + (toY - fromY) * ease);
-            if (t < 1) {
+            const elapsed  = performance.now() - startTime;
+            const total    = Math.min(elapsed / animationMs, 1);
+            const segIndex = Math.min(Math.floor(total * segCount), segCount - 1);
+            const segT     = (elapsed - segIndex * segMs) / segMs;
+            const ease     = easeInOut(Math.min(segT, 1));
+            const from     = waypoints[segIndex];
+            const to       = waypoints[segIndex + 1];
+            setCx(from.x + (to.x - from.x) * ease);
+            setCy(from.y + (to.y - from.y) * ease);
+            if (total < 1) {
                 raf = requestAnimationFrame(step);
             }
         }
 
         raf = requestAnimationFrame(step);
         return () => cancelAnimationFrame(raf);
-    }, [fromX, fromY, toX, toY]);
+    }, [waypoints, animationMs]);
 
     return (
         <>
@@ -226,13 +235,14 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
      */
     const movingDieProps = (() => {
         if (!pendingMove) return null;
-        const fromPx = hexToPixel(hexFromKey(pendingMove.fromKey), HEX_SIZE);
-        const toPx   = hexToPixel(hexFromKey(pendingMove.toKey),   HEX_SIZE);
+        const path = pendingMove.path?.length >= 2 ? pendingMove.path : [pendingMove.fromKey, pendingMove.toKey];
+        const waypoints = path.map(key => {
+            const px = hexToPixel(hexFromKey(key), HEX_SIZE);
+            return { x: px.x + OFFSET_X, y: px.y + OFFSET_Y };
+        });
         return {
-            fromX:     fromPx.x + OFFSET_X,
-            fromY:     fromPx.y + OFFSET_Y,
-            toX:       toPx.x   + OFFSET_X,
-            toY:       toPx.y   + OFFSET_Y,
+            waypoints,
+            animationMs: pendingMove.animationMs ?? 260,
             diceStack: dice[pendingMove.fromKey] ?? [],
         };
     })();
@@ -307,10 +317,8 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
             {/* ── Phase 12.6: in-flight die animation ─────────────────── */}
             {movingDieProps && (
                 <MovingDie
-                    fromX={movingDieProps.fromX}
-                    fromY={movingDieProps.fromY}
-                    toX={movingDieProps.toX}
-                    toY={movingDieProps.toY}
+                    waypoints={movingDieProps.waypoints}
+                    animationMs={movingDieProps.animationMs}
                     diceStack={movingDieProps.diceStack}
                     hexSize={TILE_SIZE}
                     playerColors={playerColors}
