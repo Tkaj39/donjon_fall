@@ -741,13 +741,13 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                             activeAction={activeAction}
                             onActionSelect={handleActionSelect}
                         />
-                    ) : state.phase === "action" && !state.actionTaken ? (
+                    ) : (
                         <div className="action-bar px-2 py-2">
                             <button disabled className="text-stone-500 text-sm tracking-wide px-6 py-7 cursor-not-allowed">
-                                Označ svou kostku
+                                {state.phase === "combat" ? "Souboj…" : state.phase === "focal" ? "Počítání bodů…" : "Označ svou kostku"}
                             </button>
                         </div>
-                    ) : <div className="action-bar opacity-0 px-6 py-7 pointer-events-none">‎</div>}
+                    )}
                 </div>
             </div>
 
