@@ -1,9 +1,5 @@
 import {ANIMAL_OPTIONS, SHIELD_BY_PLAYER} from "../styles/themes/default.js";
-
-const PLAYER_GLOW_COLOR = {
-    red:  "var(--color-player-red)",
-    blue: "var(--color-player-blue)",
-};
+import {NAMED_PLAYER_COLORS} from "./Board.jsx";
 
 /**
  * Renders a player's shield with coat of arms, score badge, and name.
@@ -17,7 +13,7 @@ const PLAYER_GLOW_COLOR = {
 export function PlayerShield({playerId, cfg, score, isActive}) {
     const shieldHref = SHIELD_BY_PLAYER[playerId] ?? SHIELD_BY_PLAYER.blue;
     const animalHref = ANIMAL_OPTIONS.find(a => a.id === cfg?.coatOfArms)?.href ?? ANIMAL_OPTIONS[0].href;
-    const glowColor = PLAYER_GLOW_COLOR[playerId];
+    const glowColor = NAMED_PLAYER_COLORS[playerId]?.glow;
 
     const glowStyle = isActive && glowColor
         ? {filter: `drop-shadow(0 0 12px ${glowColor}) drop-shadow(0 0 24px ${glowColor})`}

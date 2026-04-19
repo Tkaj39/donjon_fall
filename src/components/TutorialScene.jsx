@@ -162,7 +162,7 @@ export function TutorialScene({ frames, choices }) {
                 <div className="flex gap-3 shrink-0">
                     {choices.map(c => (
                         <button key={c.frame} onClick={() => setFi(c.frame)}
-                            className="btn-frame px-5 py-2 text-sm font-semibold tracking-wide text-stone-300 cursor-pointer"
+                            className="btn-frame-sm px-5 py-2 text-sm font-semibold tracking-wide text-stone-300 cursor-pointer"
                         >
                             {c.label}
                         </button>
@@ -172,7 +172,7 @@ export function TutorialScene({ frames, choices }) {
 
             {choices && fi !== 0 && (
                 <button onClick={() => setFi(0)}
-                    className="btn-frame px-5 py-2 text-sm font-semibold tracking-wide text-stone-300 cursor-pointer shrink-0"
+                    className="btn-frame-sm px-5 py-2 text-sm font-semibold tracking-wide text-stone-300 cursor-pointer shrink-0"
                 >
                     ↺ Reset
                 </button>
@@ -181,7 +181,7 @@ export function TutorialScene({ frames, choices }) {
             {!choices && frames.length > 1 && (
                 <button
                     onClick={() => setFi(f => (f + 1) % frames.length)}
-                    className="btn-frame px-5 py-2 text-sm font-semibold tracking-wide text-stone-300 cursor-pointer shrink-0"
+                    className="btn-frame-sm px-5 py-2 text-sm font-semibold tracking-wide text-stone-300 cursor-pointer shrink-0"
                 >
                     {fi >= frames.length - 1 ? "↺ Reset" : "Další →"}
                 </button>

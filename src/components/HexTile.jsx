@@ -66,7 +66,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
     const hasTexture = !!themeImageHref;
 
     let fill = "var(--color-hex-default)";
-    if (startingProp) fill = playerColors[startingProp.owner]?.tint ?? "var(--color-hex-starting)";
+    if (startingProp) fill = playerColors[startingProp.owner]?.tint ?? playerColors.default?.tint ?? "#d1d5db";
     if (isFocalPoint) fill = "var(--color-hex-focal)";
     if (isSelected)   fill = "var(--color-hex-selected)";
     // For highlight overlays, base fill is always transparent (texture shows), overlay is drawn above.
@@ -149,7 +149,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
             {diceStack.map((die, index) => {
                 const isTop = index === diceStack.length - 1;
                 const stackOffsetY = (diceStack.length - 1 - index) * (size * STACK_OFFSET_RATIO);
-                const color = playerColors[die.owner]?.primary ?? "var(--color-die-default)";
+                const color = playerColors[die.owner]?.primary ?? playerColors.default?.primary ?? "#6b7280";
                 return (
                     <Die
                         key={index}

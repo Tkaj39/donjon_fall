@@ -5,7 +5,18 @@ img {
     user-drag: none;
 }
 
-/* ── Phase 12.6 — Animations ──────────────────────────────────────────────── */
+/* ── Animations ───────────────────────────────────────────────────────────── */
+
+@keyframes victory-in {
+    0%   { opacity: 0; transform: scale(0.88) translateY(24px); }
+    100% { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.victory-panel {
+    animation: victory-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+
 
 /**
  * Pulsing overlay used on attacker/defender hexes during the combat phase.
@@ -48,6 +59,52 @@ img {
         24px 100%,
         0% calc(100% - 24px),
         0% 24px
+    );
+}
+
+/**
+ * Small variant of btn-frame — 12px corner clips instead of 24px.
+ * Use for navigation buttons, tutorial controls, and any compact context.
+ */
+.btn-frame-sm {
+    position: relative;
+    border-style: solid;
+    border-image: url('/src/assets/border-frame.png') 270 270 / 20px 20px / 0 stretch;
+    background-image: url('/src/assets/background-frame.png');
+    background-size: 100%;
+    clip-path: polygon(
+        12px 0%,
+        calc(100% - 12px) 0%,
+        100% 12px,
+        100% calc(100% - 12px),
+        calc(100% - 12px) 100%,
+        12px 100%,
+        0% calc(100% - 12px),
+        0% 12px
+    );
+}
+
+.btn-frame-sm:hover {
+    background-image:
+        linear-gradient(rgba(255,255,255,0.07), rgba(255,255,255,0.07)),
+        url('/src/assets/background-frame.png');
+}
+
+.btn-frame-sm::after {
+    content: '';
+    position: absolute;
+    inset: 4px 4px;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    clip-path: polygon(
+        8px 0%,
+        calc(100% - 8px) 0%,
+        100% 8px,
+        100% calc(100% - 8px),
+        calc(100% - 8px) 100%,
+        8px 100%,
+        0% calc(100% - 8px),
+        0% 8px
     );
 }
 
@@ -149,7 +206,6 @@ img {
 :root {
     /* Hex fill colours */
     --color-hex-default:        #e8e677;
-    --color-hex-starting:       #9b9ad4;
     --color-hex-focal:          #c4b5fd;
     --color-hex-selected:       #f59e0b;
     --color-hex-stroke:         #50473c;
@@ -165,13 +221,9 @@ img {
     --color-focal-active-stroke: #d97706;
     --color-focal-passive:       #7c3aed;
 
-    /* Die colours — per-player colours are defined in PLAYER_PALETTE (Board.jsx) */
-    --color-die-default:        #6b7280;
+    /* Die colours — defined in NAMED_PLAYER_COLORS.default (Board.jsx) */
 
-    /* Player label colours (used in ScoreBoard and similar UI) */
-    --color-player-red:         #f87171;
-    --color-player-blue:        #3b82f6;
-    --color-player-fallback:    #94a3b8;
+    /* Player label colours — see NAMED_PLAYER_COLORS in Board.jsx */
 
     /* App background & title */
     --color-bg:                 transparent;

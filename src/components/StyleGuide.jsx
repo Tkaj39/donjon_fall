@@ -12,47 +12,59 @@ import {
     appBackground,
 } from "../styles/themes/default.js";
 import { ActionPanel } from "./ActionPanel.jsx";
+import { CombatOverlay } from "./CombatOverlay.jsx";
 import { Die } from "./Die.jsx";
 import { DirectionPickerOverlay } from "./DirectionPickerOverlay.jsx";
 import { FocalPointMarker } from "./FocalPointMarker.jsx";
 import { Logo } from "./Logo.jsx";
+import { PlayerShield } from "./PlayerShield.jsx";
 import { Spinner } from "./Spinner.jsx";
+import { TutorialScene } from "./TutorialScene.jsx";
 import { VictoryScreen } from "./VictoryScreen.jsx";
+import { NAMED_PLAYER_COLORS } from "./Board.jsx";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-/** CSS custom properties defined in index.css :root. */
-const CSS_VARS = [
-    { name: "--color-hex-default",         label: "Hex default" },
-    { name: "--color-hex-starting",        label: "Hex starting" },
-    { name: "--color-hex-focal",           label: "Hex focal" },
-    { name: "--color-hex-selected",        label: "Hex selected" },
-    { name: "--color-hex-stroke",          label: "Hex stroke" },
-    { name: "--color-hex-reachable",       label: "Reachable" },
-    { name: "--color-hex-highlighted",     label: "Highlighted" },
-    { name: "--color-hex-trajectory",      label: "Trajectory" },
-    { name: "--color-hex-enemy-reachable", label: "Enemy reachable" },
-    { name: "--color-focal-active",        label: "Focal active" },
-    { name: "--color-focal-active-stroke", label: "Focal active stroke" },
-    { name: "--color-focal-passive",       label: "Focal passive" },
-    { name: "--color-die-default",         label: "Die default" },
-    { name: "--color-player-red",          label: "Player red" },
-    { name: "--color-player-blue",         label: "Player blue" },
-    { name: "--color-player-fallback",     label: "Player fallback" },
-    { name: "--color-title",               label: "Title" },
+/** CSS custom properties defined in index.css :root, grouped by usage. */
+const CSS_VAR_GROUPS = [
+    {
+        group: "Hex pole",
+        vars: [
+            { name: "--color-hex-default",         label: "default",         usage: "výchozí výplň prázdného pole" },
+            { name: "--color-hex-focal",            label: "focal",           usage: "výplň ohniskového pole" },
+            { name: "--color-hex-selected",         label: "selected",        usage: "výplň vybraného pole (isSelected)" },
+            { name: "--color-hex-stroke",           label: "stroke",          usage: "obrys každého hexu" },
+        ],
+    },
+    {
+        group: "Hex zvýraznění (highlights)",
+        vars: [
+            { name: "--color-hex-reachable",        label: "reachable",       usage: "pole kam lze přesunout kostku" },
+            { name: "--color-hex-highlighted",      label: "highlighted",     usage: "selected overlay (typ 'selected')" },
+            { name: "--color-hex-trajectory",       label: "trajectory",      usage: "políčka na cestě přesunu" },
+            { name: "--color-hex-enemy-reachable",  label: "enemy-reachable", usage: "pole dosažitelná soupeřem" },
+        ],
+    },
+    {
+        group: "Ohniska (focal points)",
+        vars: [
+            { name: "--color-focal-active",         label: "active",          usage: "FocalPointMarker výplň + aktivní-ohnisko overlay na HexTile" },
+            { name: "--color-focal-active-stroke",  label: "active-stroke",   usage: "obrys aktivního i pasivního markeru" },
+            { name: "--color-focal-passive",        label: "passive",         usage: "výplň pasivního ohniska" },
+        ],
+    },
+    {
+        group: "Ostatní",
+        vars: [
+            { name: "--color-title",                label: "title",           usage: "původně pro nadpis aplikace", unused: true },
+        ],
+    },
 ];
 
-/** Player palette (same as Board.jsx). */
-const PLAYER_PALETTE = [
-    { id: "red",    primary: "#dc2626", tint: "#fca5a5" },
-    { id: "blue",   primary: "#2563eb", tint: "#93c5fd" },
-    { id: "green",  primary: "#16a34a", tint: "#86efac" },
-    { id: "amber",  primary: "#d97706", tint: "#fcd34d" },
-    { id: "purple", primary: "#9333ea", tint: "#d8b4fe" },
-    { id: "cyan",   primary: "#0891b2", tint: "#67e8f9" },
-];
+/** Player palette — derived from NAMED_PLAYER_COLORS (Board.jsx). */
+const PLAYER_PALETTE = Object.entries(NAMED_PLAYER_COLORS).map(([id, c]) => ({ id, ...c }));
 
 /** Hex size for demos. */
 const HEX = 40;
@@ -108,8 +120,16 @@ function HexShape({ cx, cy, size, fill, stroke = "var(--color-hex-stroke)" }) {
  * @param {{ onBack: function(): void }} props
  * @returns {JSX.Element}
  */
+const MOCK_COMBAT_STATE = {
+    combat: { attackerHex: "0,0", defenderHex: "1,0" },
+    dice: { "0,0": [{ owner: "red", value: 5 }], "1,0": [{ owner: "blue", value: 3 }] },
+};
+
 export function StyleGuide({ onBack }) {
     const [showVictory, setShowVictory] = useState(false);
+    const [showCombat, setShowCombat] = useState(false);
+    const [showGameMenu, setShowGameMenu] = useState(false);
+    const [showSettingsOverlay, setShowSettingsOverlay] = useState(false);
 
     return (
         <div className="min-h-screen bg-stone-900 text-stone-100 p-8 overflow-y-auto">
@@ -128,16 +148,29 @@ export function StyleGuide({ onBack }) {
 
             {/* ── 1. CSS Variables ──────────────────────────────────────────── */}
             <Section title="1. CSS Variables (:root)">
-                <div className="flex flex-wrap gap-3">
-                    {CSS_VARS.map(({ name, label }) => (
-                        <div key={name} className="flex flex-col items-center gap-1">
-                            <div
-                                className="w-12 h-12 rounded-md border border-stone-600"
-                                style={{ background: `var(${name})` }}
-                            />
-                            <span className="text-[0.65rem] text-stone-400 text-center max-w-16 leading-tight">
-                                {label}
-                            </span>
+                <div className="flex flex-col gap-6">
+                    {CSS_VAR_GROUPS.map(({ group, vars }) => (
+                        <div key={group}>
+                            <p className="text-xs uppercase tracking-widest text-amber-500/70 mb-2">{group}</p>
+                            <div className="flex flex-col gap-2">
+                                {vars.map(({ name, label, usage, unused }) => (
+                                    <div key={name} className="flex items-center gap-3">
+                                        <div className="relative shrink-0">
+                                            <div
+                                                className="w-8 h-8 rounded-md border border-stone-600"
+                                                style={{ background: `var(${name})` }}
+                                            />
+                                            {unused && (
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[0.6rem] font-bold flex items-center justify-center leading-none">!</span>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className={`text-xs font-mono ${unused ? "text-stone-500 line-through" : "text-stone-300"}`}>{name}</span>
+                                            <span className="text-[0.7rem] text-stone-500 leading-tight">{usage}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -145,23 +178,21 @@ export function StyleGuide({ onBack }) {
 
             {/* ── 2. Player Palette ─────────────────────────────────────────── */}
             <Section title="2. Player Palette">
+                <div className="flex gap-6 mb-3 text-xs text-stone-400">
+                    <span><span className="inline-block w-3 h-3 rounded-sm bg-red-600 mr-1 align-middle" />primary — barva těla kostky (Die, MovingDie)</span>
+                    <span><span className="inline-block w-3 h-3 rounded-sm bg-red-300 mr-1 align-middle" />tint — tint startovního pole (HexTile)</span>
+                    <span><span className="inline-block w-3 h-3 rounded-sm bg-red-400 mr-1 align-middle" />glow — záře aktivního štítu, barva tooltipů (PlayerShield, Game)</span>
+                </div>
                 <div className="flex flex-wrap gap-4">
-                    {PLAYER_PALETTE.map(({ id, primary, tint }) => (
+                    {PLAYER_PALETTE.map(({ id, primary, tint, glow }) => (
                         <div key={id} className="flex flex-col items-center gap-1">
                             <div className="flex gap-1">
-                                <div
-                                    className="w-10 h-10 rounded-md border border-stone-600"
-                                    style={{ background: primary }}
-                                    title={`${id} primary: ${primary}`}
-                                />
-                                <div
-                                    className="w-10 h-10 rounded-md border border-stone-600"
-                                    style={{ background: tint }}
-                                    title={`${id} tint: ${tint}`}
-                                />
+                                <div className="w-10 h-10 rounded-md border border-stone-600" style={{ background: primary }} title={`primary: ${primary}`} />
+                                <div className="w-10 h-10 rounded-md border border-stone-600" style={{ background: tint }}    title={`tint: ${tint}`} />
+                                <div className="w-10 h-10 rounded-md border border-stone-600" style={{ background: glow }}    title={`glow: ${glow}`} />
                             </div>
                             <span className="text-xs text-stone-300 capitalize">{id}</span>
-                            <span className="text-[0.6rem] text-stone-500">{primary} / {tint}</span>
+                            <span className="text-[0.6rem] text-stone-500">{primary}</span>
                         </div>
                     ))}
                 </div>
@@ -311,36 +342,26 @@ export function StyleGuide({ onBack }) {
                 </div>
             </Section>
 
-            {/* ── 9. Combat Overlay (static mock) ──────────────────────────── */}
-            <Section title="9. Combat Overlay (static mock)">
-                <div className="relative w-80 h-44 bg-stone-800 rounded-lg">
-                    <div
-                        role="dialog"
-                        aria-label="Combat resolution"
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1e293b] border-2 border-[#475569] rounded-xl py-5 px-6 min-w-56 text-center text-[#f1f5f9] shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
-                    >
-                        <h2 className="m-0 mb-3 text-[1.1rem] font-bold">Combat</h2>
-                        <div className="flex justify-around mb-4">
-                            <div>
-                                <div className="text-xs opacity-70">Attacker</div>
-                                <div className="text-2xl font-bold">5</div>
-                            </div>
-                            <div className="self-center opacity-50">vs</div>
-                            <div>
-                                <div className="text-xs opacity-70">Defender</div>
-                                <div className="text-2xl font-bold">3</div>
-                            </div>
-                        </div>
-                        <div className="flex gap-3 justify-center">
-                            <button className="py-[0.4rem] px-4 rounded-[0.4rem] border border-[#475569] bg-[#334155] text-[#f1f5f9] cursor-pointer font-semibold">
-                                Push
-                            </button>
-                            <button className="py-[0.4rem] px-4 rounded-[0.4rem] border border-[#475569] bg-[#334155] text-[#f1f5f9] cursor-pointer font-semibold">
-                                Occupy
-                            </button>
-                        </div>
+            {/* ── 9. Combat Overlay ────────────────────────────────────────── */}
+            <Section title="9. Combat Overlay">
+                <p className="text-sm text-stone-400 mb-3">
+                    frame-panel + btn-frame styling. Click to show live overlay.
+                </p>
+                <button
+                    onClick={() => setShowCombat(true)}
+                    className="py-2 px-5 rounded-lg bg-stone-700 text-stone-200 font-semibold cursor-pointer border border-stone-600"
+                >
+                    Show Combat Overlay
+                </button>
+                {showCombat && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                        <CombatOverlay
+                            state={MOCK_COMBAT_STATE}
+                            options={["push", "occupy"]}
+                            onChoose={() => setShowCombat(false)}
+                        />
                     </div>
-                </div>
+                )}
             </Section>
 
             {/* ── 10. Victory Screen ────────────────────────────────────────── */}
@@ -456,6 +477,143 @@ export function StyleGuide({ onBack }) {
                     <p className="text-sm text-stone-400">Small text — secondary information</p>
                     <p className="text-xs text-stone-500">Extra small — captions, labels</p>
                 </div>
+            </Section>
+
+            {/* ── 18. btn-frame & frame-panel ───────────────────────────────── */}
+            <Section title="18. btn-frame & frame-panel">
+                <p className="text-sm text-stone-400 mb-4">
+                    Rusty metal border-image applied to buttons and panel containers.
+                </p>
+                <div className="flex flex-wrap gap-4 items-start mb-6">
+                    <button className="btn-frame px-8 py-4 text-lg font-semibold tracking-wide text-stone-300 cursor-pointer">
+                        btn-frame
+                    </button>
+                    <button className="btn-frame px-6 py-3 text-base font-semibold text-stone-300 cursor-pointer">
+                        btn-frame střední
+                    </button>
+                    <button className="btn-frame-sm px-5 py-2 text-sm font-semibold text-stone-300 cursor-pointer">
+                        btn-frame-sm
+                    </button>
+                    <button className="btn-frame-sm px-3 py-1 text-xs font-semibold text-stone-300 cursor-pointer">
+                        btn-frame-sm tiny
+                    </button>
+                </div>
+                <div className="frame-panel flex flex-col gap-3 w-64 px-8 py-6">
+                    <p className="text-stone-300 font-bold text-center tracking-widest uppercase text-sm">frame-panel</p>
+                    <p className="text-stone-500 text-xs text-center">Used for modals and overlays</p>
+                </div>
+            </Section>
+
+            {/* ── 19. PlayerShield ──────────────────────────────────────────── */}
+            <Section title="19. PlayerShield">
+                <p className="text-sm text-stone-400 mb-4">
+                    Active (glow) vs inactive (grayscale). Score shield partially behind main shield.
+                </p>
+                <div className="flex gap-12 items-center bg-stone-800 rounded-lg p-6">
+                    <div className="flex flex-col items-center gap-2">
+                        <PlayerShield playerId="red" cfg={{ name: "Červený", coatOfArms: "dragon" }} score={3} isActive={true} />
+                        <span className="text-xs text-stone-500">Active</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                        <PlayerShield playerId="blue" cfg={{ name: "Modrý", coatOfArms: "wolf" }} score={1} isActive={false} />
+                        <span className="text-xs text-stone-500">Inactive</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                        <PlayerShield playerId="red" cfg={{ name: "Red" }} score={0} isActive={false} />
+                        <span className="text-xs text-stone-500">No coat of arms</span>
+                    </div>
+                </div>
+            </Section>
+
+            {/* ── 20. TutorialScene ─────────────────────────────────────────── */}
+            <Section title="20. TutorialScene (Mini Hex Map)">
+                <p className="text-sm text-stone-400 mb-4">
+                    SVG mini board used in Tutorial steps. Supports frames, highlights, arrows, dice notes.
+                </p>
+                <div className="w-80 bg-stone-800 rounded-lg p-3">
+                    <TutorialScene
+                        frames={[
+                            {
+                                label: "Ukázkový útok",
+                                hexes: [
+                                    {q:-2,r:0},{q:-1,r:0},{q:0,r:0},{q:1,r:0},{q:2,r:0},
+                                    {q:-1,r:1},{q:0,r:1},{q:1,r:1},
+                                    {q:-1,r:-1},{q:0,r:-1},{q:1,r:-1},
+                                ],
+                                dice: [
+                                    { q: -1, r: 0, owner: "red",  value: 4 },
+                                    { q:  1, r: 0, owner: "blue", value: 2, note: "↻ ≤2" },
+                                ],
+                                highlights: [
+                                    { q: -1, r: 0, type: "selected" },
+                                    { q:  0, r: 0, type: "trajectory" },
+                                    { q:  1, r: 0, type: "target" },
+                                ],
+                                arrows: [{ fromQ: -1, fromR: 0, toQ: 1, toR: 0 }],
+                            },
+                        ]}
+                    />
+                </div>
+            </Section>
+
+            {/* ── 21. Scrollbar ─────────────────────────────────────────────── */}
+            <Section title="21. Scrollbar (.scrollbar-stone)">
+                <p className="text-sm text-stone-400 mb-4">
+                    Custom scrollbar used in RulesViewer and any overflow container.
+                </p>
+                <div className="overflow-y-auto scrollbar-stone h-32 w-64 bg-stone-800 rounded-lg p-4 text-stone-400 text-sm">
+                    {Array.from({ length: 12 }, (_, i) => (
+                        <p key={i} className="mb-1">Řádek {i + 1} — scrollovatelný obsah</p>
+                    ))}
+                </div>
+            </Section>
+
+            {/* ── 22. Game pause menu & settings overlay ────────────────────── */}
+            <Section title="22. Game Pause Menu & Settings Overlay">
+                <p className="text-sm text-stone-400 mb-4">
+                    Hamburger menu (pauza) and in-game settings modal. Both darken the background.
+                </p>
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => setShowGameMenu(true)}
+                        className="py-2 px-5 rounded-lg bg-stone-700 text-stone-200 font-semibold cursor-pointer border border-stone-600"
+                    >
+                        Show Pause Menu
+                    </button>
+                    <button
+                        onClick={() => setShowSettingsOverlay(true)}
+                        className="py-2 px-5 rounded-lg bg-stone-700 text-stone-200 font-semibold cursor-pointer border border-stone-600"
+                    >
+                        Show Settings Overlay
+                    </button>
+                </div>
+                {showGameMenu && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowGameMenu(false)}>
+                        <div className="frame-panel flex flex-col items-stretch min-w-[240px] py-6 px-2 gap-1" onClick={e => e.stopPropagation()}>
+                            <h2 className="text-center text-lg font-bold tracking-widest uppercase text-stone-300 mb-3 px-6">Pauza</h2>
+                            <button className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer">Nový start</button>
+                            <button className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer">Nastavení</button>
+                            <button className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer">Opustit hru</button>
+                            <button onClick={() => setShowGameMenu(false)} className="mt-2 px-6 py-2 text-sm text-stone-500 hover:text-stone-300 transition-colors cursor-pointer">Zpět do hry</button>
+                        </div>
+                    </div>
+                )}
+                {showSettingsOverlay && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowSettingsOverlay(false)}>
+                        <div className="frame-panel flex flex-col gap-5 w-80 px-10 py-8" onClick={e => e.stopPropagation()}>
+                            <h2 className="text-2xl font-bold tracking-widest text-stone-300 uppercase text-center">Nastavení</h2>
+                            <div className="flex items-center justify-between border-b border-stone-700 pb-4">
+                                <span className="text-stone-300 tracking-wide">Zvuk</span>
+                                <div className="w-14 h-7 rounded-full bg-stone-400 relative"><span className="absolute top-1 left-8 w-5 h-5 rounded-full bg-white" /></div>
+                            </div>
+                            <div className="flex items-center justify-between border-b border-stone-700 pb-4">
+                                <span className="text-stone-300 tracking-wide">Animace</span>
+                                <div className="w-14 h-7 rounded-full bg-stone-700 relative"><span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-white" /></div>
+                            </div>
+                            <button onClick={() => setShowSettingsOverlay(false)} className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer mt-2">Zpět do hry</button>
+                        </div>
+                    </div>
+                )}
             </Section>
         </div>
     );
