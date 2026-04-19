@@ -82,7 +82,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
         <g
             data-hex={hexKey(coords)}
             data-highlight={highlight ?? undefined}
-            style={{ cursor: onClick ? "pointer" : "default" }}
+            className={onClick ? "cursor-pointer" : "cursor-default"}
             onClick={onClick ? () => onClick(hexKey(coords)) : undefined}
             onMouseEnter={onHover ? () => onHover(hexKey(coords)) : undefined}
             onMouseLeave={onHover ? () => onHover(null) : undefined}
@@ -109,7 +109,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     height={imgSize}
                     preserveAspectRatio="xMidYMid slice"
                     clipPath={`url(#${clipId})`}
-                    style={{ pointerEvents: "none" }}
+                    className="pointer-events-none"
                 />
             )}
             {hasTexture && (
@@ -118,7 +118,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     fill="none"
                     stroke="var(--color-hex-stroke)"
                     strokeWidth={HEX_STROKE_WIDTH}
-                    style={{ pointerEvents: "none" }}
+                    className="pointer-events-none"
                 />
             )}
             {/* Highlight overlay always above texture, 0.5 opacity */}
@@ -127,7 +127,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     points={points}
                     fill={HIGHLIGHT_FILL[highlight]}
                     opacity={0.5}
-                    style={{ pointerEvents: "none" }}
+                    className="pointer-events-none"
                 />
             )}
             {isFocalPoint && isActiveFocalPoint && (
@@ -135,7 +135,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     points={points}
                     fill="var(--color-focal-active)"
                     opacity={0.25}
-                    style={{ pointerEvents: "none" }}
+                    className="pointer-events-none"
                 />
             )}
             {isFocalPoint && (
