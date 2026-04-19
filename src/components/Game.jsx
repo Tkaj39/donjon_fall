@@ -36,7 +36,7 @@ import {useGameState} from "../hooks/useGameState.js";
 import {ActionPanel} from "./ActionPanel.jsx";
 import {ActionReplay} from "./ActionReplay.jsx";
 import {ACTION_ORDER} from "./actionConstants.js";
-import {Board, moveAnimationMs, SVG_WIDTH} from "./Board.jsx";
+import {Board, moveAnimationMs, SVG_WIDTH, NAMED_PLAYER_COLORS} from "./Board.jsx";
 import {CombatOverlay} from "./CombatOverlay.jsx";
 import {CombatPowerTooltip} from "./CombatPowerTooltip.jsx";
 import {Logo} from "./Logo.jsx";
@@ -52,11 +52,10 @@ import {VictoryScreen} from "./VictoryScreen.jsx";
 /** Fallback player list used when Game is launched without setup flow. */
 const DEFAULT_PLAYERS = ["red", "blue"];
 
-/** Subtle glow colour per player ID — used for the active-player edge indicator. */
-const PLAYER_GLOW = {
-    red: "var(--color-player-red)",
-    blue: "var(--color-player-blue)",
-};
+/** Subtle glow colour per player ID — derived from NAMED_PLAYER_COLORS. */
+const PLAYER_GLOW = Object.fromEntries(
+    Object.entries(NAMED_PLAYER_COLORS).map(([id, c]) => [id, c.glow])
+);
 
 /** Which edge to show the glow on per player index (0 = top/red, 1 = bottom/blue). */
 const PLAYER_GLOW_EDGE = ["top", "bottom"];
@@ -777,7 +776,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
 
             {/* ── Victory screen ──────────────────────────────────── */}
             {winner && (
-                <VictoryScreen winner={winner} onNewGame={handleNewGame}/>
+                <VictoryScreen winner={winner} playerConfigs={playerConfigs} score={state.scores[winner] ?? 0} onNewGame={handleNewGame}/>
             )}
 
             {/* ── Rules viewer ────────────────────────────────────── */}

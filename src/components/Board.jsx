@@ -30,25 +30,29 @@ const PADDING_RATIO = 1.2;
  * `primary` — die body colour; `tint` — base-hex background tint.
  */
 const PLAYER_PALETTE = [
-    { primary: "#dc2626", tint: "#fca5a5" }, // red
-    { primary: "#2563eb", tint: "#93c5fd" }, // blue
-    { primary: "#16a34a", tint: "#86efac" }, // green
-    { primary: "#d97706", tint: "#fcd34d" }, // amber
-    { primary: "#9333ea", tint: "#d8b4fe" }, // purple
-    { primary: "#0891b2", tint: "#67e8f9" }, // cyan
+    { primary: "#dc2626", tint: "#fca5a5", glow: "#f87171" }, // red
+    { primary: "#2563eb", tint: "#93c5fd", glow: "#3b82f6" }, // blue
+    { primary: "#16a34a", tint: "#86efac", glow: "#4ade80" }, // green
+    { primary: "#d97706", tint: "#fcd34d", glow: "#fbbf24" }, // amber
+    { primary: "#9333ea", tint: "#d8b4fe", glow: "#c084fc" }, // purple
+    { primary: "#0891b2", tint: "#67e8f9", glow: "#22d3ee" }, // cyan
 ];
+
+/** Fallback palette entry for unknown player IDs. */
+const PLAYER_PALETTE_DEFAULT = { primary: "#6b7280", tint: "#d1d5db", glow: "#9ca3af" };
 
 /**
  * Named colour overrides — player IDs whose names match a colour get that colour
  * regardless of their position in the players array.
  */
-const NAMED_PLAYER_COLORS = {
+export const NAMED_PLAYER_COLORS = {
     red:    PLAYER_PALETTE[0],
     blue:   PLAYER_PALETTE[1],
     green:  PLAYER_PALETTE[2],
     amber:  PLAYER_PALETTE[3],
     purple: PLAYER_PALETTE[4],
     cyan:   PLAYER_PALETTE[5],
+    default: PLAYER_PALETTE_DEFAULT,
 };
 
 /**
@@ -174,7 +178,7 @@ function MovingDie({ waypoints, animationMs, diceStack, hexSize, playerColors })
             {diceStack.map((die, index) => {
                 const isTop       = index === diceStack.length - 1;
                 const stackOffset = (diceStack.length - 1 - index) * (hexSize * STACK_OFFSET_RATIO);
-                const color       = playerColors[die.owner]?.primary ?? "var(--color-die-default)";
+                const color       = playerColors[die.owner]?.primary ?? playerColors.default.primary;
                 return (
                     <Die
                         key={index}
@@ -223,9 +227,12 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
     const focalPoints = state?.focalPoints ?? {};
 
     const players = state?.players ?? [];
-    const playerColors = players.length > 0
-        ? Object.fromEntries(players.map((id, i) => [id, NAMED_PLAYER_COLORS[id] ?? PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]))
-        : DEFAULT_PLAYER_COLORS;
+    const playerColors = {
+        default: PLAYER_PALETTE_DEFAULT,
+        ...(players.length > 0
+            ? Object.fromEntries(players.map((id, i) => [id, NAMED_PLAYER_COLORS[id] ?? PLAYER_PALETTE[i] ?? PLAYER_PALETTE[0]]))
+            : DEFAULT_PLAYER_COLORS),
+    };
 
     // ── Phase 12.6: pre-compute moving die pixel positions ──────────────────
 
