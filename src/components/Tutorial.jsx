@@ -380,8 +380,8 @@ export function Tutorial({ onClose }) {
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-stone-500 hover:text-stone-200 text-xl leading-none transition-colors cursor-pointer"
                         aria-label="Zavřít"
+                        className="btn-frame-sm px-2 py-1 text-stone-400 hover:text-stone-100 cursor-pointer text-base leading-none transition-colors"
                     >
                         ✕
                     </button>

@@ -19,6 +19,31 @@ const APP_VERSION = "v0.1.0";
  * @typedef {"main"|"start"|"settings"} Screen
  */
 
+/* ── MenuSidebar sub-component ────────────────────────────────────────────── */
+
+/**
+ * Shared sidebar used across all menu screens. Logo size and footer are defined here once.
+ *
+ * @param {{ children: React.ReactNode, footer?: React.ReactNode }} props
+ */
+export function MenuSidebar({ children, footer }) {
+    return (
+        <nav className="flex flex-col w-72 shrink-0 bg-black/70 border-r-4 border-double border-stone-500">
+            <div className="flex justify-center pt-6 pb-4">
+                <Logo className="w-46 h-20" />
+            </div>
+            <div className="flex flex-col gap-4 px-3 overflow-y-auto grow">
+                {children}
+            </div>
+            {footer && (
+                <div className="flex flex-col px-3 pb-3 gap-3 border-t border-stone-700 pt-3">
+                    {footer}
+                </div>
+            )}
+        </nav>
+    );
+}
+
 /* ── MenuButton sub-component ─────────────────────────────────────────────── */
 
 /**
@@ -66,6 +91,10 @@ function MenuButton({ label, onClick, disabled = false, hasSubmenu = false, isOp
 export function MainMenu({ onPlay, onDirectPlay, initialScreen = "main" }) {
     const [rulesOpen, setRulesOpen] = useState(false);
     const [tutorialOpen, setTutorialOpen] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [sound, setSound] = useState(true);
+    const [animations, setAnimations] = useState(true);
+    const [language, setLanguage] = useState("cs");
     /** @type {[Screen, Function]} */
     const [screen, setScreen] = useState(initialScreen);
 
@@ -79,51 +108,20 @@ export function MainMenu({ onPlay, onDirectPlay, initialScreen = "main" }) {
         );
     }
 
-    if (screen === "settings") {
-        return <SettingsScreen onBack={() => setScreen("main")} />;
-    }
-
     return (
         <div className="flex min-h-screen text-white">
-            {/* ── Sidebar ─────────────────────────────────────── */}
-            <nav className="flex flex-col w-72 shrink-0 bg-black/70 border-r-4 border-double border-stone-500">
-                {/* Logo */}
-                <div className="flex justify-center pt-6 pb-4">
-                    <Logo className="w-36 h-36" />
-                </div>
-
-                {/* Menu items */}
-                <div className="flex flex-col gap-4 px-3 overflow-y-auto grow">
-                    <MenuButton label="Start" onClick={() => setScreen("start")} />
-                    <MenuButton label="Continue" disabled />
-                    <MenuButton label="Tutorial" onClick={() => setTutorialOpen(true)} />
-                    <MenuButton label="Rules" onClick={() => setRulesOpen(true)} />
-                    <MenuButton label="Settings" onClick={() => setScreen("settings")} />
-                    <div className="hidden">
-                        <MenuButton label="Statistics" disabled />
-                        <MenuButton label="Leaderboard" disabled />
-                        <MenuButton label="Achievements" disabled />
-                        <MenuButton label="Map Editor" disabled />
-                        <MenuButton label="Credits" disabled />
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between px-4 py-3 border-t border-stone-700 text-stone-500 text-xs">
+            <MenuSidebar footer={
+                <div className="flex items-center justify-between text-stone-500 text-xs px-1">
                     <span>{APP_VERSION}</span>
-                    <div className="flex gap-3">
-                        <a
-                            href="https://github.com/Tkaj39/donjon_fall"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-stone-300 transition-colors"
-                            aria-label="GitHub"
-                        >
-                            GitHub
-                        </a>
-                    </div>
+                    <a href="https://github.com/Tkaj39/donjon_fall" target="_blank" rel="noopener noreferrer" className="hover:text-stone-300 transition-colors" aria-label="GitHub">GitHub</a>
                 </div>
-            </nav>
+            }>
+                <MenuButton label="Start" onClick={() => setScreen("start")} />
+                <MenuButton label="Continue" disabled />
+                <MenuButton label="Tutorial" onClick={() => setTutorialOpen(true)} />
+                <MenuButton label="Rules" onClick={() => setRulesOpen(true)} />
+                <MenuButton label="Settings" onClick={() => setSettingsOpen(true)} />
+            </MenuSidebar>
 
             {/* ── Canvas (right area) ─────────────────────────── */}
             <main className="flex flex-col items-center justify-center grow">
@@ -137,6 +135,17 @@ export function MainMenu({ onPlay, onDirectPlay, initialScreen = "main" }) {
 
             {rulesOpen && <RulesViewer onClose={() => setRulesOpen(false)} />}
             {tutorialOpen && <Tutorial onClose={() => setTutorialOpen(false)} />}
+            {settingsOpen && (
+                <SettingsPanel
+                    sound={sound}
+                    onSoundChange={setSound}
+                    animations={animations}
+                    onAnimationsChange={setAnimations}
+                    language={language}
+                    onLanguageChange={setLanguage}
+                    onClose={() => setSettingsOpen(false)}
+                />
+            )}
         </div>
     );
 }
@@ -150,24 +159,17 @@ export function MainMenu({ onPlay, onDirectPlay, initialScreen = "main" }) {
 function StartScreen({ onPlay, onDirectPlay, onBack }) {
     return (
         <div className="flex min-h-screen text-white">
-            {/* ── Sidebar ─────────────────────────────────────── */}
-            <nav className="flex flex-col w-72 shrink-0 bg-black/70 border-r-4 border-double border-stone-500">
-                <div className="flex justify-center pt-6 pb-4">
-                    <Logo className="w-36 h-36" />
-                </div>
-
-                <div className="flex flex-col gap-4 px-3 overflow-y-auto grow">
-                    <MenuButton label="Quick Start" onClick={onDirectPlay} />
-                    <MenuButton label="Configure Game" onClick={onPlay} />
-                </div>
-
-                <div className="flex flex-col px-3 pb-3 gap-3 border-t border-stone-700 pt-3">
+            <MenuSidebar footer={
+                <>
                     <MenuButton label="Back" onClick={onBack} />
                     <div className="flex items-center justify-between text-stone-500 text-xs px-1">
                         <span>{APP_VERSION}</span>
                     </div>
-                </div>
-            </nav>
+                </>
+            }>
+                <MenuButton label="Quick Start" onClick={onDirectPlay} />
+                <MenuButton label="Configure Game" onClick={onPlay} />
+            </MenuSidebar>
 
             {/* ── Canvas ──────────────────────────────────────── */}
             <main className="flex flex-col items-center justify-center grow">
@@ -182,43 +184,3 @@ function StartScreen({ onPlay, onDirectPlay, onBack }) {
     );
 }
 
-/* ── SettingsScreen ────────────────────────────────────────────────────────── */
-
-/** @param {{ onBack: () => void }} props */
-function SettingsScreen({ onBack }) {
-    const [language, setLanguage] = useState("cs");
-    const [sound, setSound] = useState(true);
-    const [animations, setAnimations] = useState(true);
-
-    return (
-        <div className="flex min-h-screen text-white">
-            {/* ── Sidebar ─────────────────────────────────────── */}
-            <nav className="flex flex-col w-72 shrink-0 bg-black/70 border-r-4 border-double border-stone-500">
-                <div className="flex justify-center pt-6 pb-4">
-                    <Logo className="w-36 h-36" />
-                </div>
-
-                <div className="grow" />
-
-                <div className="flex flex-col px-3 pb-3 gap-3 border-t border-stone-700 pt-3">
-                    <MenuButton label="Zpět" onClick={onBack} />
-                    <div className="flex items-center justify-between text-stone-500 text-xs px-1">
-                        <span>{APP_VERSION}</span>
-                    </div>
-                </div>
-            </nav>
-
-            {/* ── Canvas ──────────────────────────────────────── */}
-            <main className="flex flex-col items-center justify-center grow">
-                <SettingsPanel
-                    sound={sound}
-                    onSoundChange={setSound}
-                    animations={animations}
-                    onAnimationsChange={setAnimations}
-                    language={language}
-                    onLanguageChange={setLanguage}
-                />
-            </main>
-        </div>
-    );
-}

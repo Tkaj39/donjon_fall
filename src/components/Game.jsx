@@ -829,23 +829,15 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
 
             {/* ── Settings overlay ─────────────────────────────────── */}
             {showSettings && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-                    onClick={() => setShowSettings(false)}
-                >
-                    <div onClick={e => e.stopPropagation()}>
-                        <SettingsPanel
-                            sound={settingSound}
-                            onSoundChange={setSettingSound}
-                            animations={settingAnimations}
-                            onAnimationsChange={setSettingAnimations}
-                            language={settingLanguage}
-                            onLanguageChange={setSettingLanguage}
-                            onClose={() => setShowSettings(false)}
-                            closeLabel="Zpět do hry"
-                        />
-                    </div>
-                </div>
+                <SettingsPanel
+                    sound={settingSound}
+                    onSoundChange={setSettingSound}
+                    animations={settingAnimations}
+                    onAnimationsChange={setSettingAnimations}
+                    language={settingLanguage}
+                    onLanguageChange={setSettingLanguage}
+                    onClose={() => setShowSettings(false)}
+                />
             )}
         </div>
     );

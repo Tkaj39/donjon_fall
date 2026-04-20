@@ -603,20 +603,15 @@ export function StyleGuide({ onBack }) {
                     </div>
                 )}
                 {showSettingsOverlay && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowSettingsOverlay(false)}>
-                        <div onClick={e => e.stopPropagation()}>
-                            <SettingsPanel
-                                sound={sgSound}
-                                onSoundChange={setSgSound}
-                                animations={sgAnimations}
-                                onAnimationsChange={setSgAnimations}
-                                language={sgLanguage}
-                                onLanguageChange={setSgLanguage}
-                                onClose={() => setShowSettingsOverlay(false)}
-                                closeLabel="Zpět do hry"
-                            />
-                        </div>
-                    </div>
+                    <SettingsPanel
+                        sound={sgSound}
+                        onSoundChange={setSgSound}
+                        animations={sgAnimations}
+                        onAnimationsChange={setSgAnimations}
+                        language={sgLanguage}
+                        onLanguageChange={setSgLanguage}
+                        onClose={() => setShowSettingsOverlay(false)}
+                    />
                 )}
             </Section>
         </div>
