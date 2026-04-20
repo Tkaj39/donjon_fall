@@ -47,18 +47,18 @@ img {
 .btn-frame {
     position: relative;
     border-style: solid;
-    border-image: url('/src/assets/border-frame.png') 270 270 / 30px 30px / 0 stretch;
+    border-image: url('/src/assets/border-frame.png') 270 270 / 13px 20px / 0 stretch;
     background-image: url('/src/assets/background-frame.png');
     background-size: 100% ;
     clip-path: polygon(
-        24px 0%,
-        calc(100% - 24px) 0%,
-        100% 24px,
-        100% calc(100% - 24px),
-        calc(100% - 24px) 100%,
-        24px 100%,
-        0% calc(100% - 24px),
-        0% 24px
+        15px 0%,
+        calc(100% - 15px) 0%,
+        100% 15px,
+        100% calc(100% - 15px),
+        calc(100% - 15px) 100%,
+        15px 100%,
+        0% calc(100% - 15px),
+        0% 15px
     );
 }
 
@@ -117,8 +117,8 @@ img {
     border-width: 4px;
     border-color: var(--color-stone-500, #78716c);
     background-color: color-mix(in oklab, black 70%, transparent);
-    padding: 0.5rem 0.75rem;
-    border-radius: 1.8rem;
+    padding: 0.5rem 0.5rem;
+    border-radius: 1.4rem;
     corner-shape: bevel;
     overflow: hidden;
 }
@@ -130,18 +130,18 @@ img {
 .frame-panel {
     position: relative;
     border-style: solid;
-    border-image: url('/src/assets/border-frame.png') 270 270 / 40px 40px / 0 stretch;
+    border-image: url('/src/assets/border-frame.png') 270 270 / 30px 30px / 0 stretch;
     background-image: linear-gradient(rgba(24,14,8,0.75), rgba(24,14,8,0.75)), url('/src/assets/background-frame.png');
     background-size: 100% 100%;
     clip-path: polygon(
-        36px 0%,
-        calc(100% - 36px) 0%,
-        100% 36px,
-        100% calc(100% - 36px),
-        calc(100% - 36px) 100%,
-        36px 100%,
-        0% calc(100% - 36px),
-        0% 36px
+        24px 0%,
+        calc(100% - 24px) 0%,
+        100% 24px,
+        100% calc(100% - 24px),
+        calc(100% - 24px) 100%,
+        24px 100%,
+        0% calc(100% - 24px),
+        0% 24px
     );
 }
 
@@ -156,16 +156,18 @@ img {
     position: absolute;
     inset: 8px 8px;
     box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
-    pointer-events: none;    clip-path: polygon(
-        16px 0%,
-        calc(100% - 16px) 0%,
-        100% 16px,
-        100% calc(100% - 16px),
-        calc(100% - 16px) 100%,
-        16px 100%,
-        0% calc(100% - 16px),
-        0% 16px
-    );}
+    pointer-events: none;
+    clip-path: polygon(
+        8px 0%,
+        calc(100% - 8px) 0%,
+        100% 8px,
+        100% calc(100% - 8px),
+        calc(100% - 8px) 100%,
+        8px 100%,
+        0% calc(100% - 8px),
+        0% 8px
+    );
+}
 
 /* ── Custom scrollbar ────────────────────────────────────────────────────── */
 

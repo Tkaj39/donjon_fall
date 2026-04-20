@@ -93,7 +93,7 @@ function segmentPath(cx, cy, R, centralAngle) {
     const y1 = cy + R * Math.sin(start);
     const x2 = cx + R * Math.cos(end);
     const y2 = cy + R * Math.sin(end);
-    return `M ${cx} ${cy} L ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2} Z`;
+    return `M ${cx} ${cy} L ${x1} ${y1} L ${x2} ${y2} Z`;
 }
 
 /**

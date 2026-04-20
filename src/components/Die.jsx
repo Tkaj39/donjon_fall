@@ -15,18 +15,18 @@
 const PIP_LAYOUTS = [
     [],                                                                                     // 0 (unused)
     [[0, 0]],                                                                               // 1
-    [[-0.27, -0.27], [0.27, 0.27]],                                                        // 2
-    [[-0.27, -0.27], [0, 0], [0.27, 0.27]],                                                // 3
-    [[-0.27, -0.27], [0.27, -0.27], [-0.27, 0.27], [0.27, 0.27]],                         // 4
-    [[-0.27, -0.27], [0.27, -0.27], [0, 0], [-0.27, 0.27], [0.27, 0.27]],                 // 5
-    [[-0.27, -0.3], [0.27, -0.3], [-0.27, 0], [0.27, 0], [-0.27, 0.3], [0.27, 0.3]],     // 6
+    [[-0.22, -0.22], [0.22, 0.22]],                                                        // 2
+    [[-0.22, -0.22], [0, 0], [0.22, 0.22]],                                                // 3
+    [[-0.22, -0.22], [0.22, -0.22], [-0.22, 0.22], [0.22, 0.22]],                         // 4
+    [[-0.22, -0.22], [0.22, -0.22], [0, 0], [-0.22, 0.22], [0.22, 0.22]],                 // 5
+    [[-0.22, -0.25], [0.22, -0.25], [-0.22, 0], [0.22, 0], [-0.22, 0.25], [0.22, 0.25]], // 6
 ];
 
 /** Die face side length as a fraction of the parent hex circumradius. */
-const DIE_FACE_RATIO = 0.55;
+const DIE_FACE_RATIO = 0.65;
 
 /** Pip radius as a fraction of the parent hex circumradius. */
-const PIP_RADIUS_RATIO = 0.075;
+const PIP_RADIUS_RATIO = 0.065;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -49,8 +49,18 @@ export function Die({ cx, cy, hexSize, value, color, isTop = true }) {
     const pipRadius = hexSize * PIP_RADIUS_RATIO;
     const pips = PIP_LAYOUTS[value] ?? [];
 
+    const gradId = `die-dim-${cx}-${cy}`;
+
     return (
-        <g opacity={isTop ? 1 : 0.55}>
+        <g>
+            {!isTop && (
+                <defs>
+                    <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor="rgba(0,0,0,0.55)" />
+                        <stop offset="100%" stopColor="rgba(0,0,0,0)"    />
+                    </linearGradient>
+                </defs>
+            )}
             <rect
                 x={cx - half}
                 y={cy - half}
@@ -61,6 +71,17 @@ export function Die({ cx, cy, hexSize, value, color, isTop = true }) {
                 stroke="rgba(0,0,0,0.35)"
                 strokeWidth={1}
             />
+            {!isTop && (
+                <rect
+                    x={cx - half}
+                    y={cy - half}
+                    width={half * 2}
+                    height={half * 2}
+                    rx={half * 0.3}
+                    fill={`url(#${gradId})`}
+                    className="pointer-events-none"
+                />
+            )}
             {pips.map(([relX, relY], pipIndex) => (
                 <circle
                     key={pipIndex}

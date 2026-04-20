@@ -42,6 +42,7 @@ import {CombatPowerTooltip} from "./CombatPowerTooltip.jsx";
 import {Logo} from "./Logo.jsx";
 import {PlayerShield} from "./PlayerShield.jsx";
 import {RulesViewer} from "./RulesViewer.jsx";
+import {SettingsPanel} from "./SettingsPanel.jsx";
 import {StateInspector} from "./StateInspector.jsx";
 import {VictoryScreen} from "./VictoryScreen.jsx";
 
@@ -112,6 +113,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
     const [showSettings, setShowSettings] = useState(false);
     const [settingSound, setSettingSound] = useState(true);
     const [settingAnimations, setSettingAnimations] = useState(true);
+    const [settingLanguage, setSettingLanguage] = useState("cs");
 
     /** Whether the Phase 14.1 debug overlay is visible (toggled by Ctrl+D). */
     const [debugMode, setDebugMode] = useState(false);
@@ -791,7 +793,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                     onClick={() => setShowMenu(false)}
                 >
                     <div
-                        className="frame-panel flex flex-col items-stretch min-w-[240px] py-6 px-2 gap-1"
+                        className="frame-panel flex flex-col items-center min-w-[280px] py-8 px-8 gap-3"
                         onClick={e => e.stopPropagation()}
                     >
                         <h2 className="text-center text-lg font-bold tracking-widest uppercase text-stone-300 mb-3 px-6">
@@ -799,19 +801,19 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                         </h2>
                         <button
                             onClick={() => { setShowMenu(false); handleNewGame(); }}
-                            className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer"
+                            className="btn-frame w-48 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer"
                         >
                             Nový start
                         </button>
                         <button
                             onClick={() => { setShowMenu(false); setShowSettings(true); }}
-                            className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer"
+                            className="btn-frame w-48 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer"
                         >
                             Nastavení
                         </button>
                         <button
                             onClick={() => { setShowMenu(false); onExit?.(); }}
-                            className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer"
+                            className="btn-frame w-48 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer"
                         >
                             Opustit hru
                         </button>
@@ -831,37 +833,17 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
                     onClick={() => setShowSettings(false)}
                 >
-                    <div
-                        className="frame-panel flex flex-col gap-5 w-80 px-10 py-8"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <h2 className="text-2xl font-bold tracking-widest text-stone-300 uppercase text-center">
-                            Nastavení
-                        </h2>
-                        <div className="flex items-center justify-between border-b border-stone-700 pb-4">
-                            <span className="text-stone-300 tracking-wide">Zvuk</span>
-                            <button
-                                onClick={() => setSettingSound(v => !v)}
-                                className={`w-14 h-7 rounded-full transition-colors cursor-pointer relative ${settingSound ? "bg-stone-400" : "bg-stone-700"}`}
-                            >
-                                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${settingSound ? "left-8" : "left-1"}`} />
-                            </button>
-                        </div>
-                        <div className="flex items-center justify-between border-b border-stone-700 pb-4">
-                            <span className="text-stone-300 tracking-wide">Animace</span>
-                            <button
-                                onClick={() => setSettingAnimations(v => !v)}
-                                className={`w-14 h-7 rounded-full transition-colors cursor-pointer relative ${settingAnimations ? "bg-stone-400" : "bg-stone-700"}`}
-                            >
-                                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${settingAnimations ? "left-8" : "left-1"}`} />
-                            </button>
-                        </div>
-                        <button
-                            onClick={() => setShowSettings(false)}
-                            className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer mt-2"
-                        >
-                            Zpět do hry
-                        </button>
+                    <div onClick={e => e.stopPropagation()}>
+                        <SettingsPanel
+                            sound={settingSound}
+                            onSoundChange={setSettingSound}
+                            animations={settingAnimations}
+                            onAnimationsChange={setSettingAnimations}
+                            language={settingLanguage}
+                            onLanguageChange={setSettingLanguage}
+                            onClose={() => setShowSettings(false)}
+                            closeLabel="Zpět do hry"
+                        />
                     </div>
                 </div>
             )}

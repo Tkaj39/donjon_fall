@@ -9,6 +9,7 @@
 import { useState } from "react";
 import { Logo } from "./Logo.jsx";
 import { RulesViewer } from "./RulesViewer.jsx";
+import { SettingsPanel } from "./SettingsPanel.jsx";
 import { Tutorial } from "./Tutorial.jsx";
 
 /** Application version shown in the sidebar footer. */
@@ -197,14 +198,10 @@ function SettingsScreen({ onBack }) {
                     <Logo className="w-36 h-36" />
                 </div>
 
-                <div className="flex flex-col gap-4 px-3 overflow-y-auto grow">
-                    <p className="text-stone-500 text-xs uppercase tracking-widest text-center pt-2">
-                        Settings
-                    </p>
-                </div>
+                <div className="grow" />
 
                 <div className="flex flex-col px-3 pb-3 gap-3 border-t border-stone-700 pt-3">
-                    <MenuButton label="Back" onClick={onBack} />
+                    <MenuButton label="Zpět" onClick={onBack} />
                     <div className="flex items-center justify-between text-stone-500 text-xs px-1">
                         <span>{APP_VERSION}</span>
                     </div>
@@ -213,58 +210,15 @@ function SettingsScreen({ onBack }) {
 
             {/* ── Canvas ──────────────────────────────────────── */}
             <main className="flex flex-col items-center justify-center grow">
-                <div className="frame-panel flex flex-col gap-6 w-96 px-10 py-8">
-                    <h2 className="text-3xl font-bold tracking-widest text-stone-300 uppercase text-center mb-2">
-                        Settings
-                    </h2>
-
-                    <SettingRow label="Language / Jazyk">
-                        <div className="flex gap-2">
-                            <ToggleChip active={language === "cs"} onClick={() => setLanguage("cs")}>CS</ToggleChip>
-                            <ToggleChip active={language === "en"} onClick={() => setLanguage("en")}>EN</ToggleChip>
-                        </div>
-                    </SettingRow>
-
-                    <SettingRow label="Sound">
-                        <ToggleSwitch value={sound} onChange={setSound} />
-                    </SettingRow>
-
-                    <SettingRow label="Animations">
-                        <ToggleSwitch value={animations} onChange={setAnimations} />
-                    </SettingRow>
-                </div>
+                <SettingsPanel
+                    sound={sound}
+                    onSoundChange={setSound}
+                    animations={animations}
+                    onAnimationsChange={setAnimations}
+                    language={language}
+                    onLanguageChange={setLanguage}
+                />
             </main>
         </div>
-    );
-}
-
-function SettingRow({ label, children }) {
-    return (
-        <div className="flex items-center justify-between border-b border-stone-700 pb-4">
-            <span className="text-stone-300 text-lg tracking-wide">{label}</span>
-            {children}
-        </div>
-    );
-}
-
-function ToggleSwitch({ value, onChange }) {
-    return (
-        <button
-            onClick={() => onChange(!value)}
-            className={`w-14 h-7 rounded-full transition-colors cursor-pointer relative ${value ? "bg-stone-400" : "bg-stone-700"}`}
-        >
-            <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${value ? "left-8" : "left-1"}`} />
-        </button>
-    );
-}
-
-function ToggleChip({ active, onClick, children }) {
-    return (
-        <button
-            onClick={onClick}
-            className={`btn-frame px-4 py-1 text-sm font-semibold tracking-wide cursor-pointer transition-colors ${active ? "text-stone-200 bg-stone-700" : "text-stone-500 hover:bg-stone-800"}`}
-        >
-            {children}
-        </button>
     );
 }
