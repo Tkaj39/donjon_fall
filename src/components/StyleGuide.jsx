@@ -18,6 +18,7 @@ import { DirectionPickerOverlay } from "./DirectionPickerOverlay.jsx";
 import { FocalPointMarker } from "./FocalPointMarker.jsx";
 import { Logo } from "./Logo.jsx";
 import { PlayerShield } from "./PlayerShield.jsx";
+import { SettingsPanel } from "./SettingsPanel.jsx";
 import { Spinner } from "./Spinner.jsx";
 import { TutorialScene } from "./TutorialScene.jsx";
 import { VictoryScreen } from "./VictoryScreen.jsx";
@@ -130,6 +131,9 @@ export function StyleGuide({ onBack }) {
     const [showCombat, setShowCombat] = useState(false);
     const [showGameMenu, setShowGameMenu] = useState(false);
     const [showSettingsOverlay, setShowSettingsOverlay] = useState(false);
+    const [sgSound, setSgSound] = useState(true);
+    const [sgAnimations, setSgAnimations] = useState(true);
+    const [sgLanguage, setSgLanguage] = useState("cs");
 
     return (
         <div className="min-h-screen bg-stone-900 text-stone-100 p-8 overflow-y-auto">
@@ -589,30 +593,25 @@ export function StyleGuide({ onBack }) {
                 </div>
                 {showGameMenu && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowGameMenu(false)}>
-                        <div className="frame-panel flex flex-col items-stretch min-w-[240px] py-6 px-2 gap-1" onClick={e => e.stopPropagation()}>
+                        <div className="frame-panel flex flex-col items-center min-w-[280px] py-10 px-12 gap-3" onClick={e => e.stopPropagation()}>
                             <h2 className="text-center text-lg font-bold tracking-widest uppercase text-stone-300 mb-3 px-6">Pauza</h2>
-                            <button className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer">Nový start</button>
-                            <button className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer">Nastavení</button>
-                            <button className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer">Opustit hru</button>
+                            <button className="btn-frame w-48 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer">Nový start</button>
+                            <button className="btn-frame w-48 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer">Nastavení</button>
+                            <button className="btn-frame w-48 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer">Opustit hru</button>
                             <button onClick={() => setShowGameMenu(false)} className="mt-2 px-6 py-2 text-sm text-stone-500 hover:text-stone-300 transition-colors cursor-pointer">Zpět do hry</button>
                         </div>
                     </div>
                 )}
                 {showSettingsOverlay && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowSettingsOverlay(false)}>
-                        <div className="frame-panel flex flex-col gap-5 w-80 px-10 py-8" onClick={e => e.stopPropagation()}>
-                            <h2 className="text-2xl font-bold tracking-widest text-stone-300 uppercase text-center">Nastavení</h2>
-                            <div className="flex items-center justify-between border-b border-stone-700 pb-4">
-                                <span className="text-stone-300 tracking-wide">Zvuk</span>
-                                <div className="w-14 h-7 rounded-full bg-stone-400 relative"><span className="absolute top-1 left-8 w-5 h-5 rounded-full bg-white" /></div>
-                            </div>
-                            <div className="flex items-center justify-between border-b border-stone-700 pb-4">
-                                <span className="text-stone-300 tracking-wide">Animace</span>
-                                <div className="w-14 h-7 rounded-full bg-stone-700 relative"><span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-white" /></div>
-                            </div>
-                            <button onClick={() => setShowSettingsOverlay(false)} className="btn-frame px-6 py-3 text-base font-semibold tracking-wide text-stone-300 cursor-pointer mt-2">Zpět do hry</button>
-                        </div>
-                    </div>
+                    <SettingsPanel
+                        sound={sgSound}
+                        onSoundChange={setSgSound}
+                        animations={sgAnimations}
+                        onAnimationsChange={setSgAnimations}
+                        language={sgLanguage}
+                        onLanguageChange={setSgLanguage}
+                        onClose={() => setShowSettingsOverlay(false)}
+                    />
                 )}
             </Section>
         </div>

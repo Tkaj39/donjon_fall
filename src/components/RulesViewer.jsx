@@ -228,7 +228,7 @@ export function RulesViewer({ onClose }) {
                             data-testid="close-btn"
                             aria-label="Close rules viewer"
                             onClick={onClose}
-                            className="py-[0.2rem] px-[0.55rem] rounded-[0.4rem] border border-white/20 bg-white/[0.07] text-[rgba(241,245,249,0.75)] text-[1.1rem] font-bold cursor-pointer"
+                            className="btn-frame-sm px-2 py-1 text-stone-400 hover:text-stone-100 cursor-pointer text-base leading-none transition-colors"
                         >
                             ✕
                         </button>
