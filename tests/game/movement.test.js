@@ -158,6 +158,64 @@ describe('getReachableHexes', () => {
         // Should reach many hexes on empty board
         expect(result.size).toBeGreaterThan(20);
     });
+
+    it('pass-through boost: die can traverse a second friendly that plain face value cannot enter', () => {
+        // Mover red(3) at CENTER, friendly red(2) at N1 (strength 2), second friendly red(3) at N1_N1 (strength 3).
+        // Plain face value 3: canEnterTower(N1_N1) = 3 > 3? No — cannot traverse N1_N1.
+        // After passing through N1 (1 own die, 0 enemy): boostStr = 3+1-0 = 4, boostLeft = 2.
+        // Boosted: canEnterTower(N1_N1) = 4 > 3? Yes — can traverse N1_N1.
+        // Target '3,-3,0' is ONLY reachable in 3 steps via CENTER→N1→N1_N1 (no other 3-step path exists
+        // on the board). With boost the mover traverses N1_N1 and lands there.
+        const N1_N1_DEEP = '3,-3,0';
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'red', value: 3 }],
+            },
+        });
+        const result = getReachableHexes(state, CENTER);
+        expect(result.has(N1_N1)).toBe(true);    // N1_N1 is a valid landing spot
+        expect(result.has(N1_N1_DEEP)).toBe(true); // reachable only via boosted traversal of N1_N1
+    });
+
+    it('pass-through boost does not enable traversal through a formation stronger than the boost', () => {
+        // Mover red(3) at CENTER, friendly red(2) at N1 (strength 2, traversable):
+        //   boostStr = 3+1-0 = 4, boostLeft = 2.
+        // N1_N1 has red(4) (strength 4). Boost power 4 not > 4 — cannot traverse N1_N1.
+        // '3,-3,0' is ONLY reachable via CENTER→N1→N1_N1→'3,-3,0'; since N1_N1 blocks traversal,
+        // the deep hex is NOT reachable.
+        const N1_N1_DEEP = '3,-3,0';
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'red', value: 4 }],
+            },
+        });
+        const result = getReachableHexes(state, CENTER);
+        expect(result.has(N1_N1)).toBe(true);       // N1_N1 is a valid landing spot
+        expect(result.has(N1_N1_DEEP)).toBe(false); // blocked: boost=4 not > strength=4
+    });
+
+    it('pass-through boost from larger friendly tower provides greater boost and enables traversal of stronger formation', () => {
+        // Mover red(4) at CENTER. N1 has tower [red(1), red(2)] (top=red(2), strength=3).
+        //   Entry check: mover value 4 > strength 3 ✓.
+        //   Boost: boostStr = 4+2-0 = 6, boostLeft = max(1, 3-0) = 3.
+        // N1_N1 has red(5) (strength 5). Single-die boost (5) not > 5. Tower boost (6) > 5 ✓.
+        // '3,-3,0' (only reachable via N1→N1_N1) is reachable with the larger tower boost.
+        const N1_N1_DEEP = '3,-3,0';
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 4 }],
+                [N1]: [{ owner: 'red', value: 1 }, { owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'red', value: 5 }],
+            },
+        });
+        const result = getReachableHexes(state, CENTER);
+        // With boost 6 the mover CAN traverse N1_N1 (6 > 5) and reach the deep hex.
+        expect(result.has(N1_N1_DEEP)).toBe(true);
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -291,6 +349,26 @@ describe('getPathsToHex', () => {
             expect(path[0]).toBe(CENTER);
             expect(path[path.length - 1]).toBe(N1);
         }
+    });
+
+    it('pass-through boost: includes path through second friendly that plain face value cannot traverse', () => {
+        // Mover red(3) at CENTER, friendly red(2) at N1 (strength 2), second friendly red(3) at N1_N1 (strength 3).
+        // Without boost: cannot traverse N1_N1 (3 not > 3).
+        // With boost from N1 (boostStr=4): 4 > 3 ✓ — can traverse N1_N1.
+        // '3,-3,0' is only reachable in 3 steps via CENTER→N1→N1_N1, so a path through both
+        // N1 and N1_N1 to that target must exist when boost is active.
+        const N1_N1_DEEP = '3,-3,0';
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'red', value: 3 }],
+            },
+        });
+        const result = getPathsToHex(state, CENTER, N1_N1_DEEP);
+        expect(result.length).toBeGreaterThan(0);
+        const pathThroughBothFriendlies = result.some(p => p.includes(N1) && p.includes(N1_N1));
+        expect(pathThroughBothFriendlies).toBe(true);
     });
 });
 
@@ -561,6 +639,26 @@ describe('applyMoveAction', () => {
         });
         const result = applyMoveAction(state, CENTER, N2);
         expect(result.combat.approachDirection).toBe(null);
+    });
+
+    it('pass-through boost: sets attackStrengthOverride to boosted value when path traverses a friendly', () => {
+        // Mover red(3) at CENTER, friendly red(2) at N1 (intermediate), enemy blue(1) at N1_N1.
+        // baseStr = getAttackStrength(CENTER) = 3 (standalone).
+        // Path CENTER→N1→N1_N1: after N1 (own, 1 own die, 0 enemy), boostStr = 3+1-0 = 4, boostLeft = 2.
+        // At N1_N1 (destination, last step): effectivePower = boostStr = 4.
+        // So attackStrengthOverride = max(baseStr=3, boosted=4) = 4.
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'blue', value: 1 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1_N1, N1);
+        expect(result.phase).toBe('combat');
+        expect(result.combat.attackStrengthOverride).toBe(4);
+        // Confirm it is strictly greater than the base (non-boosted) attack strength of 3
+        expect(result.combat.attackStrengthOverride).toBeGreaterThan(3);
     });
 });
 

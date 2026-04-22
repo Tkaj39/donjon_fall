@@ -26,6 +26,7 @@ import {
     getTowerReachableHexes,
     getTowerMoveRange,
     getJumpRange,
+    getMoveAttackStrength,
     canCollapse,
     getShortestPathToHex,
     getApproachDirections,
@@ -330,13 +331,14 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                 const ctrl = getController(state, key);
                 if (ctrl === state.currentPlayer && !canEnterTower(state, moverDie, key)) continue;
                 if (ctrl !== null && ctrl !== state.currentPlayer) {
-                    // For a jump, effective attack strength is distance-dependent:
-                    // tower strength within boostedRange, face value beyond.
+                    // For a jump, effective strength is distance-dependent.
+                    // For a regular move, use the best path-aware attack strength
+                    // (accounts for pass-through boost from intermediate friendly dice).
                     const effectiveStrength = isJump
                         ? (hexesDistance(hexFromKey(selectedHex), hexFromKey(key)) <= jumpBoostedRange
                             ? getAttackStrength(state, selectedHex)
                             : moverDie.value)
-                        : undefined;
+                        : getMoveAttackStrength(state, selectedHex, key);
                     if (!canAttack(state, selectedHex, key, effectiveStrength)) continue;
                 }
                 filtered.add(key);
