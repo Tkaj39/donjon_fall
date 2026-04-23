@@ -421,8 +421,12 @@ function computePathAttackStrength(state, moverDie, path, baseStrength) {
  * Returns the best effective attack strength achievable when moving the die at
  * `fromKey` to attack `toKey`, considering pass-through boosts along all valid paths.
  *
- * Used by the UI to determine whether an enemy hex should be highlighted as
- * a valid attack destination.
+ * NOTE: intentionally not used for enemy-hex highlight validation yet. Highlighting
+ * currently uses the die's base attack strength only (getAttackStrength), so a boost
+ * from passing through a friendly die is NOT shown until the player explicitly routes
+ * through it. When we want path-aware highlighting (show all hexes reachable via any
+ * route, including boosted ones), replace the getAttackStrength call in Game.jsx
+ * reachableKeys → move-die branch with getMoveAttackStrength(state, selectedHex, key).
  *
  * @param {import("./gameState.js").GameState} state
  * @param {string} fromKey

@@ -333,13 +333,13 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                 if (ctrl === state.currentPlayer && !canEnterTower(state, moverDie, key)) continue;
                 if (ctrl !== null && ctrl !== state.currentPlayer) {
                     // For a jump, effective strength is distance-dependent.
-                    // For a regular move, use the best path-aware attack strength
-                    // (accounts for pass-through boost from intermediate friendly dice).
+                    // Use base attack strength only — pass-through boost (getMoveAttackStrength)
+                    // is intentionally excluded here until path-aware highlighting is implemented.
                     const effectiveStrength = isJump
                         ? (hexesDistance(hexFromKey(selectedHex), hexFromKey(key)) <= jumpBoostedRange
                             ? getAttackStrength(state, selectedHex)
                             : moverDie.value)
-                        : getMoveAttackStrength(state, selectedHex, key);
+                        : getAttackStrength(state, selectedHex);
                     if (!canAttack(state, selectedHex, key, effectiveStrength)) continue;
                 }
                 filtered.add(key);
