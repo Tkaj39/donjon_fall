@@ -447,24 +447,29 @@ export function getMoveAttackStrength(state, fromKey, toKey) {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the effective attack strength of `moverDie` for hexes BEYOND the end
- * of an explicit player-chosen trajectory, accounting for pass-through boosts
- * from any friendly formations traversed along that trajectory.
+ * Returns the effective attack strength along a player-chosen trajectory.
  *
- * Used by the UI when a trajectory is active: if the player routed through a
- * friendly die, the boost they set up should be reflected in what enemies are
- * highlighted as reachable and what the combat tooltip shows.
+ * Two modes via `forArrival`:
+ *  - false (default): returns strength for hexes *beyond* the trajectory end —
+ *    use when the trajectory ends on a friendly die and you want to know how
+ *    strong the die will be as it continues moving.
+ *  - true: returns strength *when arriving at* the last hex — use when the
+ *    trajectory already ends on the enemy target and you want the attack value
+ *    that should be shown in the tooltip and used for reachability checks.
  *
  * @param {import("./gameState.js").GameState} state
  * @param {import("./gameState.js").Die} moverDie
  * @param {string[]} trajectoryPath - ordered hex array [fromKey, ..., currentEnd]
+ * @param {{ forArrival?: boolean }} [opts]
  * @returns {number}
  */
-export function getTrajectoryEffectiveStrength(state, moverDie, trajectoryPath) {
+export function getTrajectoryEffectiveStrength(state, moverDie, trajectoryPath, { forArrival = false } = {}) {
     const baseStr = getAttackStrength(state, trajectoryPath[0]);
     if (trajectoryPath.length < 2) return baseStr;
     let boostLeft = 0, boostStr = 0;
     for (let i = 1; i < trajectoryPath.length; i++) {
+        const effectivePower = boostLeft > 0 ? boostStr : baseStr;
+        if (forArrival && i === trajectoryPath.length - 1) return effectivePower;
         const ctrl = getController(state, trajectoryPath[i]);
         if (ctrl === moverDie.owner) {
             const stack = getDiceAt(state, trajectoryPath[i]);

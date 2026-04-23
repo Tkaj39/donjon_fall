@@ -343,7 +343,8 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                             ? getAttackStrength(state, selectedHex)
                             : moverDie.value)
                         : (trajectoryPath.length >= 2
-                            ? getTrajectoryEffectiveStrength(state, moverDie, trajectoryPath)
+                            ? getTrajectoryEffectiveStrength(state, moverDie, trajectoryPath,
+                                { forArrival: key === trajectoryPath[trajectoryPath.length - 1] })
                             : getAttackStrength(state, selectedHex));
                     if (!canAttack(state, selectedHex, key, effectiveStrength)) continue;
                 }
@@ -591,8 +592,19 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                     setTrajectoryPath([...trajectoryPath, clickedKey]);
                     setPickerApproachKey(null);
                 } else {
-                    // Auto-path re-plan to a non-adjacent (or first) destination
-                    const path = getShortestPathToHex(state, selectedHex, clickedKey, activeAction);
+                    // Auto-path re-plan to a non-adjacent (or first) destination.
+                    // If trajectory ends on a friendly die, extend from there to preserve
+                    // any pass-through boost the player has set up.
+                    let path = [];
+                    if (trajectoryEnd && getController(state, trajectoryEnd) === state.currentPlayer) {
+                        const extPath = getShortestPathToHex(state, trajectoryEnd, clickedKey, activeAction);
+                        if (extPath.length > 0 && (trajectoryPath.length - 1) + (extPath.length - 1) <= moveRange) {
+                            path = [...trajectoryPath, ...extPath.slice(1)];
+                        }
+                    }
+                    if (path.length === 0) {
+                        path = getShortestPathToHex(state, selectedHex, clickedKey, activeAction);
+                    }
                     if (path.length > 0) {
                         setTrajectoryPath(path);
                         setPickerApproachKey(null);
@@ -779,7 +791,8 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                                     // show the boosted combat power in the tooltip.
                                     if (activeAction === "move-die" && trajectoryPath.length >= 2) {
                                         const mDie = getTopDie(state, selectedHex);
-                                        return getTrajectoryEffectiveStrength(state, mDie, trajectoryPath);
+                                        return getTrajectoryEffectiveStrength(state, mDie, trajectoryPath,
+                                            { forArrival: hoveredHex === trajectoryPath[trajectoryPath.length - 1] });
                                     }
                                     return getAttackStrength(state, selectedHex);
                                 })(),
