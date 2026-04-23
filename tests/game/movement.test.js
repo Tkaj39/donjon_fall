@@ -3,6 +3,7 @@ import {
     getReachableHexes,
     getPathsToHex,
     getApproachDirections,
+    getMoveAttackStrength,
     getTrajectoryEffectiveStrength,
     applyMoveAction,
     getJumpRange,
@@ -556,6 +557,61 @@ describe('getApproachDirections with defenderStr', () => {
         const result = getApproachDirections(state, CENTER, N3, 'move-die', 2);
         expect(result.has(CENTER)).toBe(true);
         expect(result.has(N4)).toBe(true);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getMoveAttackStrength
+// ---------------------------------------------------------------------------
+
+describe('getMoveAttackStrength', () => {
+    it('returns 0 when no die at fromKey', () => {
+        const state = makeState({ dice: { [N1]: [{ owner: 'blue', value: 3 }] } });
+        expect(getMoveAttackStrength(state, CENTER, N1)).toBe(0);
+    });
+
+    it('returns base strength when toKey is unreachable (no paths found)', () => {
+        // Die value 1 cannot reach a 2-step target
+        const state = makeState({ dice: { [CENTER]: [{ owner: 'red', value: 1 }] } });
+        expect(getMoveAttackStrength(state, CENTER, N1_N1)).toBe(1);
+    });
+
+    it('returns face value for direct attack with no intermediates', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N1]:     [{ owner: 'blue', value: 1 }],
+            },
+        });
+        expect(getMoveAttackStrength(state, CENTER, N1)).toBe(3);
+    });
+
+    it('returns boosted strength when best path passes through a friendly die', () => {
+        // CENTER(red,3) → N4(red,2) → N3(blue,3)
+        // Via friendly N4: effective = 3+1 = 4
+        // Direct CENTER → N3: effective = 3
+        // Best = 4
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N4]:     [{ owner: 'red',  value: 2 }],
+                [N3]:     [{ owner: 'blue', value: 3 }],
+            },
+        });
+        expect(getMoveAttackStrength(state, CENTER, N3)).toBe(4);
+    });
+
+    it('returns base strength when friendly is not traversable (mover too weak)', () => {
+        // CENTER(red,1) cannot pass through N4(red,3) since 1 ≤ 3 (canEnterTower fails)
+        // No path through N4, direct path CENTER→N3 = base strength 1
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 1 }],
+                [N4]:     [{ owner: 'red',  value: 3 }],
+                [N3]:     [{ owner: 'blue', value: 1 }],
+            },
+        });
+        expect(getMoveAttackStrength(state, CENTER, N3)).toBe(1);
     });
 });
 
