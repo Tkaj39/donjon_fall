@@ -27,6 +27,7 @@ import {
     getTowerMoveRange,
     getJumpRange,
     getMoveAttackStrength,
+    getTrajectoryEffectiveStrength,
     canCollapse,
     getShortestPathToHex,
     getApproachDirections,
@@ -333,13 +334,17 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                 if (ctrl === state.currentPlayer && !canEnterTower(state, moverDie, key)) continue;
                 if (ctrl !== null && ctrl !== state.currentPlayer) {
                     // For a jump, effective strength is distance-dependent.
-                    // Use base attack strength only — pass-through boost (getMoveAttackStrength)
-                    // is intentionally excluded here until path-aware highlighting is implemented.
+                    // For a regular move, use base strength — unless the player has already
+                    // planned a trajectory through a friendly die, in which case the boost
+                    // they set up is reflected via getTrajectoryEffectiveStrength.
+                    // (getMoveAttackStrength is reserved for future auto path-aware highlighting.)
                     const effectiveStrength = isJump
                         ? (hexesDistance(hexFromKey(selectedHex), hexFromKey(key)) <= jumpBoostedRange
                             ? getAttackStrength(state, selectedHex)
                             : moverDie.value)
-                        : getAttackStrength(state, selectedHex);
+                        : (trajectoryPath.length >= 2
+                            ? getTrajectoryEffectiveStrength(state, moverDie, trajectoryPath)
+                            : getAttackStrength(state, selectedHex));
                     if (!canAttack(state, selectedHex, key, effectiveStrength)) continue;
                 }
                 filtered.add(key);
@@ -769,6 +774,12 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                                         if (dist > getJumpRange(state, selectedHex)) {
                                             return getTopDie(state, selectedHex).value;
                                         }
+                                    }
+                                    // If the player planned a trajectory through a friendly die,
+                                    // show the boosted combat power in the tooltip.
+                                    if (activeAction === "move-die" && trajectoryPath.length >= 2) {
+                                        const mDie = getTopDie(state, selectedHex);
+                                        return getTrajectoryEffectiveStrength(state, mDie, trajectoryPath);
                                     }
                                     return getAttackStrength(state, selectedHex);
                                 })(),

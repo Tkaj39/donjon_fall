@@ -443,6 +443,44 @@ export function getMoveAttackStrength(state, fromKey, toKey) {
 }
 
 // ---------------------------------------------------------------------------
+// 3.1e — getTrajectoryEffectiveStrength
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the effective attack strength of `moverDie` for hexes BEYOND the end
+ * of an explicit player-chosen trajectory, accounting for pass-through boosts
+ * from any friendly formations traversed along that trajectory.
+ *
+ * Used by the UI when a trajectory is active: if the player routed through a
+ * friendly die, the boost they set up should be reflected in what enemies are
+ * highlighted as reachable and what the combat tooltip shows.
+ *
+ * @param {import("./gameState.js").GameState} state
+ * @param {import("./gameState.js").Die} moverDie
+ * @param {string[]} trajectoryPath - ordered hex array [fromKey, ..., currentEnd]
+ * @returns {number}
+ */
+export function getTrajectoryEffectiveStrength(state, moverDie, trajectoryPath) {
+    const baseStr = getAttackStrength(state, trajectoryPath[0]);
+    if (trajectoryPath.length < 2) return baseStr;
+    let boostLeft = 0, boostStr = 0;
+    for (let i = 1; i < trajectoryPath.length; i++) {
+        const ctrl = getController(state, trajectoryPath[i]);
+        if (ctrl === moverDie.owner) {
+            const stack = getDiceAt(state, trajectoryPath[i]);
+            const existingOwn = stack.filter(d => d.owner === moverDie.owner).length;
+            const existingEnemy = stack.length - existingOwn;
+            boostStr = moverDie.value + existingOwn - existingEnemy;
+            boostLeft = Math.max(1, existingOwn + 1 - existingEnemy);
+        } else {
+            boostLeft = Math.max(0, boostLeft - 1);
+            boostStr = boostLeft > 0 ? boostStr : 0;
+        }
+    }
+    return boostLeft > 0 ? boostStr : baseStr;
+}
+
+// ---------------------------------------------------------------------------
 // Internal helper — move a single die from one hex to another (pure)
 // ---------------------------------------------------------------------------
 
