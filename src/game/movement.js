@@ -366,15 +366,21 @@ export function getShortestPathToHex(state, fromKey, toKey, actionType = "move-d
  * @param {"move-die"|"move-tower"} [actionType="move-die"]
  * @returns {Set<string>}  - set of hexKeys (last-step neighbors of toKey)
  */
-export function getApproachDirections(state, fromKey, toKey, actionType = "move-die") {
+export function getApproachDirections(state, fromKey, toKey, actionType = "move-die", defenderStr = null) {
     const paths = actionType === "move-tower"
         ? getTowerPathsToHex(state, fromKey, toKey)
         : getPathsToHex(state, fromKey, toKey);
+    const moverDie = defenderStr !== null ? getTopDie(state, fromKey) : null;
+    const baseStr = moverDie ? getAttackStrength(state, fromKey) : 0;
     const directions = new Set();
     for (const path of paths) {
-        if (path.length >= 2) {
-            directions.add(path[path.length - 2]);
+        if (path.length < 2) continue;
+        // When defenderStr is provided, exclude paths whose attack strength would not
+        // beat the defender — only combat-valid approach directions are shown in the picker.
+        if (defenderStr !== null && moverDie) {
+            if (computePathAttackStrength(state, moverDie, path, baseStr) <= defenderStr) continue;
         }
+        directions.add(path[path.length - 2]);
     }
     return directions;
 }

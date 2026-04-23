@@ -380,8 +380,10 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
         const dest = trajectoryPath[trajectoryPath.length - 1];
         const ctrl = getController(state, dest);
         if (ctrl === null || ctrl === state.currentPlayer) return null;
-        const dirs = getApproachDirections(state, selectedHex, dest, activeAction);
-        return dirs.size > 1 ? dest : null;
+        // Only count approach directions from paths that can actually win the combat.
+        const defStr = getAttackStrength(state, dest);
+        const dirs = getApproachDirections(state, selectedHex, dest, activeAction, defStr);
+        return dirs.size >= 1 ? dest : null;
     })();
 
     /**
@@ -389,7 +391,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      * Empty when the picker is not active.
      */
     const pickerApproachDirs = pickerEnemyKey && selectedHex
-        ? getApproachDirections(state, selectedHex, pickerEnemyKey, activeAction)
+        ? getApproachDirections(state, selectedHex, pickerEnemyKey, activeAction, getAttackStrength(state, pickerEnemyKey))
         : new Set();
 
     /**
