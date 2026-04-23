@@ -89,8 +89,9 @@ function rollD6() {
  * }} props
  * @returns {JSX.Element}
  */
-export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null, diceValues = null, onExit, onSettings}) {
-    const {state, dispatch, recordedActions, initialState} = useGameState(players, boardFields, firstPlayer, diceValues);
+// TESTING ONLY — scenario prop accepts a debug board state; probably removed for production.
+export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null, diceValues = null, scenario = null, onExit, onSettings}) {
+    const {state, dispatch, recordedActions, initialState} = useGameState(players, boardFields, firstPlayer, diceValues, scenario);
 
     // -----------------------------------------------------------------------
     // Local UI state

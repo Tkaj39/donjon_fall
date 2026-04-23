@@ -172,7 +172,8 @@ const DEFAULT_DIE_VALUE = 6;
  *                                    properties (see fieldProperties.js).
  * @returns {GameState}
  */
-export function createInitialState(players, boardFields, firstPlayer = null, diceValues = null) {
+// TESTING ONLY — scenario param is for dev/debug use and will probably be removed for production.
+export function createInitialState(players, boardFields, firstPlayer = null, diceValues = null, scenario = null) {
     const dice = {};
     const focalPoints = {};
     const scores = {};
@@ -213,9 +214,10 @@ export function createInitialState(players, boardFields, firstPlayer = null, dic
 
     return {
         players: [...players],
-        currentPlayer: (firstPlayer && players.includes(firstPlayer)) ? firstPlayer : players[Math.floor(Math.random() * players.length)],
-        phase: "focal",
-        dice,
+        // TESTING ONLY — scenario overrides dice/phase/currentPlayer; probably removed for production.
+        currentPlayer: scenario?.currentPlayer ?? ((firstPlayer && players.includes(firstPlayer)) ? firstPlayer : players[Math.floor(Math.random() * players.length)]),
+        phase: scenario?.phase ?? "focal",
+        dice: scenario?.dice ?? dice,
         focalPoints,
         scores,
         activeFocalHolders,

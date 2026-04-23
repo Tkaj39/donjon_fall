@@ -82,11 +82,12 @@ import { hasLegalMoves } from "../game/turnManager.js";
  *   hasLegalMoves: Function,
  * }}
  */
-export function useGameState(players, boardFields, firstPlayer = null, diceValues = null) {
+// TESTING ONLY — scenario param threads a debug board state through to createInitialState; probably removed for production.
+export function useGameState(players, boardFields, firstPlayer = null, diceValues = null, scenario = null) {
   const [combined, dispatch] = useReducer(
     recordingReducer,
     undefined,
-    () => ({ game: createInitialState(players, boardFields, firstPlayer, diceValues), actions: [] }),
+    () => ({ game: createInitialState(players, boardFields, firstPlayer, diceValues, scenario), actions: [] }),
   );
 
   const state = combined.game;
@@ -96,7 +97,7 @@ export function useGameState(players, boardFields, firstPlayer = null, diceValue
    * Snapshot of the initial game state, captured once at mount.
    * Used by ActionReplay (Phase 14.3) as the deterministic replay baseline.
    */
-  const [initialState] = useState(() => createInitialState(players, boardFields, firstPlayer, diceValues));
+  const [initialState] = useState(() => createInitialState(players, boardFields, firstPlayer, diceValues, scenario));
 
   const bound = (fn) => (...args) => fn(state, ...args);
 

@@ -41,7 +41,7 @@ export function App() {
     /** @type {[import("./components/PlayerSetup.jsx").PlayerConfig[]|null, Function]} */
     const [playerConfigs, setPlayerConfigs] = useState(null);
 
-    /** @type {[{ players: string[], boardFields: import("./hex/fieldProperties.js").HexField[], diceValues: number[]|null }|null, Function]} */
+    /** @type {[{ players: string[], boardFields: import("./hex/fieldProperties.js").HexField[], diceValues: number[]|null, scenario: object|null }|null, Function]} */
     const [gameSetup, setGameSetup] = useState(null);
 
     /** Initial sub-screen for MainMenu — "main" normally, "settings" when navigating from in-game settings. */
@@ -67,13 +67,24 @@ export function App() {
                     initialScreen={menuInitialScreen}
                     onDirectPlay={() => {
                         const randomAnimal = () => ANIMAL_OPTIONS[Math.floor(Math.random() * ANIMAL_OPTIONS.length)].id;
-                        const randomDice = Array.from({ length: 5 }, () => Math.ceil(Math.random() * 6));
+                        // TEMPORARY: debug scenario for BUG-014 (equal combat power shown as valid)
+                        // Remove scenario below and restore randomDice to revert to normal quick start.
+                        // const randomDice = Array.from({ length: 5 }, () => Math.ceil(Math.random() * 6));
+                        const debugScenario = {
+                            currentPlayer: "blue",
+                            phase: "action",
+                            dice: {
+                                "-3,4,-1": [{ owner: "blue", value: 3 }],
+                                "-4,4,0":  [{ owner: "blue", value: 2 }],
+                                "-2,2,0":  [{ owner: "red",  value: 3 }],
+                            },
+                        };
                         setSelectedMap(DEFAULT_MAP);
                         setPlayerConfigs([
                             { id: "red",  name: "Red",  coatOfArms: randomAnimal() },
                             { id: "blue", name: "Blue", coatOfArms: randomAnimal() },
                         ]);
-                        setGameSetup(prev => ({ ...(prev ?? {}), diceValues: randomDice }));
+                        setGameSetup(prev => ({ ...(prev ?? {}), diceValues: null, scenario: debugScenario }));
                         navigate("gameLoading");
                     }}
                 />
@@ -99,14 +110,14 @@ export function App() {
                     playerConfigs={playerConfigs}
                     map={selectedMap}
                     onDone={(players, boardFields) => {
-                        setGameSetup(prev => ({ diceValues: prev?.diceValues ?? null, players, boardFields }));
+                        setGameSetup(prev => ({ diceValues: prev?.diceValues ?? null, scenario: prev?.scenario ?? null, players, boardFields }));
                         navigate("game");
                     }}
                 />
             );
         case "game":
             return gameSetup
-                ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} playerConfigs={playerConfigs ?? []} diceValues={gameSetup.diceValues} onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />
+                ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} playerConfigs={playerConfigs ?? []} diceValues={gameSetup.diceValues} scenario={gameSetup.scenario ?? null} onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />
                 : <Game onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />;
         default:
             return <Game onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />;
