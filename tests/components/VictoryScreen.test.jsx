@@ -21,7 +21,7 @@ describe('VictoryScreen', () => {
 
     test('displays "Victory!" heading', () => {
         renderScreen();
-        expect(screen.getByText('Victory!')).toBeDefined();
+        expect(screen.getByText('Vítěz!')).toBeDefined();
     });
 
     test('shows winner name in the winner label', () => {

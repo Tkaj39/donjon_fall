@@ -50,10 +50,10 @@ describe('PlayerShield — score badge', () => {
 });
 
 describe('PlayerShield — active state', () => {
-    test('active badge has amber background class', () => {
+    test('active shield has a glow filter style applied', () => {
         const { container } = renderShield({ isActive: true });
-        const badge = container.querySelector('span');
-        expect(badge.className).toMatch(/bg-amber-400/);
+        const glowDiv = container.querySelector('[style*="drop-shadow"]');
+        expect(glowDiv).not.toBeNull();
     });
 
     test('inactive badge does not have amber background class', () => {
@@ -64,9 +64,9 @@ describe('PlayerShield — active state', () => {
 });
 
 describe('PlayerShield — images', () => {
-    test('renders two img elements (shield + animal)', () => {
+    test('renders three img elements (shield + animal + score shield)', () => {
         const { container } = renderShield();
-        expect(container.querySelectorAll('img')).toHaveLength(2);
+        expect(container.querySelectorAll('img')).toHaveLength(3);
     });
 
     test('animal img alt matches coatOfArms id', () => {

@@ -67,10 +67,10 @@ describe('MainMenu — menu items', () => {
         expect(btn).toHaveAttribute('disabled');
     });
 
-    it('renders "Tutorial" disabled button', () => {
+    it('renders "Tutorial" enabled button', () => {
         renderMenu();
         const btn = screen.getByText('Tutorial').closest('button');
-        expect(btn).toHaveAttribute('disabled');
+        expect(btn).not.toHaveAttribute('disabled');
     });
 
     it('renders "Rules" button (enabled)', () => {
@@ -79,105 +79,45 @@ describe('MainMenu — menu items', () => {
         expect(btn).not.toHaveAttribute('disabled');
     });
 
-    it('renders "Statistics" disabled button', () => {
-        renderMenu();
-        const btn = screen.getByText('Statistics').closest('button');
-        expect(btn).toHaveAttribute('disabled');
-    });
-
-    it('renders "Leaderboard" disabled button', () => {
-        renderMenu();
-        const btn = screen.getByText('Leaderboard').closest('button');
-        expect(btn).toHaveAttribute('disabled');
-    });
-
-    it('renders "Achievements" disabled button', () => {
-        renderMenu();
-        const btn = screen.getByText('Achievements').closest('button');
-        expect(btn).toHaveAttribute('disabled');
-    });
-
-    it('renders "Settings" disabled button with submenu indicator', () => {
+    it('renders "Settings" enabled button', () => {
         renderMenu();
         const btn = screen.getByText('Settings').closest('button');
-        expect(btn).toHaveAttribute('disabled');
-    });
-
-    it('renders "Map Editor" disabled button', () => {
-        renderMenu();
-        const btn = screen.getByText('Map Editor').closest('button');
-        expect(btn).toHaveAttribute('disabled');
-    });
-
-    it('renders "Credits" disabled button', () => {
-        renderMenu();
-        const btn = screen.getByText('Credits').closest('button');
-        expect(btn).toHaveAttribute('disabled');
+        expect(btn).not.toHaveAttribute('disabled');
     });
 });
 
-describe('MainMenu — Start submenu', () => {
-    it('Start submenu is initially hidden', () => {
+describe('MainMenu — Start screen', () => {
+    it('Start screen is initially hidden', () => {
         renderMenu();
         expect(screen.queryByText('Quick Start')).toBeNull();
     });
 
-    it('clicking Start toggles submenu open', () => {
+    it('clicking Start navigates to Start screen', () => {
         renderMenu();
-        const startButton = screen.getByText('Start').closest('button');
-        fireEvent.click(startButton);
+        fireEvent.click(screen.getByText('Start').closest('button'));
         expect(screen.getByText('Quick Start')).toBeDefined();
     });
 
-    it('clicking Start twice toggles submenu closed', () => {
-        renderMenu();
-        const startButton = screen.getByText('Start').closest('button');
-        fireEvent.click(startButton);
-        fireEvent.click(startButton);
-        expect(screen.queryByText('Quick Start')).toBeNull();
-    });
-
-    it('submenu contains "Quick Start" button', () => {
+    it('Start screen contains "Quick Start" enabled button', () => {
         renderMenu();
         fireEvent.click(screen.getByText('Start').closest('button'));
         const btn = screen.getByText('Quick Start').closest('button');
         expect(btn).not.toHaveAttribute('disabled');
     });
 
-    it('submenu contains "Start" button (enabled)', () => {
-        renderMenu();
-        fireEvent.click(screen.getAllByText('Start')[0].closest('button'));
-        const buttons = screen.getAllByText('Start');
-        // First is the parent button, second is the submenu item
-        expect(buttons).toHaveLength(2);
-    });
-
-    it('submenu contains "Start vs Bot" disabled button', () => {
+    it('Start screen contains "Configure Game" enabled button', () => {
         renderMenu();
         fireEvent.click(screen.getByText('Start').closest('button'));
-        const btn = screen.getByText('Start vs Bot').closest('button');
-        expect(btn).toHaveAttribute('disabled');
+        const btn = screen.getByText('Configure Game').closest('button');
+        expect(btn).not.toHaveAttribute('disabled');
     });
 
-    it('submenu contains "Online" disabled button', () => {
+    it('clicking Back returns to main menu', () => {
         renderMenu();
         fireEvent.click(screen.getByText('Start').closest('button'));
-        const btn = screen.getByText('Online').closest('button');
-        expect(btn).toHaveAttribute('disabled');
-    });
-
-    it('submenu contains "Daily Challenge" disabled button', () => {
-        renderMenu();
-        fireEvent.click(screen.getByText('Start').closest('button'));
-        const btn = screen.getByText('Daily Challenge').closest('button');
-        expect(btn).toHaveAttribute('disabled');
-    });
-
-    it('submenu contains "Campaign" disabled button', () => {
-        renderMenu();
-        fireEvent.click(screen.getByText('Start').closest('button'));
-        const btn = screen.getByText('Campaign').closest('button');
-        expect(btn).toHaveAttribute('disabled');
+        fireEvent.click(screen.getByText('Back').closest('button'));
+        expect(screen.queryByText('Quick Start')).toBeNull();
+        expect(screen.getByText('Continue')).toBeDefined();
     });
 });
 
@@ -189,11 +129,10 @@ describe('MainMenu — callback functions', () => {
         expect(props.onDirectPlay).toHaveBeenCalledTimes(1);
     });
 
-    it('clicking submenu "Start" calls onPlay', () => {
+    it('clicking "Configure Game" calls onPlay', () => {
         const { props } = renderMenu();
-        fireEvent.click(screen.getAllByText('Start')[0].closest('button'));
-        const startButtons = screen.getAllByText('Start').map(el => el.closest('button'));
-        fireEvent.click(startButtons[1]); // Second "Start" is the submenu item
+        fireEvent.click(screen.getByText('Start').closest('button'));
+        fireEvent.click(screen.getByText('Configure Game').closest('button'));
         expect(props.onPlay).toHaveBeenCalledTimes(1);
     });
 });

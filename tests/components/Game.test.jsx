@@ -145,14 +145,12 @@ describe('Game', () => {
         expect(container.querySelector('[role="toolbar"]')).toBeInTheDocument();
     });
 
-    test('action panel buttons are disabled after deselecting', () => {
+    test('action panel is hidden after deselecting', () => {
         const { container } = render(<Game firstPlayer="red" />);
         const hex = RED_HEXES[0];
         fireEvent.click(getHexGroup(container, hex)); // select
         expect(container.querySelector('[role="toolbar"]')).toBeInTheDocument();
         fireEvent.click(getHexGroup(container, hex)); // deselect
-        const buttons = [...container.querySelectorAll('[role="toolbar"] button')];
-        expect(buttons.length).toBeGreaterThan(0);
-        expect(buttons.every(b => b.disabled)).toBe(true);
+        expect(container.querySelector('[role="toolbar"]')).toBeNull();
     });
 });
