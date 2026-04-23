@@ -3,6 +3,7 @@ import {
     getReachableHexes,
     getPathsToHex,
     getApproachDirections,
+    getTrajectoryEffectiveStrength,
     applyMoveAction,
     getJumpRange,
     getJumpReachableHexes,
@@ -502,6 +503,133 @@ describe('getApproachDirections', () => {
             const result = getApproachDirections(state2, CENTER, N1_N1, 'move-tower');
             expect(result.size).toBe(0);
         });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getApproachDirections — defenderStr filtering
+// ---------------------------------------------------------------------------
+
+describe('getApproachDirections with defenderStr', () => {
+    // Setup: mover (red, value 3) at CENTER, friendly (red, value 2) at N4,
+    // enemy (blue, value 3) at N3 (adjacent to both CENTER and N4).
+    // Direct path CENTER→N3 has effective strength 3 (no boost).
+    // Path CENTER→N4→N3 passes through friendly: effective strength 3+1=4.
+    // defenderStr=3 should filter out the direct path (3 ≤ 3), keeping only N4 approach.
+
+    function makeBoostState() {
+        return makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N4]:     [{ owner: 'red',  value: 2 }],
+                [N3]:     [{ owner: 'blue', value: 3 }],
+            },
+        });
+    }
+
+    it('returns both approach directions when defenderStr is not provided', () => {
+        const state = makeBoostState();
+        const result = getApproachDirections(state, CENTER, N3);
+        // CENTER (direct) and N4 (via friendly) are both geometric approaches
+        expect(result.has(CENTER)).toBe(true);
+        expect(result.has(N4)).toBe(true);
+    });
+
+    it('filters out paths whose attack strength does not exceed defenderStr', () => {
+        const state = makeBoostState();
+        // defenderStr=3: direct path (strength 3) is excluded, only boost path (strength 4) remains
+        const result = getApproachDirections(state, CENTER, N3, 'move-die', 3);
+        expect(result.has(N4)).toBe(true);
+        expect(result.has(CENTER)).toBe(false);
+    });
+
+    it('returns empty set when no path beats defenderStr', () => {
+        const state = makeBoostState();
+        // defenderStr=4: even the boosted path (strength 4) does not strictly exceed it
+        const result = getApproachDirections(state, CENTER, N3, 'move-die', 4);
+        expect(result.size).toBe(0);
+    });
+
+    it('returns all directions when defenderStr is low enough for every path', () => {
+        const state = makeBoostState();
+        // defenderStr=2: both paths (strength 3 and 4) beat it
+        const result = getApproachDirections(state, CENTER, N3, 'move-die', 2);
+        expect(result.has(CENTER)).toBe(true);
+        expect(result.has(N4)).toBe(true);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getTrajectoryEffectiveStrength
+// ---------------------------------------------------------------------------
+
+describe('getTrajectoryEffectiveStrength', () => {
+    const mover = { owner: 'red', value: 3 };
+
+    it('returns base strength for single-element trajectory', () => {
+        const state = makeState({ dice: { [CENTER]: [{ owner: 'red', value: 3 }] } });
+        expect(getTrajectoryEffectiveStrength(state, mover, [CENTER])).toBe(3);
+    });
+
+    it('returns base strength when trajectory passes through empty hex', () => {
+        const state = makeState({ dice: { [CENTER]: [{ owner: 'red', value: 3 }] } });
+        expect(getTrajectoryEffectiveStrength(state, mover, [CENTER, N1])).toBe(3);
+    });
+
+    it('returns boosted strength when trajectory ends on a friendly die', () => {
+        // CENTER(red,3) → N1(red,2): boost = 3+1-0 = 4; boostLeft=2 after N1 → returns 4
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]:     [{ owner: 'red', value: 2 }],
+            },
+        });
+        expect(getTrajectoryEffectiveStrength(state, mover, [CENTER, N1])).toBe(4);
+    });
+
+    it('returns base strength when trajectory ends on enemy (forArrival=false, boost expired)', () => {
+        // CENTER→N1(friendly)→N1_N1(empty)→N1_N2(enemy): boost expires at N1_N2
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N1]:     [{ owner: 'red',  value: 2 }],
+                [N1_N2]:  [{ owner: 'blue', value: 3 }],
+            },
+        });
+        const result = getTrajectoryEffectiveStrength(
+            state, mover, [CENTER, N1, N1_N1, N1_N2], { forArrival: false },
+        );
+        expect(result).toBe(3);
+    });
+
+    it('returns boosted arrival strength when forArrival=true and boost still active at enemy', () => {
+        // Same path as above; boost lasts 2 steps after N1 — still active at N1_N2 (2nd step)
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N1]:     [{ owner: 'red',  value: 2 }],
+                [N1_N2]:  [{ owner: 'blue', value: 3 }],
+            },
+        });
+        const result = getTrajectoryEffectiveStrength(
+            state, mover, [CENTER, N1, N1_N1, N1_N2], { forArrival: true },
+        );
+        expect(result).toBe(4);
+    });
+
+    it('returns boosted strength when enemy is 1 step from friendly (forArrival=true)', () => {
+        // CENTER→N1(friendly)→N1_N1(enemy): boost active at N1_N1 (1st step after N1)
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N1]:     [{ owner: 'red',  value: 2 }],
+                [N1_N1]:  [{ owner: 'blue', value: 3 }],
+            },
+        });
+        const result = getTrajectoryEffectiveStrength(
+            state, mover, [CENTER, N1, N1_N1], { forArrival: true },
+        );
+        expect(result).toBe(4);
     });
 });
 
