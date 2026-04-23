@@ -67,24 +67,13 @@ export function App() {
                     initialScreen={menuInitialScreen}
                     onDirectPlay={() => {
                         const randomAnimal = () => ANIMAL_OPTIONS[Math.floor(Math.random() * ANIMAL_OPTIONS.length)].id;
-                        // TEMPORARY: debug scenario for BUG-014 (equal combat power shown as valid)
-                        // Remove scenario below and restore randomDice to revert to normal quick start.
-                        // const randomDice = Array.from({ length: 5 }, () => Math.ceil(Math.random() * 6));
-                        const debugScenario = {
-                            currentPlayer: "blue",
-                            phase: "action",
-                            dice: {
-                                "-3,4,-1": [{ owner: "blue", value: 3 }],
-                                "-4,4,0":  [{ owner: "blue", value: 2 }],
-                                "-2,2,0":  [{ owner: "red",  value: 3 }],
-                            },
-                        };
+                        const randomDice = Array.from({ length: 5 }, () => Math.ceil(Math.random() * 6));
                         setSelectedMap(DEFAULT_MAP);
                         setPlayerConfigs([
                             { id: "red",  name: "Red",  coatOfArms: randomAnimal() },
                             { id: "blue", name: "Blue", coatOfArms: randomAnimal() },
                         ]);
-                        setGameSetup(prev => ({ ...(prev ?? {}), diceValues: null, scenario: debugScenario }));
+                        setGameSetup(prev => ({ ...(prev ?? {}), diceValues: randomDice, scenario: null }));
                         navigate("gameLoading");
                     }}
                 />
