@@ -36,7 +36,7 @@ import {useGameState} from "../hooks/useGameState.js";
 import {ActionPanel} from "./ActionPanel.jsx";
 import {ActionReplay} from "./ActionReplay.jsx";
 import {ACTION_ORDER} from "./actionConstants.js";
-import {Board, moveAnimationMs, SVG_WIDTH, NAMED_PLAYER_COLORS} from "./Board.jsx";
+import {Board, moveAnimationMs, SVG_WIDTH, SVG_HEIGHT, NAMED_PLAYER_COLORS} from "./Board.jsx";
 import {CombatOverlay} from "./CombatOverlay.jsx";
 import {CombatPowerTooltip} from "./CombatPowerTooltip.jsx";
 import {Logo} from "./Logo.jsx";
@@ -694,7 +694,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                         );
 
                         if (idx === 0) return <>{shield}
-                            <div key="board" className="relative h-full" style={{width: SVG_WIDTH}}>
+                            <div key="board" className="relative h-full" style={{aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}`}}>
                                 <Board
                                     state={state}
                                     selectedHex={selectedHex}
