@@ -5,17 +5,7 @@
 
 import { ALL_MAPS } from "../game/boardDefinition.js";
 import { MenuSidebar } from "./MainMenu.jsx";
-
-/**
- * Placeholder thumbnail shown until a real preview asset is available.
- */
-function MapThumbnail() {
-    return (
-        <div className="w-full h-28 bg-stone-900/60 rounded flex items-center justify-center text-stone-600 text-xs mb-3 border border-stone-700">
-            MAP PREVIEW
-        </div>
-    );
-}
+import mapStartImg from "../assets/map-start.png";
 
 /**
  * @param {{ map: import("../game/boardDefinition.js").BoardDefinition, onSelect: () => void }} props
@@ -27,16 +17,33 @@ function MapCard({ map, onSelect }) {
             : `${map.minPlayers}–${map.maxPlayers} hráči`;
 
     return (
-        <div className="frame-panel p-5 flex flex-col gap-3">
-            <MapThumbnail />
-            <p className="text-stone-200 font-semibold text-base tracking-wide">{map.name}</p>
-            <p className="text-stone-400 text-sm">{players} · První na {map.victoryPoints} VP</p>
-            <button
-                onClick={onSelect}
-                className="btn-frame-sm self-end px-6 py-2 text-sm font-semibold tracking-wide text-stone-200 cursor-pointer"
-            >
-                Vybrat
-            </button>
+        <div className="frame-panel flex flex-col">
+            {/* Image with gradient overlay and title */}
+            <div className="relative mx-4 mt-4 overflow-hidden" style={{clipPath: "polygon(18px 0%, calc(100% - 18px) 0%, 100% 18px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 18px)"}}>
+                <img src={mapStartImg} alt={map.name} className="w-full h-44 object-cover" />
+                <div
+                    className="absolute inset-0"
+                    style={{ background: "linear-gradient(to top, rgba(10,6,3,0.92) 0%, rgba(10,6,3,0.3) 50%, transparent 100%)" }}
+                />
+                <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
+                    <h3 className="text-xl font-bold tracking-widest uppercase text-stone-100">{map.name}</h3>
+                </div>
+            </div>
+
+            {/* Footer row */}
+            <div className="flex items-center justify-between px-8 py-4">
+                <div className="flex gap-4 text-stone-400 text-sm">
+                    <span>{players}</span>
+                    <span className="text-stone-600">·</span>
+                    <span>První na <span className="text-amber-400 font-semibold">{map.victoryPoints} VP</span></span>
+                </div>
+                <button
+                    onClick={onSelect}
+                    className="btn-frame-sm px-6 py-2 text-sm font-semibold tracking-wide text-stone-200 cursor-pointer"
+                >
+                    Vybrat
+                </button>
+            </div>
         </div>
     );
 }
@@ -61,15 +68,10 @@ export function MapSelection({ onSelect, onBack }) {
             </MenuSidebar>
 
             <main className="flex flex-col items-center justify-center grow p-8">
-                <div className="w-full max-w-lg">
-                    <h2 className="text-2xl font-bold tracking-widest uppercase text-stone-300 mb-6 text-center">
-                        Vyberte mapu
-                    </h2>
-                    <div className="flex flex-col gap-4">
-                        {ALL_MAPS.map(map => (
-                            <MapCard key={map.id} map={map} onSelect={() => onSelect(map)} />
-                        ))}
-                    </div>
+                <div className="w-full max-w-lg flex flex-col gap-5">
+                    {ALL_MAPS.map(map => (
+                        <MapCard key={map.id} map={map} onSelect={() => onSelect(map)} />
+                    ))}
                 </div>
             </main>
         </div>
