@@ -5,6 +5,18 @@
 import { useState } from "react";
 import { TutorialScene, hexRange, hexDist } from "./TutorialScene.jsx";
 
+import picAttack        from "../assets/pictogram/pictogram-attack.svg";
+import picDestroyed     from "../assets/pictogram/pictogram-destroyed.svg";
+import picFocalActive   from "../assets/pictogram/pictogram-focal-active.svg";
+import picJump          from "../assets/pictogram/pictogram-jump.svg";
+import picMoveDice      from "../assets/pictogram/pictogram-move-dice.svg";
+import picMoveTower     from "../assets/pictogram/pictogram-move-tower.svg";
+import picPlus          from "../assets/pictogram/pictogram-plus.svg";
+import picPush          from "../assets/pictogram/pictogram-push.svg";
+import picReroll        from "../assets/pictogram/pictogram-reroll.svg";
+import picTower         from "../assets/pictogram/pictogram-tower.svg";
+import picTowerCollapse from "../assets/pictogram/pictogram-tower-collapse.svg";
+
 const H2 = hexRange(2);
 
 function reachable(hexes, oq, or_, radius) {
@@ -23,6 +35,8 @@ function trajectory(path) {
 
 const STEPS = [
     {
+        icon: picMoveDice,
+        title: "Pohyb kostky",
         caption: "Klikni na svou kostku. Můžeš ji posunout až o tolik polí, kolik ukazuje její hodnota — to je zároveň její bojové číslo. Nemůžeš projít přes soupeřovy kostky ani přes vlastní s vyšší hodnotou.",
         scene: {
             frames: [
@@ -41,6 +55,8 @@ const STEPS = [
         },
     },
     {
+        icon: picAttack,
+        title: "Útok",
         caption: "Útok: Zautočit můžeš, pokud máš vyšší hodnotu než soupeř. Vyber si: obsadit pole (skoč na kostku), nebo ji odstrčit. Po útoku má útočník vždy −1 k hodnotě. Při odstrčení se obráncova kostka přehodí, ale nemůže být silnější než byla.",
         scene: {
             frames: [
@@ -90,6 +106,8 @@ const STEPS = [
         },
     },
     {
+        icon: picDestroyed,
+        title: "Destrukce",
         caption: "Získávání bodů — destrukce: +1 bod za každou soupeřovu kostku zničenou vyšoupnutím z mapy, obklíčením nebo zhroucením věže. Cílem je získat 5 bodů jako první!",
         scene: {
             frames: [
@@ -122,6 +140,8 @@ const STEPS = [
         },
     },
     {
+        icon: picFocalActive,
+        title: "Ohniska",
         caption: "Získávání bodů — ohniska: Pokud tvoje kostka stála na aktivním ohnisku na konci tvého minulého tahu, na začátku tahu získáš bod. Kostka se přehodí na stejnou nebo nižší hodnotu.",
         scene: {
             frames: [
@@ -149,6 +169,8 @@ const STEPS = [
         },
     },
     {
+        icon: picTower,
+        title: "Tvorba věže",
         caption: "Tvorba věže: Přesuneš-li kostku na pole s jinou kostkou nižší hodnoty, vznikne věž. Na vlastní kostku bez boje — hodnota se nemění. Na soupeřovu kostku přes boj — útočník ztrácí 1.",
         scene: {
             dual: [
@@ -207,6 +229,8 @@ const STEPS = [
         },
     },
     {
+        icon: picMoveTower,
+        title: "Pohyb věže",
         caption: "Pohyb věže: Věž přesuneš, pokud máš navrchu svou kostku. Dosah = počet vlastních kostek − počet soupeřových (min 1). Věž se pohybuje jako celek.",
         scene: {
             frames: [
@@ -223,6 +247,8 @@ const STEPS = [
         },
     },
     {
+        icon: picPush,
+        title: "Útok věže",
         caption: "Útok věže: Bojová síla věže = hodnota vrchní kostky + vlastní kostky pod ní − soupeřovy kostky pod ní. Věž může soupeře pouze vyšoupnout — nemůže pole obsadit.",
         scene: {
             frames: [
@@ -261,6 +287,8 @@ const STEPS = [
         },
     },
     {
+        icon: picJump,
+        title: "Skok z věže",
         caption: "Skok z věže: Vrchní kostka může seskočit. Dosah skoku = vlastní kostky ve věži − soupeřovy. Útočí s bojovou silou celé věže, ale pohybuje se samostatně.",
         scene: {
             frames: [
@@ -284,6 +312,8 @@ const STEPS = [
         },
     },
     {
+        icon: picPlus,
+        title: "Průchod věží",
         caption: "Průchod vlastní věží: Táhneš-li kostkou přes vlastní věž nebo kostku, platí pro tebe pravidla skoku z věže — dosah i bojová síla se řídí věží, přes kterou jsi prošel.",
         scene: {
             frames: [
@@ -328,6 +358,8 @@ const STEPS = [
         },
     },
     {
+        icon: picTowerCollapse,
+        title: "Zhroucení věže",
         caption: "Zhroucení věže: Věž se 3+ kostkami může zhroutit. Hráč s vrchní kostkou ji aktivuje — spodní kostka je odstraněna. Pokud to byl soupeřův kámen, získáváš bod.",
         scene: {
             frames: [
@@ -387,6 +419,14 @@ export function Tutorial({ onClose }) {
                     </button>
                 </div>
 
+                {/* Step title */}
+                <div className="flex items-center gap-3 px-12 pb-1">
+                    {current.icon && (
+                        <img src={current.icon} alt="" className="w-8 h-8 shrink-0 invert opacity-80" />
+                    )}
+                    <h3 className="m-0 text-lg font-semibold text-stone-200">{current.title}</h3>
+                </div>
+
                 {/* Mini-map + arrows */}
                 <div className="flex items-center gap-4 w-full px-8 mt-2">
                     <button
@@ -428,9 +468,11 @@ export function Tutorial({ onClose }) {
                 </div>
 
                 {/* Caption */}
-                <p className="text-stone-400 text-sm mt-3 px-12 text-center min-h-[2.5rem]">
-                    {current.caption}
-                </p>
+                <div className="mt-3 px-12 min-h-[2.5rem]">
+                    <p className="text-stone-400 text-sm text-center">
+                        {current.caption}
+                    </p>
+                </div>
 
                 {/* Dot indicators */}
                 <div className="flex gap-2 mt-4 mb-8">

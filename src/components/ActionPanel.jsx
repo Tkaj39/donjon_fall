@@ -7,7 +7,7 @@
  * Disabled when the action is not in availableActions or actionTaken is true.
  */
 
-import { ACTION_ORDER, ACTION_LABELS } from "./actionConstants.js";
+import { ACTION_ORDER, ACTION_LABELS, ACTION_ICONS } from "./actionConstants.js";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -71,7 +71,18 @@ export function ActionPanel({ currentPlayer, availableActions, activeAction, onA
                             transform: isActive ? "translateY(2px)" : "none",
                             transition: "transform 0.15s",
                         }}>
-                            {ACTION_LABELS[actionKey]}
+                            {ACTION_ICONS[actionKey] && (
+                                <img
+                                    src={ACTION_ICONS[actionKey]}
+                                    alt={ACTION_LABELS[actionKey]}
+                                    style={{
+                                        width: 32,
+                                        height: 32,
+                                        filter: "brightness(0) invert(1)",
+                                        opacity: isDisabled ? 0.3 : isActive ? 1 : 0.75,
+                                    }}
+                                />
+                            )}
                         </span>
                     </button>
                 );

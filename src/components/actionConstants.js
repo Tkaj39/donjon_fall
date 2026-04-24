@@ -3,6 +3,11 @@
  * Phase 8.1 / 12.1 — Action panel ordering and labels.
  */
 
+import picMoveDice      from "../assets/pictogram/pictogram-move-dice.svg";
+import picMoveTower     from "../assets/pictogram/pictogram-move-tower.svg";
+import picReroll        from "../assets/pictogram/pictogram-reroll.svg";
+import picTowerCollapse from "../assets/pictogram/pictogram-tower-collapse.svg";
+
 // ---------------------------------------------------------------------------
 // Action ordering & labels
 // ---------------------------------------------------------------------------
@@ -26,4 +31,16 @@ export const ACTION_LABELS = {
     "move-die":   "Move die",
     "reroll":     "Reroll",
     "collapse":   "Collapse",
+};
+
+/**
+ * Pictogram icon URL for each action key.
+ *
+ * @type {Object.<string, string>}
+ */
+export const ACTION_ICONS = {
+    "move-tower": picMoveTower,
+    "move-die":   picMoveDice,
+    "reroll":     picReroll,
+    "collapse":   picTowerCollapse,
 };

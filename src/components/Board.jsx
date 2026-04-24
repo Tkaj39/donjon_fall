@@ -87,8 +87,8 @@ const BOARD_PADDING = HEX_SIZE * PADDING_RATIO;
 /** Total SVG canvas width. Exported so Game.jsx can align HUD to board edges. */
 export const SVG_WIDTH  = maxX - minX + BOARD_PADDING * 2;
 
-/** Total SVG canvas height. */
-const SVG_HEIGHT = maxY - minY + BOARD_PADDING * 2;
+/** Total SVG canvas height. Exported for aspect-ratio scaling in Game.jsx. */
+export const SVG_HEIGHT = maxY - minY + BOARD_PADDING * 2;
 
 /** Shifts hex pixel coords so the leftmost/topmost center lands at BOARD_PADDING. */
 const OFFSET_X = -minX + BOARD_PADDING;
@@ -272,8 +272,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
             width="100%"
             height="100%"
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-            className="block mx-auto"
-            style={{ maxWidth: SVG_WIDTH }}
+            className="block w-full h-full"
         >
             {BOARD_HEXES.map(hex => {
                 const key = hexKey(hex);

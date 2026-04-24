@@ -51,14 +51,14 @@ img {
     background-image: url('/src/assets/background-frame.png');
     background-size: 100% ;
     clip-path: polygon(
-        15px 0%,
-        calc(100% - 15px) 0%,
-        100% 15px,
-        100% calc(100% - 15px),
-        calc(100% - 15px) 100%,
-        15px 100%,
-        0% calc(100% - 15px),
-        0% 15px
+        12px 0%,
+        calc(100% - 12px) 0%,
+        100% 12px,
+        100% calc(100% - 12px),
+        calc(100% - 12px) 100%,
+        12px 100%,
+        0% calc(100% - 12px),
+        0% 12px
     );
 }
 
