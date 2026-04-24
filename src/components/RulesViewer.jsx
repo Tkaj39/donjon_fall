@@ -9,79 +9,103 @@
 
 import { useState } from "react";
 
+import picArrow         from "../assets/pictogram/pictogram-arrow.svg";
+import picBoot          from "../assets/pictogram/pictogram-boot.svg";
+import picMoveDice      from "../assets/pictogram/pictogram-move-dice.svg";
+import picMoveTower     from "../assets/pictogram/pictogram-move-tower.svg";
+import picAttack        from "../assets/pictogram/pictogram-attack.svg";
+import picDestroyed     from "../assets/pictogram/pictogram-destroyed.svg";
+import picFocalActive   from "../assets/pictogram/pictogram-focal-active.svg";
+import picFocalInactive from "../assets/pictogram/pictogram-focal-inactive.svg";
+import picJump          from "../assets/pictogram/pictogram-jump.svg";
+import picMinus         from "../assets/pictogram/pictogram-minus.svg";
+import picNum1          from "../assets/pictogram/pictogram-num-1.svg";
+import picNum2          from "../assets/pictogram/pictogram-num-2.svg";
+import picNum3          from "../assets/pictogram/pictogram-num-3.svg";
+import picNum4          from "../assets/pictogram/pictogram-num-4.svg";
+import picPlus          from "../assets/pictogram/pictogram-plus.svg";
+import picPush          from "../assets/pictogram/pictogram-push.svg";
+import picHex          from "../assets/pictogram/pictogram-hex.svg";
+import picReroll        from "../assets/pictogram/pictogram-reroll.svg";
+import picTower        from "../assets/pictogram/pictogram-tower.svg";
+import picTowerCollapse from "../assets/pictogram/pictogram-tower-collapse.svg";
+import picTowerMove     from "../assets/pictogram/pictogram-tower-move.svg";
+
 // ---------------------------------------------------------------------------
 // Rules data
 // ---------------------------------------------------------------------------
 
-/** Each entry: { id, title, content } where content is an array of paragraphs/lists. */
+/** Each item: { text, icon? } — icon is an imported SVG URL. */
 const SECTIONS = [
     {
         id:    "board",
         title: "Board & Components",
         items: [
-            "61 hexagonal fields arranged in a large hexagon. Default map; more maps can be designed.",
-            "Two players: red and blue.",
-            "Each player gets 5 D6 dice representing their units, plus one shared extra D6 for focal point resolution.",
-            "Red base = top row; Blue base = bottom row. Bases act as normal fields during play.",
-            "3 focal points in the middle horizontal row (left, center, right). The center focal point starts active.",
+            { text: "61 hexagonal fields arranged in a large hexagon. Default map; more maps can be designed." },
+            { text: "Two players: red and blue." },
+            { text: "Each player gets 5 D6 dice representing their units, plus one shared extra D6 for focal point resolution." },
+            { text: "Red base = top row; Blue base = bottom row. Bases act as normal fields during play." },
+            { text: "3 focal points in the middle horizontal row (left, center, right). The center focal point starts active.", icon: picFocalActive },
         ],
     },
     {
         id:    "win",
         title: "Win Condition",
         items: [
-            "First player to accumulate 5 victory points wins. Points are permanent (cannot be lost).",
-            "Points are scored only on your own turn.",
-            "A player who cannot make a legal move immediately loses (sudden death).",
+            { text: "First player to accumulate 5 victory points wins. Points are permanent (cannot be lost).", icon: picPlus },
+            { text: "Points are scored only on your own turn." },
+            { text: "A player who cannot make a legal move immediately loses (sudden death)." },
         ],
     },
     {
         id:    "scoring",
         title: "Scoring",
         items: [
-            "Destruction: +1 point per enemy die destroyed (pushed off map, encircled, or tower collapse).",
-            "Focal points: if your die held an active focal point at the end of your previous turn, at the start of your current turn you score 1 point, reroll that die (new value = min(roll, original−1)), then roll the extra D6 to pick which remaining focal point activates next (even = left, odd = right).",
+            { text: "Destruction: +1 point per enemy die destroyed (pushed off map, encircled, or tower collapse).", icon: picDestroyed },
+            { text: "Focal points: if your die held an active focal point at the end of your previous turn, you score 1 point, reroll that die (min(roll, original−1)), then roll the extra D6 to pick which remaining focal point activates next (even = left, odd = right).", icon: picFocalActive },
         ],
     },
     {
         id:    "turn",
         title: "Turn Structure",
         items: [
-            "1. Focal points — resolve any focal point scoring.",
-            "2. Actions — choose and perform exactly one action.",
-            "3. Combat — resolve combat if your move ended on an enemy field.",
-            "4. Victory — check if you have 5+ points.",
+            { text: "1. Focal points — resolve any focal point scoring.", icon: picNum1 },
+            { text: "2. Actions — choose and perform exactly one action.", icon: picNum2 },
+            { text: "3. Combat — resolve combat if your move ended on an enemy field.", icon: picNum3 },
+            { text: "4. Victory — check if you have 5+ points.", icon: picNum4 },
         ],
     },
     {
         id:    "actions",
         title: "Actions",
         items: [
-            "Move die — move one of your dice up to its face value in hexes. Cannot pass through enemy dice. Can pass through friendly dice only if your die has higher attack strength. Jump from tower: top die may detach and jump (range = own dice − enemy dice, min 1); attack strength uses jumping die value alone.",
-            "Tower collapse — available when tower has 3+ dice and you control the top. Removes the bottom die; score 1 point if it was an enemy die.",
-            "Move whole tower — controlled by the player with the top die. Range = own dice − enemy dice (min 1). If destination has an enemy, only push is available.",
-            "Reroll — reroll one of your dice (standalone or tower top). If the new value is lower than the original, keep the original. Value can only stay the same or increase.",
+            { text: "Move die — move one of your dice up to its face value in hexes. Cannot pass through enemy dice. Can pass through friendly dice only if your die has higher attack strength.", icon: picMoveDice },
+            { text: "Jump from tower: top die may detach and jump (range = own dice − enemy dice, min 1); attack strength uses jumping die value alone.", icon: picJump },
+            { text: "Tower collapse — available when tower has 3+ dice and you control the top. Removes the bottom die; score 1 point if it was an enemy die.", icon: picTowerCollapse },
+            { text: "Move whole tower — controlled by the player with the top die. Range = own dice − enemy dice (min 1). If destination has an enemy, only push is available.", icon: picMoveTower },
+            { text: "Reroll — reroll one of your dice (standalone or tower top). If the new value is lower than the original, keep the original. Value can only stay the same or increase.", icon: picReroll },
         ],
     },
     {
         id:    "combat",
         title: "Combat",
         items: [
-            "Triggered when a move ends on an enemy-occupied field.",
-            "Attack strength = top die value + own dice count − enemy dice count.",
-            "Attack succeeds only if attack strength strictly exceeds defender's attack strength.",
-            "Phase 1 (automatic): attacker's die value decreases by 1 (minimum 1).",
-            "Phase 2 — Push: enemy formation is pushed 1 hex in the attack direction if a free field exists. One defeated enemy die rerolls (min(roll, original)). Chain reaction: formations behind are also pushed — those that hit your unit or the map edge are destroyed (score 1 point each). Encirclement: if your own unit blocks the retreat, the last formation is destroyed.",
-            "Phase 2 — Occupy: attacker's die is placed on top of the enemy, creating a mixed tower. Defender does not reroll.",
+            { text: "Triggered when a move ends on an enemy-occupied field.", icon: picAttack },
+            { text: "Attack strength = top die value + own dice count − enemy dice count." },
+            { text: "Attack succeeds only if attack strength strictly exceeds defender's attack strength." },
+            { text: "Phase 1 (automatic): attacker's die value decreases by 1 (minimum 1)." },
+            { text: "Phase 2 — Push: enemy formation is pushed 1 hex in the attack direction if a free field exists. One defeated enemy die rerolls. Chain reaction: formations pushed into your unit or the map edge are destroyed (score 1 point each). Encirclement: if your own unit blocks the retreat, the last formation is destroyed.", icon: picPush },
+            { text: "Phase 2 — Occupy: attacker's die is placed on top of the enemy, creating a mixed tower. Defender does not reroll.", icon: picJump },
         ],
     },
     {
         id:    "towers",
         title: "Towers & Key Terms",
         items: [
-            "Tower: 2+ dice on the same field. A new die can only be added if its attack strength strictly exceeds the current top die's attack strength. Control = player with the top die.",
-            "Mixed tower: tower containing both players' dice. Controlled by the player with the top die — only that player can move it, attack from it, or jump from it.",
-            "Base: starting row; no special rules during play.",
+            { text: "Tower: 2+ dice on the same field. A new die can only be added if its attack strength strictly exceeds the current top die's attack strength. Control = player with the top die." },
+            { text: "Mixed tower: tower containing both players' dice. Controlled by the player with the top die — only that player can move it, attack from it, or jump from it." },
+            { text: "Inactive focal point: not currently scoring.", icon: picFocalInactive },
+            { text: "Base: starting row; no special rules during play." },
         ],
     },
 ];
@@ -125,11 +149,15 @@ function RulesSection({ id, title, items, isOpen, onToggle }) {
                     id={`rules-panel-${id}`}
                     role="region"
                     aria-labelledby={`rules-heading-${id}`}
-                    className="m-0 mb-3 p-0 pl-[1.1rem] text-[rgba(241,245,249,0.82)] text-[0.85rem] leading-[1.65]"
+                    className="m-0 mb-3 p-0 list-none text-[rgba(241,245,249,0.82)] text-[0.85rem] leading-[1.65]"
                 >
-                    {items.map((text, i) => (
-                        <li key={i} className="mb-[0.35rem]">
-                            {text}
+                    {items.map((item, i) => (
+                        <li key={i} className="mb-[0.35rem] flex items-start gap-2">
+                            {item.icon
+                                ? <img src={item.icon} alt="" className="w-4 h-4 mt-[0.2rem] shrink-0 invert opacity-70" />
+                                : <span className="w-4 h-4 mt-[0.2rem] shrink-0" />
+                            }
+                            <span>{item.text}</span>
                         </li>
                     ))}
                 </ul>

@@ -24,6 +24,54 @@ import { TutorialScene } from "./TutorialScene.jsx";
 import { VictoryScreen } from "./VictoryScreen.jsx";
 import { NAMED_PLAYER_COLORS } from "./Board.jsx";
 
+import picArrow         from "../assets/pictogram/pictogram-arrow.svg";
+import picAttack        from "../assets/pictogram/pictogram-attack.svg";
+import picBoot          from "../assets/pictogram/pictogram-boot.svg";
+import picCoatOfArms    from "../assets/pictogram/pictogram-coat-of-arms.svg";
+import picDestroyed     from "../assets/pictogram/pictogram-destroyed.svg";
+import picEmptyShield   from "../assets/pictogram/pictogram-empty-shield.svg";
+import picFocalActive   from "../assets/pictogram/pictogram-focal-active.svg";
+import picFocalInactive from "../assets/pictogram/pictogram-focal-inactive.svg";
+import picJump          from "../assets/pictogram/pictogram-jump.svg";
+import picMinus         from "../assets/pictogram/pictogram-minus.svg";
+import picNum1          from "../assets/pictogram/pictogram-num-1.svg";
+import picNum2          from "../assets/pictogram/pictogram-num-2.svg";
+import picNum3          from "../assets/pictogram/pictogram-num-3.svg";
+import picNum4          from "../assets/pictogram/pictogram-num-4.svg";
+import picPlus          from "../assets/pictogram/pictogram-plus.svg";
+import picPush          from "../assets/pictogram/pictogram-push.svg";
+import picHex          from "../assets/pictogram/pictogram-hex.svg";
+import picReroll        from "../assets/pictogram/pictogram-reroll.svg";
+import picMoveDice     from "../assets/pictogram/pictogram-move-dice.svg";
+import picMoveTower    from "../assets/pictogram/pictogram-move-tower.svg";
+import picTower        from "../assets/pictogram/pictogram-tower.svg";
+import picTowerCollapse from "../assets/pictogram/pictogram-tower-collapse.svg";
+
+const PICTOGRAMS = [
+    { src: picCoatOfArms,    label: "coat-of-arms" },
+    { src: picEmptyShield,   label: "empty-shield" },
+    { src: picBoot,          label: "boot" },
+    { src: picArrow,         label: "arrow" },
+    { src: picJump,          label: "jump" },
+    { src: picPush,          label: "push" },
+    { src: picAttack,        label: "attack" },
+    { src: picFocalActive,   label: "focal-active" },
+    { src: picFocalInactive, label: "focal-inactive" },
+    { src: picDestroyed,     label: "destroyed" },
+    { src: picPlus,          label: "plus" },
+    { src: picMinus,         label: "minus" },
+    { src: picNum1,          label: "num-1" },
+    { src: picNum2,          label: "num-2" },
+    { src: picNum3,          label: "num-3" },
+    { src: picNum4,          label: "num-4" },
+    { src: picHex,           label: "hex" },
+    { src: picMoveDice,      label: "move-dice" },
+    { src: picMoveTower,     label: "move-tower" },
+    { src: picTower,         label: "tower" },
+    { src: picTowerCollapse, label: "tower-collapse" },
+    { src: picReroll,        label: "reroll" },
+];
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -613,6 +661,22 @@ export function StyleGuide({ onBack }) {
                         onClose={() => setShowSettingsOverlay(false)}
                     />
                 )}
+            </Section>
+
+            {/* ── 23. Pictograms ───────────────────────────────────────────── */}
+            <Section title="23. Pictograms">
+                <div className="grid grid-cols-4 gap-6">
+                    {PICTOGRAMS.map(({ src, label, placeholder }) => (
+                        <div key={label} className="flex flex-col items-center gap-2">
+                            <div className={`p-4 flex items-center justify-center w-20 h-20 ${placeholder ? "border-2 border-dashed border-stone-600 rounded" : "frame-panel"}`}>
+                                <img src={src} alt={label} className={`w-10 h-10 object-contain ${placeholder ? "opacity-30" : "invert"}`} />
+                            </div>
+                            <span className={`text-xs text-center ${placeholder ? "text-stone-600 italic" : "text-stone-400"}`}>
+                                {label}{placeholder ? " ·  chybí" : ""}
+                            </span>
+                        </div>
+                    ))}
+                </div>
             </Section>
         </div>
     );
