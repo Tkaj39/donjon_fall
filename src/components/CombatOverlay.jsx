@@ -4,10 +4,17 @@
  */
 
 import { getAttackStrength } from "../game/gameState.js";
+import picPush from "../assets/pictogram/pictogram-push.svg";
+import picJump from "../assets/pictogram/pictogram-jump.svg";
 
 const OPTION_LABELS = {
     push:   "Push",
     occupy: "Occupy",
+};
+
+const OPTION_ICONS = {
+    push:   picPush,
+    occupy: picJump,
 };
 
 /**
@@ -56,9 +63,14 @@ export function CombatOverlay({ state, options, onChoose }) {
                         <button
                             key={option}
                             onClick={() => onChoose(option)}
-                            className="btn-frame flex-1 py-4 text-xl font-semibold tracking-wide text-stone-300 hover:bg-stone-700 transition-colors cursor-pointer"
+                            aria-label={OPTION_LABELS[option]}
+                            className="btn-frame flex-1 py-4 flex flex-col items-center gap-2 text-stone-300 cursor-pointer"
                         >
-                            {OPTION_LABELS[option] ?? option}
+                            <img
+                                src={OPTION_ICONS[option]}
+                                alt={OPTION_LABELS[option]}
+                                style={{ width: 32, height: 32, filter: "brightness(0) invert(1)", opacity: 0.85 }}
+                            />
                         </button>
                     ))}
                 </div>
