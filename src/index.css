@@ -217,6 +217,7 @@ img {
     --color-hex-highlighted:    #34d399;
     --color-hex-trajectory:     #67e8f9;
     --color-hex-enemy-reachable:#fca5a5;
+    --color-hex-dimmed:         #000000;
 
     /* Focal point markers */
     --color-focal-active:        #fbbf24;

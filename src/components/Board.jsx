@@ -96,6 +96,39 @@ const OFFSET_X = -minX + BOARD_PADDING;
 /** Vertical coordinate offset for hex rendering. */
 const OFFSET_Y = -minY + BOARD_PADDING;
 
+/**
+ * 12-vertex polygon tracing the exact outer boundary of the hex board.
+ * Derived analytically: each of the 6 corner hexes contributes 2 vertices.
+ * Stored relative to the board pixel centre (0,0); add OFFSET_X/Y in SVG space.
+ */
+const _SQ3 = Math.sqrt(3);
+const _BR   = Math.round(-minY / (HEX_SIZE * 1.5)); // board radius = 4
+const BOARD_FRAME_VERTS = (() => {
+    const s = HEX_SIZE, R = _BR;
+    const pairs = [
+        [ _SQ3*R/2,      -(3*R+2)/2],  // top-left  tip of corner hex (R,−R,0)
+        [ _SQ3*(R+1)/2,  -(3*R+1)/2],  // upper-right vertex
+        [ _SQ3*(2*R+1)/2, -0.5     ],  // corner hex (R, 0,−R)
+        [ _SQ3*(2*R+1)/2,  0.5     ],
+        [ _SQ3*(R+1)/2,   (3*R+1)/2],
+        [ _SQ3*R/2,       (3*R+2)/2],
+        [-_SQ3*R/2,       (3*R+2)/2],
+        [-_SQ3*(R+1)/2,   (3*R+1)/2],
+        [-_SQ3*(2*R+1)/2,  0.5     ],
+        [-_SQ3*(2*R+1)/2, -0.5     ],
+        [-_SQ3*(R+1)/2,  -(3*R+1)/2],
+        [-_SQ3*R/2,      -(3*R+2)/2],
+    ];
+    return pairs.map(([x, y]) => [x * s, y * s]);
+})();
+
+/** Convert BOARD_FRAME_VERTS to an SVG points string, scaled from the board centre. */
+function boardFramePoints(scale = 1) {
+    return BOARD_FRAME_VERTS
+        .map(([x, y]) => `${OFFSET_X + x * scale},${OFFSET_Y + y * scale}`)
+        .join(" ");
+}
+
 /** Static field-properties lookup: hexKey → HexField.properties[]. */
 const FIELD_PROPS_BY_KEY = Object.fromEntries(
     BOARD_FIELDS.map(field => [hexKey(field.coords), field.properties])
@@ -346,6 +379,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                     />
                 );
             })}
+
         </svg>
     );
 }

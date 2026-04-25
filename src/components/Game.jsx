@@ -30,7 +30,7 @@ import {
     getApproachDirections,
 } from "../game/movement.js";
 import {hasLegalMoves} from "../game/turnManager.js";
-import {BOARD_FIELDS} from "../hex/boardConstants.js";
+import {BOARD_FIELDS, BOARD_HEX_SET} from "../hex/boardConstants.js";
 import {hexFromKey, hexesDistance} from "../hex/hexUtils.js";
 import {useGameState} from "../hooks/useGameState.js";
 import {ActionPanel} from "./ActionPanel.jsx";
@@ -393,11 +393,18 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
     /** @type {{ [hexKey: string]: string }} */
     const highlightedHexes = (() => {
         const map = {};
-        for (const key of reachableKeys) {
-            const ctrl = getController(state, key);
-            map[key] = ctrl !== null && ctrl !== state.currentPlayer
-                ? "enemy-reachable"
-                : "reachable";
+        if (selectedHex && reachableKeys.size > 0) {
+            for (const key of BOARD_HEX_SET) {
+                if (key !== selectedHex && !reachableKeys.has(key)) {
+                    map[key] = "dimmed";
+                }
+            }
+            for (const key of reachableKeys) {
+                const ctrl = getController(state, key);
+                if (ctrl !== null && ctrl !== state.currentPlayer) {
+                    map[key] = "enemy-reachable";
+                }
+            }
         }
         for (const key of trajectoryPath.slice(1)) {
             map[key] = "trajectory";
@@ -758,19 +765,25 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
 
             {/* ── Action panel + End turn ──────────────────────── */}
             <div className="flex flex-col items-center gap-2 shrink-0 pb-4 px-4">
-                <div className="flex items-center justify-center">
-                    {showActionPanel ? (
+                <div className="relative flex items-center justify-center">
+                    {/* Always in DOM — anchors height so board never resizes */}
+                    <div style={{
+                        visibility: showActionPanel ? "visible" : "hidden",
+                        pointerEvents: showActionPanel ? "auto" : "none",
+                    }}>
                         <ActionPanel
                             currentPlayer={state.currentPlayer}
-                            availableActions={availableActions}
-                            activeAction={activeAction}
-                            onActionSelect={handleActionSelect}
+                            availableActions={showActionPanel ? availableActions : ["move-die", "reroll"]}
+                            activeAction={showActionPanel ? activeAction : null}
+                            onActionSelect={showActionPanel ? handleActionSelect : () => {}}
                         />
-                    ) : (
-                        <div className="action-bar px-2 py-2">
-                            <button disabled className="text-stone-500 text-sm tracking-wide px-6 py-7 cursor-not-allowed">
+                    </div>
+                    {/* Status text overlaid when no die is selected */}
+                    {!showActionPanel && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-stone-500 text-sm tracking-wide">
                                 {state.phase === "combat" ? "Souboj…" : state.phase === "focal" ? "Počítání bodů…" : "Označ svou kostku"}
-                            </button>
+                            </span>
                         </div>
                     )}
                 </div>

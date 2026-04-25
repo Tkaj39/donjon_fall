@@ -16,7 +16,7 @@ export function PlayerShield({playerId, cfg, score, isActive}) {
     const glowColor = NAMED_PLAYER_COLORS[playerId]?.glow;
 
     const glowStyle = isActive && glowColor
-        ? {filter: `drop-shadow(0 0 12px ${glowColor}) drop-shadow(0 0 24px ${glowColor})`}
+        ? {filter: `drop-shadow(0 0 10px ${glowColor}) drop-shadow(0 0 5px ${glowColor})`}
         : {filter: "grayscale(80%) brightness(50%)"};
 
     return (

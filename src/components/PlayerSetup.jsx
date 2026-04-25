@@ -28,7 +28,7 @@ function CoatOfArmsTile({ id, label, animalHref, shieldHref, selected, onSelect 
             className="relative w-14 cursor-pointer transition-all"
             style={{
                 filter: selected
-                    ? "drop-shadow(0 0 6px rgba(251,191,36,0.9)) drop-shadow(0 0 12px rgba(251,191,36,0.5))"
+                    ? "drop-shadow(0 0 3px rgba(251,191,36,0.7)) drop-shadow(0 0 6px rgba(251,191,36,0.3))"
                     : "none",
                 opacity: selected ? 1 : 0.55,
             }}
