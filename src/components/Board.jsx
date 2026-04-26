@@ -10,7 +10,12 @@ import { hexCorners, hexFromKey, hexKey, hexToPixel } from "../hex/hexUtils.js";
 import { getAttackStrength } from "../game/gameState.js";
 import { Die } from "./Die.jsx";
 import { HexTile } from "./HexTile.jsx";
-import { resolveHexImage } from "../styles/themes/default.js";
+import { resolveHexImage, grassImg } from "../styles/themes/default.js";
+
+/** Deterministic 0-15 tile index for a grass hex, based on cube coordinates. */
+function grassVariant(q, r) {
+    return (((q * 374761393) ^ (r * 1234567891)) % 16 + 16) % 16;
+}
 
 // ---------------------------------------------------------------------------
 // Layout constants
@@ -30,16 +35,16 @@ const PADDING_RATIO = 1.2;
  * `primary` — die body colour; `tint` — base-hex background tint.
  */
 const PLAYER_PALETTE = [
-    { primary: "#dc2626", tint: "#fca5a5", glow: "#f87171" }, // red
-    { primary: "#2563eb", tint: "#93c5fd", glow: "#3b82f6" }, // blue
-    { primary: "#16a34a", tint: "#86efac", glow: "#4ade80" }, // green
-    { primary: "#d97706", tint: "#fcd34d", glow: "#fbbf24" }, // amber
-    { primary: "#9333ea", tint: "#d8b4fe", glow: "#c084fc" }, // purple
-    { primary: "#0891b2", tint: "#67e8f9", glow: "#22d3ee" }, // cyan
+    { primary: "#dc2626", tint: "#fca5a5", glow: "#f87171", dark: "#7f1d1d" }, // red
+    { primary: "#2563eb", tint: "#93c5fd", glow: "#3b82f6", dark: "#1e3a8a" }, // blue
+    { primary: "#16a34a", tint: "#86efac", glow: "#4ade80", dark: "#14532d" }, // green
+    { primary: "#d97706", tint: "#fcd34d", glow: "#fbbf24", dark: "#78350f" }, // amber
+    { primary: "#9333ea", tint: "#d8b4fe", glow: "#c084fc", dark: "#581c87" }, // purple
+    { primary: "#0891b2", tint: "#67e8f9", glow: "#22d3ee", dark: "#164e63" }, // cyan
 ];
 
 /** Fallback palette entry for unknown player IDs. */
-const PLAYER_PALETTE_DEFAULT = { primary: "#6b7280", tint: "#d1d5db", glow: "#9ca3af" };
+const PLAYER_PALETTE_DEFAULT = { primary: "#6b7280", tint: "#d1d5db", glow: "#9ca3af", dark: "#1c1917" };
 
 /**
  * Named colour overrides — player IDs whose names match a colour get that colour
@@ -336,6 +341,7 @@ export function Board({ state = null, selectedHex = null, highlightedHexes = {},
                         fieldProperties={fieldProps}
                         diceStack={diceStack}
                         themeImageHref={resolveHexImage(fieldProps, playerColors)}
+                        themeImageVariant={resolveHexImage(fieldProps, playerColors) === grassImg ? grassVariant(hex.q, hex.r) : null}
                         highlight={highlightedHexes[key] ?? null}
                         isSelected={selectedHex === key}
                         playerColors={playerColors}

@@ -18,7 +18,7 @@ const HIGHLIGHT_FILL = {
 };
 
 /** Focal point marker circle radius as a fraction of hex size. */
-const HEX_STROKE_WIDTH = 2.5;
+const HEX_STROKE_WIDTH = 1;
 const FOCAL_MARKER_RATIO = 0.18;
 
 /** Vertical spacing between stacked dice as a fraction of hex size. */
@@ -56,7 +56,7 @@ const STACK_OFFSET_RATIO = 0.22;
  * @param {function(string|null): void} [props.onHover]    - Called with hexKey on mouse enter, null on leave.
  * @returns {JSX.Element}
  */
-export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, directionPicker = null, themeImageHref = null, debugInfo = null, onClick, onHover }) {
+export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], diceStack = [], highlight = null, isSelected = false, playerColors = {}, isActiveFocalPoint = false, directionPicker = null, themeImageHref = null, themeImageVariant = null, debugInfo = null, onClick, onHover }) {
     const corners = hexCorners(centerX, centerY, size);
     const points = corners.map(({ x, y }) => `${x},${y}`).join(" ");
 
@@ -72,7 +72,11 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
     // For highlight/selected overlays, base fill is transparent so texture shows; overlays are drawn above.
     const polygonFill = hasTexture ? "transparent" : fill;
 
-    const clipId = `hex-clip-${hexKey(coords)}`;
+    const clipId      = `hex-clip-${hexKey(coords)}`;
+    const gradId      = `starter-grad-${hexKey(coords)}`;
+    const glowId      = `hex-glow-${hexKey(coords)}`;
+    const focalGlowId = `focal-glow-${hexKey(coords)}`;
+    const isNeutral   = !startingProp && !isFocalPoint;
     // Bounding box of the hex for the image placement.
     const imgX = centerX - size;
     const imgY = centerY - size;
@@ -92,6 +96,36 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     <clipPath id={clipId}>
                         <polygon points={points} />
                     </clipPath>
+                    {startingProp && (() => {
+                        const dark = playerColors[startingProp.owner]?.primary ?? playerColors.default?.primary ?? "#6b7280";
+                        const erode = Math.round(size * 0.25);
+                        const blur  = size * 0.35;
+                        return (
+                            <filter id={gradId} x="-5%" y="-5%" width="110%" height="110%" colorInterpolationFilters="sRGB">
+                                <feMorphology in="SourceAlpha" operator="erode" radius={erode} result="shrunken"/>
+                                <feGaussianBlur in="shrunken" stdDeviation={blur} result="core"/>
+                                <feComposite in="SourceAlpha" in2="core" operator="out" result="edge"/>
+                                <feFlood floodColor={dark} result="color"/>
+                                <feComposite in="color" in2="edge" operator="in"/>
+                            </filter>
+                        );
+                    })()}
+                    <filter id={glowId} x="-5%" y="-5%" width="110%" height="110%" colorInterpolationFilters="sRGB">
+                        <feMorphology in="SourceAlpha" operator="erode" radius={Math.round(size * 0.05)} result="shrunken"/>
+                        <feGaussianBlur in="shrunken" stdDeviation={size * 0.05} result="core"/>
+                        <feComposite in="SourceAlpha" in2="core" operator="out" result="edge"/>
+                        <feFlood floodColor="#746940" result="color"/>
+                        <feComposite in="color" in2="edge" operator="in"/>
+                    </filter>
+                    {isFocalPoint && isActiveFocalPoint && (
+                        <filter id={focalGlowId} x="-5%" y="-5%" width="110%" height="110%" colorInterpolationFilters="sRGB">
+                            <feMorphology in="SourceAlpha" operator="erode" radius={Math.round(size * 0.05)} result="shrunken"/>
+                            <feGaussianBlur in="shrunken" stdDeviation={size * 0.05} result="core"/>
+                            <feComposite in="SourceAlpha" in2="core" operator="out" result="edge"/>
+                            <feFlood floodColor="var(--color-focal-active)" result="color"/>
+                            <feComposite in="color" in2="edge" operator="in"/>
+                        </filter>
+                    )}
                 </defs>
             )}
             <polygon
@@ -100,7 +134,18 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                 stroke="var(--color-hex-stroke)"
                 strokeWidth={HEX_STROKE_WIDTH}
             />
-            {hasTexture && (
+            {hasTexture && themeImageVariant !== null ? (
+                // Atlas crop: full 936px image scaled to 4×imgSize, offset to show selected tile
+                <image
+                    href={themeImageHref}
+                    x={imgX - (themeImageVariant % 4) * imgSize}
+                    y={imgY - Math.floor(themeImageVariant / 4) * imgSize}
+                    width={imgSize * 4}
+                    height={imgSize * 4}
+                    clipPath={`url(#${clipId})`}
+                    className="pointer-events-none"
+                />
+            ) : hasTexture && (
                 <image
                     href={themeImageHref}
                     x={imgX}
@@ -121,6 +166,37 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     className="pointer-events-none"
                 />
             )}
+            {/* Sepia edge glow — all hex types */}
+            {hasTexture && (
+                <polygon
+                    points={points}
+                    fill="#928550"
+                    filter={`url(#${glowId})`}
+                    className="pointer-events-none"
+                    style={{ mixBlendMode: "screen" }}
+                />
+            )}
+            {/* Starting field — player colour multiply above sepia glow */}
+            {startingProp && (() => {
+                const dark = playerColors[startingProp.owner]?.primary ?? playerColors.default?.primary ?? "#6b7280";
+                return (
+                    <polygon
+                        points={points}
+                        fill={dark}
+                        filter={`url(#${gradId})`}
+                        className="pointer-events-none"
+                        style={{ mixBlendMode: "multiply" }}
+                    />
+                );
+            })()}
+            {/* Thin dark inner stroke — sharpens hex edge above texture */}
+            <polygon
+                points={points}
+                fill="none"
+                stroke="rgba(0,0,0,0.75)"
+                strokeWidth={0.5}
+                className="pointer-events-none"
+            />
             {/* Selected overlay — above texture */}
             {isSelected && (
                 <polygon
@@ -130,12 +206,12 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     className="pointer-events-none"
                 />
             )}
-            {/* Highlight overlay always above texture */}
-            {highlight && (
+            {/* Highlight overlay (non-dimmed) above texture, below dice */}
+            {highlight && highlight !== "dimmed" && (
                 <polygon
                     points={points}
                     fill={HIGHLIGHT_FILL[highlight]}
-                    opacity={highlight === "dimmed" ? 0.55 : 0.5}
+                    opacity={0.5}
                     className="pointer-events-none"
                 />
             )}
@@ -143,8 +219,9 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                 <polygon
                     points={points}
                     fill="var(--color-focal-active)"
-                    opacity={0.25}
+                    filter={`url(#${focalGlowId})`}
                     className="pointer-events-none"
+                    style={{ mixBlendMode: "screen" }}
                 />
             )}
             {isFocalPoint && (
@@ -171,6 +248,15 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     />
                 );
             })}
+            {/* Dimmed overlay above dice — covers dice on unreachable hexes */}
+            {highlight === "dimmed" && (
+                <polygon
+                    points={points}
+                    fill={HIGHLIGHT_FILL.dimmed}
+                    opacity={0.55}
+                    className="pointer-events-none"
+                />
+            )}
             {directionPicker && (
                 <DirectionPickerOverlay
                     cx={centerX}

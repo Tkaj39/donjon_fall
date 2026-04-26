@@ -5,12 +5,12 @@
  * All image imports live here — game logic and components stay image-free.
  */
 
-import grassImg          from "../../assets/battlefield/grass.png";
+import grassImg          from "../../assets/battlefield/grass.jpg";
 import grassDenseImg     from "../../assets/battlefield/grass-dense.png";
 
 /** Background image for the entire app. */
 export const appBackground = grassDenseImg;
-import focusImg          from "../../assets/battlefield/focus.png";
+import focusImg          from "../../assets/battlefield/focus.jpg";
 import starterRedImg     from "../../assets/battlefield/startr-field-red.png";
 import starterBlueImg    from "../../assets/battlefield/startr-field-blue.png";
 
@@ -68,12 +68,10 @@ const RED_PRIMARY  = "#dc2626";
  * @param {Object.<string,{primary:string}>}   playerColors - ownerId → colour pair
  * @returns {string|null}
  */
+/** The grass atlas image reference — used by Board to detect grass tiles. */
+export { grassImg };
+
 export function resolveHexImage(fieldProperties, playerColors) {
-    const startingProp = fieldProperties.find(p => p.type === "startingField");
-    if (startingProp) {
-        const primary = playerColors[startingProp.owner]?.primary;
-        return primary === RED_PRIMARY ? starterRedImg : starterBlueImg;
-    }
     if (fieldProperties.some(p => p.type === "focalPoint")) return focusImg;
     return grassImg;
 }
