@@ -5,6 +5,7 @@
 import { Logo } from "./Logo.jsx";
 import { PlayerShield } from "./PlayerShield.jsx";
 import { NAMED_PLAYER_COLORS } from "./Board.jsx";
+import picFocalActive from "../assets/pictogram/pictogram-focal-inactive.svg";
 
 /**
  * @param {Object}   props
@@ -29,24 +30,16 @@ export function VictoryScreen({ winner, playerConfigs = [], score = 0, onNewGame
 
             <div className="frame-panel victory-panel flex flex-col items-center gap-6 px-14 py-10 min-w-[320px]">
 
-                {/* Crown SVG */}
-                <svg aria-hidden="true" width="80" height="64" viewBox="0 0 80 64">
-                    <filter id="vic-glow">
-                        <feGaussianBlur stdDeviation="3" result="blur"/>
-                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                    </filter>
-                    <g filter="url(#vic-glow)">
-                        <polygon
-                            points="4,56 16,20 40,40 64,20 76,56"
-                            fill={palette.primary}
-                            opacity="0.95"
-                        />
-                        <circle cx="4"  cy="18" r="5" fill={palette.glow} />
-                        <circle cx="40" cy="14" r="6" fill={palette.glow} />
-                        <circle cx="76" cy="18" r="5" fill={palette.glow} />
-                        <rect x="4" y="56" width="72" height="8" rx="4" fill={palette.primary} />
-                    </g>
-                </svg>
+                {/* Focal-active pictogram, white with player glow */}
+                <img
+                    src={picFocalActive}
+                    aria-hidden="true"
+                    width={80}
+                    height={80}
+                    style={{
+                        filter: `brightness(0) invert(1) drop-shadow(0 0 10px ${palette.glow}) drop-shadow(0 0 20px ${palette.glow})`,
+                    }}
+                />
 
                 {/* Title */}
                 <h1 className="text-4xl font-extrabold tracking-widest uppercase text-stone-100 m-0"

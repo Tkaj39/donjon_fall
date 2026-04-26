@@ -14,6 +14,7 @@ const HIGHLIGHT_FILL = {
     selected:          "var(--color-hex-highlighted)",
     trajectory:        "var(--color-hex-trajectory)",
     "enemy-reachable": "var(--color-hex-enemy-reachable)",
+    dimmed:            "var(--color-hex-dimmed)",
 };
 
 /** Focal point marker circle radius as a fraction of hex size. */
@@ -68,8 +69,7 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
     let fill = "var(--color-hex-default)";
     if (startingProp) fill = playerColors[startingProp.owner]?.tint ?? playerColors.default?.tint ?? "#d1d5db";
     if (isFocalPoint) fill = "var(--color-hex-focal)";
-    if (isSelected)   fill = "var(--color-hex-selected)";
-    // For highlight overlays, base fill is always transparent (texture shows), overlay is drawn above.
+    // For highlight/selected overlays, base fill is transparent so texture shows; overlays are drawn above.
     const polygonFill = hasTexture ? "transparent" : fill;
 
     const clipId = `hex-clip-${hexKey(coords)}`;
@@ -121,12 +121,21 @@ export function HexTile({ coords, centerX, centerY, size, fieldProperties = [], 
                     className="pointer-events-none"
                 />
             )}
-            {/* Highlight overlay always above texture, 0.5 opacity */}
+            {/* Selected overlay — above texture */}
+            {isSelected && (
+                <polygon
+                    points={points}
+                    fill="var(--color-hex-selected)"
+                    opacity={0.45}
+                    className="pointer-events-none"
+                />
+            )}
+            {/* Highlight overlay always above texture */}
             {highlight && (
                 <polygon
                     points={points}
                     fill={HIGHLIGHT_FILL[highlight]}
-                    opacity={0.5}
+                    opacity={highlight === "dimmed" ? 0.55 : 0.5}
                     className="pointer-events-none"
                 />
             )}
