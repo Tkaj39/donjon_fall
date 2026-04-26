@@ -28,7 +28,7 @@ export function VictoryScreen({ winner, playerConfigs = [], score = 0, onNewGame
         >
             <Logo className="w-24 mb-6" />
 
-            <div className="frame-panel victory-panel flex flex-col items-center gap-6 px-14 py-10 min-w-[320px]">
+            <div className="frame-panel victory-panel flex flex-col items-center gap-6 px-8 sm:px-14 py-10 w-[90vw] sm:w-auto sm:min-w-[320px] max-w-sm sm:max-w-none">
 
                 {/* Focal-active pictogram, white with player glow */}
                 <img
@@ -42,7 +42,7 @@ export function VictoryScreen({ winner, playerConfigs = [], score = 0, onNewGame
                 />
 
                 {/* Title */}
-                <h1 className="text-4xl font-extrabold tracking-widest uppercase text-stone-100 m-0"
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-widest uppercase text-stone-100 m-0"
                     style={{ textShadow: `0 0 24px ${palette.glow}, 0 0 8px ${palette.glow}` }}
                 >
                     Vítěz!

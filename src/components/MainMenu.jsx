@@ -108,45 +108,89 @@ export function MainMenu({ onPlay, onDirectPlay, initialScreen = "main" }) {
         );
     }
 
-    return (
-        <div className="flex min-h-screen text-white">
-            <MenuSidebar footer={
-                <div className="flex items-center justify-between text-stone-500 text-xs px-1">
-                    <span>{APP_VERSION}</span>
-                    <a href="https://github.com/Tkaj39/donjon_fall" target="_blank" rel="noopener noreferrer" className="hover:text-stone-300 transition-colors" aria-label="GitHub">GitHub</a>
-                </div>
-            }>
-                <MenuButton label="Start" onClick={() => setScreen("start")} />
-                <MenuButton label="Continue" disabled />
-                <MenuButton label="Tutorial" onClick={() => setTutorialOpen(true)} />
-                <MenuButton label="Rules" onClick={() => setRulesOpen(true)} />
-                <MenuButton label="Settings" onClick={() => setSettingsOpen(true)} />
-            </MenuSidebar>
-
-            {/* ── Canvas (right area) ─────────────────────────── */}
-            <main className="flex flex-col items-center justify-center grow">
-                <p className="text-stone-500 text-lg uppercase tracking-widest">
-                    Donjon Fall
-                </p>
-                <p className="text-stone-600 text-sm mt-2">
-                    Select an option from the menu
-                </p>
-            </main>
-
-            {rulesOpen && <RulesViewer onClose={() => setRulesOpen(false)} />}
+    const overlays = (
+        <>
+            {rulesOpen    && <RulesViewer onClose={() => setRulesOpen(false)} />}
             {tutorialOpen && <Tutorial onClose={() => setTutorialOpen(false)} />}
             {settingsOpen && (
                 <SettingsPanel
-                    sound={sound}
-                    onSoundChange={setSound}
-                    animations={animations}
-                    onAnimationsChange={setAnimations}
-                    language={language}
-                    onLanguageChange={setLanguage}
+                    sound={sound} onSoundChange={setSound}
+                    animations={animations} onAnimationsChange={setAnimations}
+                    language={language} onLanguageChange={setLanguage}
                     onClose={() => setSettingsOpen(false)}
                 />
             )}
-        </div>
+        </>
+    );
+
+    return (
+        <>
+            {/* ── Mobile layout ───────────────────────────────── */}
+            <div className="lg:hidden h-dvh flex flex-col text-white">
+
+                {/* Top bar — icon buttons */}
+                <header className="flex justify-end gap-2 p-4 shrink-0">
+                    <button
+                        onClick={() => setTutorialOpen(true)}
+                        className="btn-frame-sm px-3 py-2 text-xs font-semibold tracking-widest text-stone-300 cursor-pointer"
+                    >
+                        Tutorial
+                    </button>
+                    <button
+                        onClick={() => setRulesOpen(true)}
+                        aria-label="Pravidla"
+                        className="btn-frame-sm w-9 h-9 flex items-center justify-center text-stone-300 text-base font-bold cursor-pointer"
+                    >
+                        ?
+                    </button>
+                    <button
+                        onClick={() => setSettingsOpen(true)}
+                        aria-label="Nastavení"
+                        className="btn-frame-sm w-9 h-9 flex items-center justify-center text-stone-300 text-base cursor-pointer"
+                    >
+                        ⚙
+                    </button>
+                </header>
+
+                {/* Center — Logo */}
+                <div className="flex-1 flex items-center justify-center">
+                    <Logo className="w-56" />
+                </div>
+
+                {/* Bottom — Start button */}
+                <div className="shrink-0 px-8 pb-12">
+                    <button
+                        onClick={() => setScreen("start")}
+                        className="btn-frame w-full py-5 text-2xl font-bold tracking-widest text-stone-200 cursor-pointer"
+                    >
+                        Start
+                    </button>
+                </div>
+            </div>
+
+            {/* ── Desktop layout ───────────────────────────────── */}
+            <div className="hidden lg:flex min-h-screen text-white">
+                <MenuSidebar footer={
+                    <div className="flex items-center justify-between text-stone-500 text-xs px-1">
+                        <span>{APP_VERSION}</span>
+                        <a href="https://github.com/Tkaj39/donjon_fall" target="_blank" rel="noopener noreferrer" className="hover:text-stone-300 transition-colors" aria-label="GitHub">GitHub</a>
+                    </div>
+                }>
+                    <MenuButton label="Start" onClick={() => setScreen("start")} />
+                    <MenuButton label="Continue" disabled />
+                    <MenuButton label="Tutorial" onClick={() => setTutorialOpen(true)} />
+                    <MenuButton label="Rules" onClick={() => setRulesOpen(true)} />
+                    <MenuButton label="Settings" onClick={() => setSettingsOpen(true)} />
+                </MenuSidebar>
+
+                <main className="flex flex-col items-center justify-center grow">
+                    <p className="text-stone-500 text-lg uppercase tracking-widest">Donjon Fall</p>
+                    <p className="text-stone-600 text-sm mt-2">Select an option from the menu</p>
+                </main>
+            </div>
+
+            {overlays}
+        </>
     );
 }
 
@@ -158,29 +202,58 @@ export function MainMenu({ onPlay, onDirectPlay, initialScreen = "main" }) {
  */
 function StartScreen({ onPlay, onDirectPlay, onBack }) {
     return (
-        <div className="flex min-h-screen text-white">
-            <MenuSidebar footer={
-                <>
-                    <MenuButton label="Back" onClick={onBack} />
-                    <div className="flex items-center justify-between text-stone-500 text-xs px-1">
-                        <span>{APP_VERSION}</span>
-                    </div>
-                </>
-            }>
-                <MenuButton label="Quick Start" onClick={onDirectPlay} />
-                <MenuButton label="Configure Game" onClick={onPlay} />
-            </MenuSidebar>
+        <>
+            {/* ── Mobile layout ───────────────────────────────── */}
+            <div className="lg:hidden h-dvh flex flex-col text-white">
+                <header className="flex justify-start p-4 shrink-0">
+                    <button
+                        onClick={onBack}
+                        className="btn-frame-sm px-3 py-2 text-xs font-semibold tracking-widest text-stone-300 cursor-pointer"
+                    >
+                        ← Zpět
+                    </button>
+                </header>
 
-            {/* ── Canvas ──────────────────────────────────────── */}
-            <main className="flex flex-col items-center justify-center grow">
-                <p className="text-stone-500 text-lg uppercase tracking-widest">
-                    New Game
-                </p>
-                <p className="text-stone-600 text-sm mt-2">
-                    Choose a game mode
-                </p>
-            </main>
-        </div>
+                <div className="flex-1 flex items-center justify-center">
+                    <Logo className="w-56" />
+                </div>
+
+                <div className="shrink-0 px-8 pb-12 flex flex-col gap-4">
+                    <button
+                        onClick={onDirectPlay}
+                        className="btn-frame w-full py-5 text-2xl font-bold tracking-widest text-stone-200 cursor-pointer"
+                    >
+                        Rychlá hra
+                    </button>
+                    <button
+                        onClick={onPlay}
+                        className="btn-frame-sm w-full py-3 text-base font-semibold tracking-widest text-stone-300 cursor-pointer"
+                    >
+                        Nastavit hru
+                    </button>
+                </div>
+            </div>
+
+            {/* ── Desktop layout ───────────────────────────────── */}
+            <div className="hidden lg:flex min-h-screen text-white">
+                <MenuSidebar footer={
+                    <>
+                        <MenuButton label="Back" onClick={onBack} />
+                        <div className="flex items-center justify-between text-stone-500 text-xs px-1">
+                            <span>{APP_VERSION}</span>
+                        </div>
+                    </>
+                }>
+                    <MenuButton label="Quick Start" onClick={onDirectPlay} />
+                    <MenuButton label="Configure Game" onClick={onPlay} />
+                </MenuSidebar>
+
+                <main className="flex flex-col items-center justify-center grow">
+                    <p className="text-stone-500 text-lg uppercase tracking-widest">New Game</p>
+                    <p className="text-stone-600 text-sm mt-2">Choose a game mode</p>
+                </main>
+            </div>
+        </>
     );
 }
 

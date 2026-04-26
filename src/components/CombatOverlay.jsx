@@ -39,7 +39,7 @@ export function CombatOverlay({ state, options, onChoose }) {
             aria-label="Combat resolution"
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100]"
         >
-            <div className="frame-panel flex flex-col items-center gap-5 px-10 py-7 min-w-64 text-stone-200">
+            <div className="frame-panel flex flex-col items-center gap-5 px-6 sm:px-10 py-7 min-w-[min(256px,90vw)] text-stone-200">
                 <div className="flex items-center gap-3">
                     <img src={picAttack} alt="" style={{ width: 28, height: 28, filter: "brightness(0) invert(1)", opacity: 0.75, transform: "scaleX(-1)" }} />
                     <h2 className="text-2xl font-bold tracking-widest uppercase text-stone-300">Combat</h2>

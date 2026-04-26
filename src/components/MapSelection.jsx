@@ -52,28 +52,54 @@ function MapCard({ map, onSelect }) {
  * @param {{ onSelect: (map: import("../game/boardDefinition.js").BoardDefinition) => void, onBack: () => void }} props
  */
 export function MapSelection({ onSelect, onBack }) {
-    return (
-        <div className="flex min-h-screen text-white">
-            <MenuSidebar footer={
-                <button
-                    onClick={onBack}
-                    className="btn-frame w-full py-4 text-xl font-semibold tracking-wide text-stone-300 cursor-pointer text-center"
-                >
-                    Zpět
-                </button>
-            }>
-                <p className="text-stone-500 text-xs uppercase tracking-widest text-center pt-2">
-                    Výběr mapy
-                </p>
-            </MenuSidebar>
+    const cards = ALL_MAPS.map(map => (
+        <MapCard key={map.id} map={map} onSelect={() => onSelect(map)} />
+    ));
 
-            <main className="flex flex-col items-center justify-center grow p-8">
-                <div className="w-full max-w-lg flex flex-col gap-5">
-                    {ALL_MAPS.map(map => (
-                        <MapCard key={map.id} map={map} onSelect={() => onSelect(map)} />
-                    ))}
+    return (
+        <>
+            {/* ── Mobile layout ───────────────────────────────── */}
+            <div className="lg:hidden min-h-dvh flex flex-col text-white">
+                <header className="flex justify-start p-4 shrink-0">
+                    <button
+                        onClick={onBack}
+                        className="btn-frame-sm px-3 py-2 text-xs font-semibold tracking-widest text-stone-300 cursor-pointer"
+                    >
+                        ← Zpět
+                    </button>
+                </header>
+
+                <div className="flex-1 overflow-y-auto px-4 pb-8">
+                    <h2 className="text-xl font-bold tracking-widest uppercase text-stone-300 text-center mb-4">
+                        Výběr mapy
+                    </h2>
+                    <div className="flex flex-col gap-4">
+                        {cards}
+                    </div>
                 </div>
-            </main>
-        </div>
+            </div>
+
+            {/* ── Desktop layout ───────────────────────────────── */}
+            <div className="hidden lg:flex min-h-screen text-white">
+                <MenuSidebar footer={
+                    <button
+                        onClick={onBack}
+                        className="btn-frame w-full py-4 text-xl font-semibold tracking-wide text-stone-300 cursor-pointer text-center"
+                    >
+                        Zpět
+                    </button>
+                }>
+                    <p className="text-stone-500 text-xs uppercase tracking-widest text-center pt-2">
+                        Výběr mapy
+                    </p>
+                </MenuSidebar>
+
+                <main className="flex flex-col items-center justify-center grow p-8">
+                    <div className="w-full max-w-lg flex flex-col gap-5">
+                        {cards}
+                    </div>
+                </main>
+            </div>
+        </>
     );
 }

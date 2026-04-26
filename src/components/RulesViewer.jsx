@@ -232,7 +232,7 @@ export function RulesViewer({ onClose }) {
             {/* Panel */}
             <div className="frame-panel w-full max-w-[36rem] max-h-[85vh] flex flex-col overflow-hidden px-4 py-4">
                 {/* Header */}
-                <div className="flex justify-between items-center pt-6 pb-3 px-8 border-b border-white/10 shrink-0">
+                <div className="flex justify-between items-center pt-6 pb-3 px-4 sm:px-8 border-b border-white/10 shrink-0">
                     <h2 className="m-0 text-[1.15rem] font-bold text-[#f1f5f9]">
                         Game Rules
                     </h2>
@@ -264,7 +264,7 @@ export function RulesViewer({ onClose }) {
                 </div>
 
                 {/* Scrollable body */}
-                <div className="overflow-y-auto scrollbar-stone px-8 pb-6 grow">
+                <div className="overflow-y-auto scrollbar-stone px-4 sm:px-8 pb-6 grow">
                     {SECTIONS.map((section) => (
                         <RulesSection
                             key={section.id}
