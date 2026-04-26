@@ -3,7 +3,7 @@
  * Displays colours, CSS variables, player palette, component demos, and assets.
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { hexCorners } from "../hex/hexUtils.js";
 import {
     SHIELD_BY_PLAYER,
@@ -46,6 +46,199 @@ import picMoveDice     from "../assets/pictogram/pictogram-move-dice.svg";
 import picMoveTower    from "../assets/pictogram/pictogram-move-tower.svg";
 import picTower        from "../assets/pictogram/pictogram-tower.svg";
 import picTowerCollapse from "../assets/pictogram/pictogram-tower-collapse.svg";
+
+const SOUND_GROUPS = [
+    {
+        group: "UI",
+        sounds: [
+            { id: "ui-click",        label: "Click",           desc: "Kliknutí na tlačítko" },
+            { id: "ui-hover",        label: "Hover",           desc: "Přejetí myší přes prvek" },
+        ],
+    },
+    {
+        group: "Tah",
+        sounds: [
+            { id: "turn-start",      label: "Turn Start",      desc: "Začátek tahu hráče" },
+            { id: "turn-end",        label: "Turn End",        desc: "Konec tahu / potvrzení akce" },
+        ],
+    },
+    {
+        group: "Kostky",
+        sounds: [
+            { id: "die-move",        label: "Die Move",        desc: "Přesun kostky po plánu" },
+            { id: "die-roll",        label: "Reroll",          desc: "Hod kostkou (akce reroll)" },
+            { id: "die-land",        label: "Die Land",        desc: "Přistání na cílovém poli" },
+        ],
+    },
+    {
+        group: "Věž",
+        sounds: [
+            { id: "tower-form",      label: "Tower Form",      desc: "Kostka vstoupí na obsazené pole" },
+            { id: "tower-collapse",  label: "Collapse",        desc: "Zřícení — dolní kostka odstraněna" },
+            { id: "die-jump",        label: "Jump",            desc: "Skok kostky z věže" },
+        ],
+    },
+    {
+        group: "Boj",
+        sounds: [
+            { id: "combat-hit",      label: "Hit",             desc: "Zásah — hodnota útočníka klesne" },
+            { id: "combat-push",     label: "Push",            desc: "Odsunutí nepřátelské formace" },
+            { id: "combat-occupy",   label: "Occupy",          desc: "Obsazení pole útočníkem" },
+            { id: "die-destroy",     label: "Destroy",         desc: "Zničení kostky (mapa / obklíčení)" },
+        ],
+    },
+    {
+        group: "Ohniska",
+        sounds: [
+            { id: "focal-score",     label: "Focal Score",     desc: "Bodování u aktivního ohniska" },
+            { id: "focal-activate",  label: "Focal Activate",  desc: "Aktivace vedlejšího ohniska" },
+        ],
+    },
+    {
+        group: "Konec hry",
+        sounds: [
+            { id: "victory",         label: "Victory",         desc: "5 VP dosaženo — vítězství" },
+            { id: "defeat",          label: "Defeat",          desc: "Sudden death — hráč nemůže táhnout" },
+        ],
+    },
+];
+
+function SoundTile({ id, label, desc }) {
+    const [status, setStatus] = useState("idle"); // idle | playing | missing
+    const audioRef = useRef(null);
+
+    const toggle = () => {
+        if (status === "playing") {
+            audioRef.current?.pause();
+            if (audioRef.current) audioRef.current.currentTime = 0;
+            setStatus("idle");
+            return;
+        }
+        const audio = new Audio(`/sounds/${id}.mp3`);
+        audioRef.current = audio;
+        audio.addEventListener("ended", () => setStatus("idle"));
+        audio.addEventListener("error", () => setStatus("missing"));
+        audio.play().then(() => setStatus("playing")).catch(() => setStatus("missing"));
+    };
+
+    const icon = status === "playing" ? "■" : status === "missing" ? "✕" : "▶";
+    const color = status === "missing" ? "text-red-500 border-red-800"
+        : status === "playing" ? "text-amber-400 border-amber-700"
+        : "text-stone-300 border-stone-600 hover:border-stone-400 hover:text-white";
+
+    return (
+        <div className="flex flex-col gap-1 w-28">
+            <button
+                onClick={toggle}
+                className={`w-full h-10 rounded border flex items-center justify-center gap-2 text-sm font-mono transition-colors cursor-pointer bg-stone-800 ${color}`}
+                title={desc}
+            >
+                <span>{icon}</span>
+                <span className="text-xs truncate">{label}</span>
+            </button>
+            <span className="text-[0.6rem] text-stone-500 leading-tight">{desc}</span>
+            <span className="text-[0.55rem] text-stone-600 font-mono">{id}.mp3</span>
+        </div>
+    );
+}
+
+const ANIMATION_GROUPS = [
+    {
+        group: "Kostky",
+        anims: [
+            { id: "die-move",     label: "Die Move",     desc: "Kostka se přesouvá po plánu",      trigger: "Pohyb kostky / věže",          dur: 600 },
+            { id: "die-roll",     label: "Die Roll",     desc: "Kostka se otočí při hodu",          trigger: "Reroll akce",                  dur: 700 },
+            { id: "die-land",     label: "Die Land",     desc: "Odražení při přistání na poli",     trigger: "Konec pohybu",                 dur: 500 },
+            { id: "die-destroy",  label: "Die Destroy",  desc: "Kostka zmizí po zničení",           trigger: "Zničení kostky",               dur: 600 },
+        ],
+    },
+    {
+        group: "Věž",
+        anims: [
+            { id: "tower-form",    label: "Tower Form",   desc: "Kostka padá do věže",              trigger: "Vstup na obsazené pole",        dur: 500 },
+            { id: "tower-collapse",label: "Collapse",     desc: "Spodní kostka padá a mizí",        trigger: "Akce tower collapse",           dur: 500 },
+            { id: "die-jump",      label: "Die Jump",     desc: "Kostka letí obloukem z věže",      trigger: "Skok z věže",                  dur: 700 },
+        ],
+    },
+    {
+        group: "Boj",
+        anims: [
+            { id: "combat-hit",   label: "Hit",          desc: "Hodnota klesne — kostka se třese",  trigger: "Automaticky po útoku",         dur: 500 },
+            { id: "combat-push",  label: "Push",         desc: "Formace se posune v útočném směru", trigger: "Volba push",                   dur: 600 },
+            { id: "hex-select",   label: "Combat Flash", desc: "Hex pulzuje — již implementováno",   trigger: "Fáze combat (existující)",     dur: 1200, loop: true },
+        ],
+    },
+    {
+        group: "UI",
+        anims: [
+            { id: "hex-select",   label: "Hex Select",   desc: "Amber překryv pulzuje při výběru",  trigger: "Výběr kostky",                 dur: 900, loop: true },
+            { id: "score-pop",    label: "Score Pop",    desc: "VP číslo vyskočí a zfádí",          trigger: "Bodování (zničení / ohnisko)", dur: 700 },
+            { id: "turn-switch",  label: "Turn Switch",  desc: "Štít aktivního hráče se rozsvítí",  trigger: "Konec tahu",                   dur: 800 },
+        ],
+    },
+    {
+        group: "Ohniska",
+        anims: [
+            { id: "focal-pulse",  label: "Focal Pulse",  desc: "Ohnisko pulzuje při aktivaci",      trigger: "Aktivace vedlejšího ohniska",  dur: 800, loop: true },
+            { id: "focal-score",  label: "Focal Score",  desc: "Záblesk světla + VP efekt",         trigger: "Bodování na začátku tahu",     dur: 700 },
+        ],
+    },
+    {
+        group: "Konec hry",
+        anims: [
+            { id: "victory",      label: "Victory",      desc: "Victory screen naběhne s efektem",  trigger: "Hráč dosáhne 5 VP",           dur: 800 },
+        ],
+    },
+];
+
+function AnimTile({ id, label, desc, trigger, dur, loop }) {
+    const [playing, setPlaying] = useState(false);
+    const timerRef = useRef(null);
+
+    const play = () => {
+        if (playing) return;
+        setPlaying(true);
+        clearTimeout(timerRef.current);
+        if (!loop) {
+            timerRef.current = setTimeout(() => setPlaying(false), dur + 50);
+        }
+    };
+    const stop = () => { setPlaying(false); clearTimeout(timerRef.current); };
+
+    const animStyle = playing ? {
+        animation: `sg-${id} ${dur}ms ease-in-out ${loop ? "infinite" : "1"} forwards`,
+    } : {};
+
+    return (
+        <div className="flex flex-col gap-1 w-32">
+            <div className="h-14 bg-stone-800 rounded flex items-center justify-center overflow-hidden relative border border-stone-700">
+                <div
+                    className="w-7 h-7 rounded bg-amber-500 flex items-center justify-center text-xs font-bold text-black"
+                    style={animStyle}
+                >
+                    {id === "score-pop" ? "+1" : id === "turn-switch" ? "⬡" : "●"}
+                </div>
+            </div>
+            <div className="flex gap-1">
+                <button
+                    onClick={play}
+                    disabled={playing && !loop}
+                    className="flex-1 h-7 rounded text-xs border border-stone-600 bg-stone-800 text-stone-300 hover:border-amber-600 hover:text-amber-400 transition-colors cursor-pointer disabled:opacity-40"
+                >
+                    {playing ? "▶" : "▷"} Play
+                </button>
+                {loop && playing && (
+                    <button onClick={stop} className="h-7 px-2 rounded text-xs border border-stone-600 bg-stone-800 text-stone-400 hover:text-white cursor-pointer">
+                        ■
+                    </button>
+                )}
+            </div>
+            <span className="text-[0.65rem] text-stone-300 font-medium leading-tight">{label}</span>
+            <span className="text-[0.6rem] text-stone-500 leading-tight">{desc}</span>
+            <span className="text-[0.55rem] text-stone-600 italic leading-tight">{trigger}</span>
+        </div>
+    );
+}
 
 const PICTOGRAMS = [
     { src: picCoatOfArms,    label: "coat-of-arms" },
@@ -204,22 +397,20 @@ export function StyleGuide({ onBack }) {
                     {CSS_VAR_GROUPS.map(({ group, vars }) => (
                         <div key={group}>
                             <p className="text-xs uppercase tracking-widest text-amber-500/70 mb-2">{group}</p>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-wrap gap-3">
                                 {vars.map(({ name, label, usage, unused }) => (
-                                    <div key={name} className="flex items-center gap-3">
-                                        <div className="relative shrink-0">
+                                    <div key={name} className="flex flex-col gap-1 w-28">
+                                        <div className="relative">
                                             <div
-                                                className="w-8 h-8 rounded-md border border-stone-600"
+                                                className="w-full h-10 rounded-md border border-stone-600"
                                                 style={{ background: `var(${name})` }}
                                             />
                                             {unused && (
                                                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[0.6rem] font-bold flex items-center justify-center leading-none">!</span>
                                             )}
                                         </div>
-                                        <div className="flex flex-col min-w-0">
-                                            <span className={`text-xs font-mono ${unused ? "text-stone-500 line-through" : "text-stone-300"}`}>{name}</span>
-                                            <span className="text-[0.7rem] text-stone-500 leading-tight">{usage}</span>
-                                        </div>
+                                        <span className={`text-[0.65rem] font-mono leading-tight ${unused ? "text-stone-500 line-through" : "text-stone-300"}`}>{label}</span>
+                                        <span className="text-[0.6rem] text-stone-500 leading-tight">{usage}</span>
                                     </div>
                                 ))}
                             </div>
@@ -230,23 +421,45 @@ export function StyleGuide({ onBack }) {
 
             {/* ── 2. Player Palette ─────────────────────────────────────────── */}
             <Section title="2. Player Palette">
-                <div className="flex gap-6 mb-3 text-xs text-stone-400">
-                    <span><span className="inline-block w-3 h-3 rounded-sm bg-red-600 mr-1 align-middle" />primary — barva těla kostky (Die, MovingDie)</span>
-                    <span><span className="inline-block w-3 h-3 rounded-sm bg-red-300 mr-1 align-middle" />tint — tint startovního pole (HexTile)</span>
-                    <span><span className="inline-block w-3 h-3 rounded-sm bg-red-400 mr-1 align-middle" />glow — záře aktivního štítu, barva tooltipů (PlayerShield, Game)</span>
-                </div>
-                <div className="flex flex-wrap gap-4">
-                    {PLAYER_PALETTE.map(({ id, primary, tint, glow }) => (
-                        <div key={id} className="flex flex-col items-center gap-1">
-                            <div className="flex gap-1">
-                                <div className="w-10 h-10 rounded-md border border-stone-600" style={{ background: primary }} title={`primary: ${primary}`} />
-                                <div className="w-10 h-10 rounded-md border border-stone-600" style={{ background: tint }}    title={`tint: ${tint}`} />
-                                <div className="w-10 h-10 rounded-md border border-stone-600" style={{ background: glow }}    title={`glow: ${glow}`} />
-                            </div>
-                            <span className="text-xs text-stone-300 capitalize">{id}</span>
-                            <span className="text-[0.6rem] text-stone-500">{primary}</span>
-                        </div>
-                    ))}
+                <div className="overflow-x-auto">
+                    <table className="border-separate border-spacing-1 text-xs">
+                        <thead>
+                            <tr>
+                                <th className="text-left text-stone-500 font-normal pr-3 pb-1 w-16" />
+                                {PLAYER_PALETTE.map(({ id }) => (
+                                    <th key={id} className="text-stone-300 font-semibold capitalize text-center pb-1 px-1">{id}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {[
+                                { key: "primary", label: "primary" },
+                                { key: "tint",    label: "tint" },
+                                { key: "glow",    label: "glow" },
+                            ].map(({ key, label }) => (
+                                <tr key={key}>
+                                    <td className="text-stone-500 pr-3 py-0.5">{label}</td>
+                                    {PLAYER_PALETTE.map((p) => (
+                                        <td key={p.id} className="py-0.5 px-1">
+                                            <div
+                                                className="w-10 h-8 rounded border border-stone-600"
+                                                style={{ background: p[key] }}
+                                                title={`${p.id} ${key}: ${p[key]}`}
+                                            />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                            <tr>
+                                <td />
+                                {PLAYER_PALETTE.map(({ id, primary }) => (
+                                    <td key={id} className="text-center px-1 pt-1">
+                                        <span className="text-[0.6rem] text-stone-500 font-mono">{primary}</span>
+                                    </td>
+                                ))}
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </Section>
 
@@ -255,30 +468,19 @@ export function StyleGuide({ onBack }) {
                 <p className="text-sm text-stone-400 mb-3">
                     All 6 values × red & blue, plus dimmed (non-top) variant.
                 </p>
-                <svg width={620} height={120} className="bg-stone-800 rounded-lg">
-                    {[1, 2, 3, 4, 5, 6].map((value, i) => (
-                        <Die
-                            key={`red-${value}`}
-                            cx={50 + i * 95}
-                            cy={35}
-                            hexSize={HEX}
-                            value={value}
-                            color="#dc2626"
-                            isTop={true}
-                        />
+                <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5, 6].map((value) => (
+                        <div key={value} className="flex flex-col items-center gap-1">
+                            <svg width={70} height={55} className="bg-stone-800 rounded">
+                                <Die cx={35} cy={27} hexSize={HEX} value={value} color="#dc2626" isTop={true} />
+                            </svg>
+                            <svg width={70} height={55} className="bg-stone-800 rounded">
+                                <Die cx={35} cy={27} hexSize={HEX} value={value} color="#2563eb" isTop={value > 3} />
+                            </svg>
+                            <span className="text-[0.6rem] text-stone-500">{value}</span>
+                        </div>
                     ))}
-                    {[1, 2, 3, 4, 5, 6].map((value, i) => (
-                        <Die
-                            key={`blue-${value}`}
-                            cx={50 + i * 95}
-                            cy={90}
-                            hexSize={HEX}
-                            value={value}
-                            color="#2563eb"
-                            isTop={i > 2}
-                        />
-                    ))}
-                </svg>
+                </div>
             </Section>
 
             {/* ── 4. HexTile Fills ─────────────────────────────────────────── */}
@@ -287,29 +489,25 @@ export function StyleGuide({ onBack }) {
                     Default, starting-red, starting-blue, focal, selected, reachable,
                     trajectory, enemy-reachable.
                 </p>
-                <svg width={720} height={110} className="bg-stone-800 rounded-lg">
+                <div className="flex flex-wrap gap-3">
                     {[
-                        { fill: "var(--color-hex-default)",        label: "Default" },
-                        { fill: "#fca5a5",                          label: "Starting (R)" },
-                        { fill: "#93c5fd",                          label: "Starting (B)" },
-                        { fill: "var(--color-hex-focal)",          label: "Focal" },
-                        { fill: "var(--color-hex-selected)",       label: "Selected" },
-                        { fill: "var(--color-hex-reachable)",      label: "Reachable" },
-                        { fill: "var(--color-hex-trajectory)",     label: "Trajectory" },
-                        { fill: "var(--color-hex-enemy-reachable)",label: "Enemy reach" },
-                    ].map(({ fill, label }, i) => {
-                        const cx = 50 + i * 85;
-                        const cy = 48;
-                        return (
-                            <g key={label}>
-                                <HexShape cx={cx} cy={cy} size={36} fill={fill} />
-                                <text x={cx} y={cy + 48} textAnchor="middle" fontSize={10} fill="#a8a29e">
-                                    {label}
-                                </text>
-                            </g>
-                        );
-                    })}
-                </svg>
+                        { fill: "var(--color-hex-default)",         label: "Default" },
+                        { fill: "#fca5a5",                           label: "Starting (R)" },
+                        { fill: "#93c5fd",                           label: "Starting (B)" },
+                        { fill: "var(--color-hex-focal)",           label: "Focal" },
+                        { fill: "var(--color-hex-selected)",        label: "Selected" },
+                        { fill: "var(--color-hex-reachable)",       label: "Reachable" },
+                        { fill: "var(--color-hex-trajectory)",      label: "Trajectory" },
+                        { fill: "var(--color-hex-enemy-reachable)", label: "Enemy reach" },
+                    ].map(({ fill, label }) => (
+                        <div key={label} className="flex flex-col items-center gap-1">
+                            <svg width={72} height={68} className="bg-stone-800 rounded">
+                                <HexShape cx={36} cy={34} size={28} fill={fill} />
+                            </svg>
+                            <span className="text-[0.65rem] text-stone-400 text-center w-16 leading-tight">{label}</span>
+                        </div>
+                    ))}
+                </div>
             </Section>
 
             {/* ── 5. Focal Point Markers ────────────────────────────────────── */}
@@ -561,19 +759,17 @@ export function StyleGuide({ onBack }) {
                 <p className="text-sm text-stone-400 mb-4">
                     Active (glow) vs inactive (grayscale). Score shield partially behind main shield.
                 </p>
-                <div className="flex gap-12 items-center bg-stone-800 rounded-lg p-6">
-                    <div className="flex flex-col items-center gap-2">
-                        <PlayerShield playerId="red" cfg={{ name: "Červený", coatOfArms: "dragon" }} score={3} isActive={true} />
-                        <span className="text-xs text-stone-500">Active</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                        <PlayerShield playerId="blue" cfg={{ name: "Modrý", coatOfArms: "wolf" }} score={1} isActive={false} />
-                        <span className="text-xs text-stone-500">Inactive</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                        <PlayerShield playerId="red" cfg={{ name: "Red" }} score={0} isActive={false} />
-                        <span className="text-xs text-stone-500">No coat of arms</span>
-                    </div>
+                <div className="flex flex-wrap gap-6 bg-stone-800 rounded-lg p-6">
+                    {[
+                        { playerId: "red",  cfg: { name: "Červený", coatOfArms: "dragon" }, score: 3, isActive: true,  label: "Active" },
+                        { playerId: "blue", cfg: { name: "Modrý",   coatOfArms: "wolf"   }, score: 1, isActive: false, label: "Inactive" },
+                        { playerId: "red",  cfg: { name: "Red" },                            score: 0, isActive: false, label: "No coat of arms" },
+                    ].map(({ playerId, cfg, score, isActive, label }) => (
+                        <div key={label} className="flex flex-col items-center gap-2">
+                            <PlayerShield playerId={playerId} cfg={cfg} score={score} isActive={isActive} />
+                            <span className="text-xs text-stone-500">{label}</span>
+                        </div>
+                    ))}
                 </div>
             </Section>
 
@@ -661,6 +857,44 @@ export function StyleGuide({ onBack }) {
                         onClose={() => setShowSettingsOverlay(false)}
                     />
                 )}
+            </Section>
+
+            {/* ── 22b. Sounds ──────────────────────────────────────────────── */}
+            <Section title="22b. Sounds">
+                <p className="text-sm text-stone-400 mb-4">
+                    Nahrávky uložit do <code className="text-amber-400 font-mono text-xs">public/sounds/</code> jako <code className="text-amber-400 font-mono text-xs">{'<id>'}.mp3</code>.
+                    Tlačítka přehrají zvuk — červené = soubor chybí, žluté = přehrává se.
+                </p>
+                <div className="flex flex-col gap-5">
+                    {SOUND_GROUPS.map(({ group, sounds }) => (
+                        <div key={group}>
+                            <p className="text-xs uppercase tracking-widest text-amber-500/70 mb-2">{group}</p>
+                            <div className="flex flex-wrap gap-3">
+                                {sounds.map(s => (
+                                    <SoundTile key={s.id} {...s} />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Section>
+
+            {/* ── 22c. Animations ──────────────────────────────────────────── */}
+            <Section title="22c. Animations">
+                <p className="text-sm text-stone-400 mb-4">
+                    CSS <code className="text-amber-400 font-mono text-xs">@keyframes sg-*</code> definice jsou v <code className="text-amber-400 font-mono text-xs">index.css</code>.
+                    Kliknutím na Play spustíš ukázku — smyčky zastavíš tlačítkem ■.
+                </p>
+                <div className="flex flex-col gap-5">
+                    {ANIMATION_GROUPS.map(({ group, anims }) => (
+                        <div key={group}>
+                            <p className="text-xs uppercase tracking-widest text-amber-500/70 mb-2">{group}</p>
+                            <div className="flex flex-wrap gap-3">
+                                {anims.map(a => <AnimTile key={a.id + a.label} {...a} />)}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </Section>
 
             {/* ── 23. Pictograms ───────────────────────────────────────────── */}
