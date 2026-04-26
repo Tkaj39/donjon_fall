@@ -406,7 +406,7 @@ export function Tutorial({ onClose }) {
         >
             <div className="frame-panel flex flex-col items-center w-[680px] max-w-[95vw]">
                 {/* Header */}
-                <div className="flex items-center justify-between w-full px-12 pt-8 pb-2">
+                <div className="flex items-center justify-between w-full px-4 sm:px-12 pt-8 pb-2">
                     <h2 className="text-2xl font-bold tracking-widest uppercase text-stone-300">
                         Tutoriál
                     </h2>
@@ -420,7 +420,7 @@ export function Tutorial({ onClose }) {
                 </div>
 
                 {/* Step title */}
-                <div className="flex items-center gap-3 px-12 pb-1">
+                <div className="flex items-center gap-3 px-4 sm:px-12 pb-1">
                     {current.icon && (
                         <img src={current.icon} alt="" className="w-8 h-8 shrink-0 invert opacity-80" />
                     )}
@@ -428,7 +428,7 @@ export function Tutorial({ onClose }) {
                 </div>
 
                 {/* Mini-map + arrows */}
-                <div className="flex items-center gap-4 w-full px-8 mt-2">
+                <div className="flex items-center gap-2 sm:gap-4 w-full px-2 sm:px-8 mt-2">
                     <button
                         onClick={() => setStep(s => Math.max(0, s - 1))}
                         disabled={isFirst}
@@ -468,7 +468,7 @@ export function Tutorial({ onClose }) {
                 </div>
 
                 {/* Caption */}
-                <div className="mt-3 px-12 min-h-[2.5rem]">
+                <div className="mt-3 px-4 sm:px-12 min-h-[2.5rem]">
                     <p className="text-stone-400 text-sm text-center">
                         {current.caption}
                     </p>

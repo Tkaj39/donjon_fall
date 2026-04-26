@@ -28,7 +28,7 @@ function CoatOfArmsTile({ id, label, animalHref, shieldHref, selected, onSelect 
             className="relative w-14 cursor-pointer transition-all"
             style={{
                 filter: selected
-                    ? "drop-shadow(0 0 3px rgba(251,191,36,0.7)) drop-shadow(0 0 6px rgba(251,191,36,0.3))"
+                    ? "drop-shadow(0 0 6px rgba(251,191,36,0.7)) drop-shadow(0 0 12px rgba(251,191,36,0.3))"
                     : "none",
                 opacity: selected ? 1 : 0.55,
             }}
@@ -62,7 +62,7 @@ function PlayerSlot({ playerId, config, onChange }) {
             {/* Coat of arms picker */}
             <div>
                 <label className="block text-stone-500 text-xs uppercase tracking-widest mb-2 text-center">Choice of coats of arms</label>
-                <div className="flex justify-between px-4">
+                <div className="flex justify-around gap-1">
                     {ANIMAL_OPTIONS.map(animal => (
                         <CoatOfArmsTile
                             key={animal.id}
@@ -128,45 +128,77 @@ export function PlayerSetup({ map, onConfirm, onBack }) {
 
     const allNamed = configs.every(c => c.name.trim().length > 0);
 
-    return (
-        <div className="flex min-h-screen text-white">
-            <MenuSidebar footer={
-                <button
-                    onClick={onBack}
-                    className="btn-frame w-full py-4 text-xl font-semibold tracking-wide text-stone-300 cursor-pointer text-center"
-                >
-                    Zpět
-                </button>
-            }>
-                <p className="text-stone-500 text-xs uppercase tracking-widest text-center pt-2">
-                    Nastavení hráčů
-                </p>
-            </MenuSidebar>
+    const playerSlots = configs.map((config, i) => (
+        <PlayerSlot
+            key={config.id}
+            playerId={config.id}
+            config={config}
+            onChange={patch => updateConfig(i, patch)}
+        />
+    ));
 
-            <main className="flex flex-col items-center justify-center grow p-8">
-                <div className="w-full max-w-lg flex flex-col gap-5">
-                    <h2 className="text-2xl font-bold tracking-widest uppercase text-stone-300 text-center">
+    const startButton = (
+        <button
+            onClick={() => onConfirm(configs)}
+            disabled={!allNamed}
+            className={`btn-frame w-full py-4 text-lg font-bold tracking-widest text-stone-200 cursor-pointer ${!allNamed ? "opacity-40 cursor-not-allowed" : ""}`}
+        >
+            Spustit hru
+        </button>
+    );
+
+    return (
+        <>
+            {/* ── Mobile layout ───────────────────────────────── */}
+            <div className="lg:hidden min-h-dvh flex flex-col text-white">
+                <header className="flex justify-start p-4 shrink-0">
+                    <button
+                        onClick={onBack}
+                        className="btn-frame-sm px-3 py-2 text-xs font-semibold tracking-widest text-stone-300 cursor-pointer"
+                    >
+                        ← Zpět
+                    </button>
+                </header>
+
+                <div className="flex-1 overflow-y-auto px-4 pb-4">
+                    <h2 className="text-xl font-bold tracking-widest uppercase text-stone-300 text-center mb-4">
                         Hráči
                     </h2>
-
-                    {configs.map((config, i) => (
-                        <PlayerSlot
-                            key={config.id}
-                            playerId={config.id}
-                            config={config}
-                            onChange={patch => updateConfig(i, patch)}
-                        />
-                    ))}
-
-                    <button
-                        onClick={() => onConfirm(configs)}
-                        disabled={!allNamed}
-                        className={`btn-frame w-full py-4 text-lg font-bold tracking-widest text-stone-200 cursor-pointer ${!allNamed ? "opacity-40 cursor-not-allowed" : ""}`}
-                    >
-                        Spustit hru
-                    </button>
+                    <div className="flex flex-col gap-4">
+                        {playerSlots}
+                    </div>
                 </div>
-            </main>
-        </div>
+
+                <div className="shrink-0 px-4 pb-8 pt-3">
+                    {startButton}
+                </div>
+            </div>
+
+            {/* ── Desktop layout ───────────────────────────────── */}
+            <div className="hidden lg:flex min-h-screen text-white">
+                <MenuSidebar footer={
+                    <button
+                        onClick={onBack}
+                        className="btn-frame w-full py-4 text-xl font-semibold tracking-wide text-stone-300 cursor-pointer text-center"
+                    >
+                        Zpět
+                    </button>
+                }>
+                    <p className="text-stone-500 text-xs uppercase tracking-widest text-center pt-2">
+                        Nastavení hráčů
+                    </p>
+                </MenuSidebar>
+
+                <main className="flex flex-col items-center justify-center grow p-8">
+                    <div className="w-full max-w-lg flex flex-col gap-5">
+                        <h2 className="text-2xl font-bold tracking-widest uppercase text-stone-300 text-center">
+                            Hráči
+                        </h2>
+                        {playerSlots}
+                        {startButton}
+                    </div>
+                </main>
+            </div>
+        </>
     );
 }

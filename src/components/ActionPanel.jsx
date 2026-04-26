@@ -42,7 +42,7 @@ export function ActionPanel({ currentPlayer, availableActions, activeAction, onA
         <div
             role="toolbar"
             aria-label="Action panel"
-            className="action-bar flex gap-3"
+            className="action-bar flex gap-2 sm:gap-3"
         >
             {visibleActions.map((actionKey) => {
                 const isActive   = actionKey === activeAction;
@@ -55,7 +55,7 @@ export function ActionPanel({ currentPlayer, availableActions, activeAction, onA
                         disabled={isDisabled}
                         aria-pressed={isActive}
                         onClick={() => !isDisabled && onActionSelect(actionKey)}
-                        className={`btn-frame px-6 py-7 text-sm font-semibold tracking-wide transition-all cursor-pointer
+                        className={`btn-frame px-4 sm:px-6 py-5 sm:py-7 text-sm font-semibold tracking-wide transition-all cursor-pointer
                             ${isDisabled  ? "text-stone-600 cursor-not-allowed opacity-50" : ""}
                             ${isActive    ? "text-stone-100" : !isDisabled ? "text-stone-300" : ""}
                         `}

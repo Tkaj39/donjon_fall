@@ -68,7 +68,7 @@ export function SettingsPanel({
     onClose,
 }) {
     const panel = (
-        <div className="frame-panel flex flex-col gap-5 w-80 px-10 py-8">
+        <div className="frame-panel flex flex-col gap-5 w-[90vw] sm:w-80 px-6 sm:px-10 py-8">
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold tracking-widest text-stone-300 uppercase">
                     Nastavení
