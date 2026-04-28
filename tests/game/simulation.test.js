@@ -250,7 +250,107 @@ describe('tower-vs-tower push', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. Focal die at value 1 edge case
+// 5. Tower-vs-tower: occupy unavailable
+// ---------------------------------------------------------------------------
+
+describe('tower-vs-tower combat: occupy option is unavailable', () => {
+    it('getAvailableCombatOptions returns only push when both sides are towers', () => {
+        const state = makeState({
+            phase: 'combat',
+            dice: {
+                [A]: [{ owner: 'red', value: 2 }, { owner: 'red', value: 5 }],
+                [B]: [{ owner: 'blue', value: 1 }, { owner: 'blue', value: 3 }],
+            },
+            combat: {
+                attackerHex: A,
+                defenderHex: B,
+                approachDirection: A,
+                options: ['push'],
+            },
+        });
+
+        const opts = getAvailableCombatOptions(state);
+        expect(opts).toEqual(['push']);
+        expect(opts).not.toContain('occupy');
+    });
+
+    it('push still resolves correctly in a tower-vs-tower fight', () => {
+        let state = makeState({
+            phase: 'combat',
+            dice: {
+                [A]: [{ owner: 'red', value: 2 }, { owner: 'red', value: 5 }],
+                [B]: [{ owner: 'blue', value: 1 }, { owner: 'blue', value: 3 }],
+            },
+            combat: {
+                attackerHex: A,
+                defenderHex: B,
+                approachDirection: A,
+                options: ['push'],
+            },
+        });
+
+        state = gameReducer(state, { type: 'CHOOSE_COMBAT_OPTION', option: 'push', rerollValue: 1 });
+
+        expect(state.combat).toBeNull();
+        expect(state.dice[B]).toBeDefined();
+        expect(state.dice[B][state.dice[B].length - 1].owner).toBe('red');
+        expect(state.dice[C]).toBeDefined();
+        expect(state.dice[C].some(d => d.owner === 'blue')).toBe(true);
+        expect(state.dice[B][state.dice[B].length - 1].value).toBe(4);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// 6. REROLL
+// ---------------------------------------------------------------------------
+
+describe('REROLL action', () => {
+    it('keeps original value when new roll is lower', () => {
+        let state = makeState({
+            dice: { [A]: [{ owner: 'red', value: 5 }] },
+        });
+        state = gameReducer(state, { type: 'REROLL', hex: A, newValue: 2 });
+        expect(state.dice[A][0].value).toBe(5);
+        expect(state.actionTaken).toBe(true);
+    });
+
+    it('keeps same value when new roll equals original', () => {
+        let state = makeState({
+            dice: { [A]: [{ owner: 'red', value: 3 }] },
+        });
+        state = gameReducer(state, { type: 'REROLL', hex: A, newValue: 3 });
+        expect(state.dice[A][0].value).toBe(3);
+    });
+
+    it('updates to new value when new roll is higher', () => {
+        let state = makeState({
+            dice: { [A]: [{ owner: 'red', value: 2 }] },
+        });
+        state = gameReducer(state, { type: 'REROLL', hex: A, newValue: 6 });
+        expect(state.dice[A][0].value).toBe(6);
+    });
+
+    it('only affects the top die in a tower', () => {
+        let state = makeState({
+            dice: { [A]: [{ owner: 'red', value: 1 }, { owner: 'red', value: 4 }] },
+        });
+        state = gameReducer(state, { type: 'REROLL', hex: A, newValue: 6 });
+        expect(state.dice[A][0].value).toBe(1); // bottom unchanged
+        expect(state.dice[A][1].value).toBe(6); // top updated
+    });
+
+    it('cannot reroll an enemy-controlled die (state is returned unchanged)', () => {
+        const state = makeState({
+            dice: { [A]: [{ owner: 'blue', value: 4 }] },
+        });
+        const next = gameReducer(state, { type: 'REROLL', hex: A, newValue: 6 });
+        expect(next).toBe(state);
+        expect(next.actionTaken).toBe(false);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// 7. Focal die at value 1 edge case
 // ---------------------------------------------------------------------------
 
 describe('focal scoring — die clamped at 1 when already at 1', () => {
