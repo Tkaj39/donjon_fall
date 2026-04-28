@@ -32,7 +32,7 @@ function renderMenu(overrides = {}) {
 describe('MainMenu — basic rendering', () => {
     it('renders the Logo component', () => {
         renderMenu();
-        expect(screen.getByTestId('logo')).toBeDefined();
+        expect(screen.getAllByTestId('logo').length).toBeGreaterThan(0);
     });
 
     it('renders sidebar navigation', () => {
@@ -58,7 +58,7 @@ describe('MainMenu — basic rendering', () => {
 describe('MainMenu — menu items', () => {
     it('renders "Start" menu button', () => {
         renderMenu();
-        expect(screen.getByText('Start')).toBeDefined();
+        expect(screen.getAllByText('Start').length).toBeGreaterThan(0);
     });
 
     it('renders "Continue" disabled button', () => {
@@ -69,7 +69,7 @@ describe('MainMenu — menu items', () => {
 
     it('renders "Tutorial" enabled button', () => {
         renderMenu();
-        const btn = screen.getByText('Tutorial').closest('button');
+        const btn = screen.getAllByText('Tutorial')[0].closest('button');
         expect(btn).not.toHaveAttribute('disabled');
     });
 
@@ -94,27 +94,27 @@ describe('MainMenu — Start screen', () => {
 
     it('clicking Start navigates to Start screen', () => {
         renderMenu();
-        fireEvent.click(screen.getByText('Start').closest('button'));
+        fireEvent.click(screen.getAllByText('Start')[0].closest('button'));
         expect(screen.getByText('Quick Start')).toBeDefined();
     });
 
     it('Start screen contains "Quick Start" enabled button', () => {
         renderMenu();
-        fireEvent.click(screen.getByText('Start').closest('button'));
+        fireEvent.click(screen.getAllByText('Start')[0].closest('button'));
         const btn = screen.getByText('Quick Start').closest('button');
         expect(btn).not.toHaveAttribute('disabled');
     });
 
     it('Start screen contains "Configure Game" enabled button', () => {
         renderMenu();
-        fireEvent.click(screen.getByText('Start').closest('button'));
+        fireEvent.click(screen.getAllByText('Start')[0].closest('button'));
         const btn = screen.getByText('Configure Game').closest('button');
         expect(btn).not.toHaveAttribute('disabled');
     });
 
     it('clicking Back returns to main menu', () => {
         renderMenu();
-        fireEvent.click(screen.getByText('Start').closest('button'));
+        fireEvent.click(screen.getAllByText('Start')[0].closest('button'));
         fireEvent.click(screen.getByText('Back').closest('button'));
         expect(screen.queryByText('Quick Start')).toBeNull();
         expect(screen.getByText('Continue')).toBeDefined();
@@ -124,14 +124,14 @@ describe('MainMenu — Start screen', () => {
 describe('MainMenu — callback functions', () => {
     it('clicking "Quick Start" calls onDirectPlay', () => {
         const { props } = renderMenu();
-        fireEvent.click(screen.getByText('Start').closest('button'));
+        fireEvent.click(screen.getAllByText('Start')[0].closest('button'));
         fireEvent.click(screen.getByText('Quick Start').closest('button'));
         expect(props.onDirectPlay).toHaveBeenCalledTimes(1);
     });
 
     it('clicking "Configure Game" calls onPlay', () => {
         const { props } = renderMenu();
-        fireEvent.click(screen.getByText('Start').closest('button'));
+        fireEvent.click(screen.getAllByText('Start')[0].closest('button'));
         fireEvent.click(screen.getByText('Configure Game').closest('button'));
         expect(props.onPlay).toHaveBeenCalledTimes(1);
     });

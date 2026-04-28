@@ -53,17 +53,14 @@ describe('HexTile', () => {
     test('renders FocalPointMarker for focal point hex', () => {
         const fieldProperties = [{ type: 'focalPoint', active: true, group: 'main' }];
         const { container } = renderTile({ fieldProperties, isActiveFocalPoint: true });
-        // Active marker = <polygon> (star); the hex body polygon is already counted — check both
-        const polygons = container.querySelectorAll('polygon');
-        // One polygon for the hex, one for the star marker
-        expect(polygons.length).toBeGreaterThanOrEqual(2);
+        // FocalPointMarker renders an <image> element for the pictogram
+        expect(container.querySelector('image')).not.toBeNull();
     });
 
     test('no FocalPointMarker for regular hex', () => {
         const { container } = renderTile({ fieldProperties: [] });
-        // Only the hex body polygon — no extra marker polygon
-        const polygons = container.querySelectorAll('polygon');
-        expect(polygons).toHaveLength(1);
+        // No focal point marker image for a plain hex
+        expect(container.querySelector('image')).toBeNull();
     });
 
     test('calls onClick with hexKey when hex is clicked', () => {

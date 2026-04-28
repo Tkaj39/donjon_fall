@@ -94,7 +94,7 @@ describe('Game', () => {
         fireEvent.click(getHexGroup(container, RED_HEXES[2]));
         const types = getHighlightedKeys(container)
             .map((k) => container.querySelector(`g[data-hex="${k}"]`)?.getAttribute('data-highlight'));
-        const valid = new Set(['reachable', 'selected', 'enemy-reachable', 'trajectory']);
+        const valid = new Set(['reachable', 'selected', 'enemy-reachable', 'trajectory', 'dimmed']);
         expect(types.every((t) => valid.has(t))).toBe(true);
     });
 
@@ -149,8 +149,11 @@ describe('Game', () => {
         const { container } = render(<Game firstPlayer="red" />);
         const hex = RED_HEXES[0];
         fireEvent.click(getHexGroup(container, hex)); // select
-        expect(container.querySelector('[role="toolbar"]')).toBeInTheDocument();
+        const toolbar = container.querySelector('[role="toolbar"]');
+        expect(toolbar).toBeInTheDocument();
+        const wrapper = toolbar.parentElement;
+        expect(wrapper.style.visibility).not.toBe('hidden');
         fireEvent.click(getHexGroup(container, hex)); // deselect
-        expect(container.querySelector('[role="toolbar"]')).toBeNull();
+        expect(wrapper.style.visibility).toBe('hidden');
     });
 });

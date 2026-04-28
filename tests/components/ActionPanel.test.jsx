@@ -48,15 +48,15 @@ describe('ActionPanel — visibility', () => {
     test('Move tower appears before Move die', () => {
         renderPanel({ availableActions: ['move-tower', 'move-die', 'reroll'] });
         const buttons = screen.getAllByRole('button');
-        const labels = buttons.map((b) => b.textContent);
-        expect(labels.indexOf('Move tower')).toBeLessThan(labels.indexOf('Move die'));
+        const ids = buttons.map((b) => b.getAttribute('data-testid'));
+        expect(ids.indexOf('action-btn-move-tower')).toBeLessThan(ids.indexOf('action-btn-move-die'));
     });
 
     test('Move die appears before Reroll', () => {
         renderPanel({ availableActions: ['move-die', 'reroll'] });
         const buttons = screen.getAllByRole('button');
-        const labels = buttons.map((b) => b.textContent);
-        expect(labels.indexOf('Move die')).toBeLessThan(labels.indexOf('Reroll'));
+        const ids = buttons.map((b) => b.getAttribute('data-testid'));
+        expect(ids.indexOf('action-btn-move-die')).toBeLessThan(ids.indexOf('action-btn-reroll'));
     });
 });
 
