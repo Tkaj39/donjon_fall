@@ -6,7 +6,7 @@
 |----|-----------|-------------|----------|--------|-------|
 | — | — | — | — | — | — |
 
-**Priority:** `P1` critical · `P2` high · `P3` medium · `P4` low  
+**Priority:** `P1` critical · `P2` high · `P3` medium · `P4` low · `P90` backlog / future  
 **Status:** `open` · `in-progress` · `done` · `wont-do`
 
 ---
@@ -72,6 +72,49 @@
 | FEAT-020 | Dev / AI | Load full game rules into Claude's memory so it can reference them directly without reading the PDF | P3 | open | |
 | FEAT-021 | Dev / AI | Build a knowledge base of project-specific technology decisions and patterns for Claude to reference | P4 | open | |
 | FEAT-022 | Dev / AI | Per-branch session memory: Claude saves and restores context when switching git branches | P4 | open | |
+
+---
+
+## Tutorial
+
+| ID | Component | Description | Priority | Status | Notes |
+|----|-----------|-------------|----------|--------|-------|
+| FEAT-023 | Tutorial | Improved tutorial: annotated game against the bot or scripted board scenarios | P90 | open | |
+
+---
+
+## Architecture / Refactor
+
+| ID | Component | Description | Priority | Status | Notes |
+|----|-----------|-------------|----------|--------|-------|
+| FEAT-024 | App / Architecture | Major refactor: move game logic out of UI components; choose and apply a clean architecture (Context API, or other) | P90 | open | UI components currently contain a lot of game logic |
+
+---
+
+## Audio
+
+| ID | Component | Description | Priority | Status | Notes |
+|----|-----------|-------------|----------|--------|-------|
+| FEAT-025 | App / Audio | Sound effects for game events (movement, combat, scoring, etc.) | P90 | open | |
+| FEAT-026 | App / Audio | Background music | P90 | open | |
+
+---
+
+## Stats
+
+| ID | Component | Description | Priority | Status | Notes |
+|----|-----------|-------------|----------|--------|-------|
+| FEAT-027 | App / Stats | Personal player statistics (wins, losses, etc.) | P90 | open | |
+
+---
+
+## Generalization
+
+| ID | Component | Description | Priority | Status | Notes |
+|----|-----------|-------------|----------|--------|-------|
+| FEAT-028 | App / Config | Map generalization: define maps in JSON format | P90 | open | |
+| FEAT-029 | App / Config | Win condition generalization: configurable victory point target or alternative win conditions (e.g. defeat the king) | P90 | open | |
+| FEAT-030 | App / Config | Player generalization: define players in JSON format | P90 | open | |
 
 ---
 

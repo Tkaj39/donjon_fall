@@ -6,7 +6,7 @@
 |----|------------|-------|----------|------|----------|
 | — | — | — | — | — | — |
 
-**Priorita:** `P1` kritická · `P2` vysoká · `P3` střední · `P4` nízká  
+**Priorita:** `P1` kritická · `P2` vysoká · `P3` střední · `P4` nízká · `P90` backlog / budoucnost  
 **Stav:** `otevřená` · `řeší se` · `hotová` · `neřeší se`
 
 ---
@@ -72,6 +72,49 @@
 | FEAT-020 | Dev / AI | Načíst celá herní pravidla do paměti Claude, aby je mohl referencovat přímo bez čtení PDF | P3 | otevřená | |
 | FEAT-021 | Dev / AI | Vytvořit znalostní bázi pro technologická rozhodnutí a vzory projektu, aby je Claude mohl referencovat | P4 | otevřená | |
 | FEAT-022 | Dev / AI | Session paměť per větev: Claude ukládá a obnovuje kontext při přepínání git větví | P4 | otevřená | |
+
+---
+
+## Tutorial
+
+| ID | Komponenta | Popis | Priorita | Stav | Poznámky |
+|----|------------|-------|----------|------|----------|
+| FEAT-023 | Tutorial | Přehlednější tutorial: komentovaná hra proti botovi nebo naskriptované situace | P90 | otevřená | |
+
+---
+
+## Architektura / Přeformátování
+
+| ID | Komponenta | Popis | Priorita | Stav | Poznámky |
+|----|------------|-------|----------|------|----------|
+| FEAT-024 | App / Architektura | Celkové přeformátování: přesunout herní logiku z UI komponent; zvolit a zavést čistou architekturu (Context API nebo jiná) | P90 | otevřená | UI komponenty v současnosti obsahují velké množství herní logiky |
+
+---
+
+## Audio
+
+| ID | Komponenta | Popis | Priorita | Stav | Poznámky |
+|----|------------|-------|----------|------|----------|
+| FEAT-025 | App / Audio | Zvuky pro herní události (pohyb, souboj, body atd.) | P90 | otevřená | |
+| FEAT-026 | App / Audio | Hudba na pozadí | P90 | otevřená | |
+
+---
+
+## Statistiky
+
+| ID | Komponenta | Popis | Priorita | Stav | Poznámky |
+|----|------------|-------|----------|------|----------|
+| FEAT-027 | App / Statistiky | Osobní statistika hráče (výhry, prohry atd.) | P90 | otevřená | |
+
+---
+
+## Zobecňování
+
+| ID | Komponenta | Popis | Priorita | Stav | Poznámky |
+|----|------------|-------|----------|------|----------|
+| FEAT-028 | App / Config | Zobecnění map: definovat mapy v JSON formátu | P90 | otevřená | |
+| FEAT-029 | App / Config | Zobecnění win condition: konfigurovatelný počet vítězných bodů nebo alternativní podmínky výhry (např. zabij krále) | P90 | otevřená | |
+| FEAT-030 | App / Config | Zobecnění hráčů: definovat hráče v JSON formátu | P90 | otevřená | |
 
 ---
 
