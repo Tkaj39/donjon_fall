@@ -25,6 +25,9 @@ import {
     getReachableHexes,
     getTowerReachableHexes,
     getTowerMoveRange,
+    getJumpRange,
+    getMoveAttackStrength,
+    getTrajectoryEffectiveStrength,
     canCollapse,
     getShortestPathToHex,
     getApproachDirections,
@@ -87,12 +90,21 @@ function rollD6() {
  * }} props
  * @returns {JSX.Element}
  */
-export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null, onExit, onSettings}) {
-    const {state, dispatch, recordedActions, initialState} = useGameState(players, boardFields, firstPlayer);
+// TESTING ONLY — scenario prop accepts a debug board state; probably removed for production.
+export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null, diceValues = null, scenario = null, onExit, onSettings}) {
+    const {state, dispatch, recordedActions, initialState} = useGameState(players, boardFields, firstPlayer, diceValues, scenario);
 
     // -----------------------------------------------------------------------
     // Local UI state
     // -----------------------------------------------------------------------
+
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
+    useEffect(() => {
+        const mq = window.matchMedia("(max-width: 639px)");
+        const handler = (e) => setIsMobile(e.matches);
+        mq.addEventListener("change", handler);
+        return () => mq.removeEventListener("change", handler);
+    }, []);
 
     /** Hex key of the currently selected die, or null. */
     const [selectedHex, setSelectedHex] = useState(null);
@@ -252,6 +264,11 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      * @returns {void}
      */
     function handleActionSelect(action) {
+        if (action === "reroll" && selectedHex) {
+            dispatch({type: "REROLL", hex: selectedHex, newValue: rollD6()});
+            deselect();
+            return;
+        }
         setActiveAction(action);
         setTrajectoryPath([]);
     }
@@ -320,12 +337,30 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
             // but the UI should only treat them as destinations when tower entry
             // is legal (mover value strictly exceeds top die value).
             const moverDie = getTopDie(state, selectedHex);
+            const selectedStack = state.dice[selectedHex] ?? [];
+            const isJump = selectedStack.length >= 2;
+            const jumpBoostedRange = isJump ? getJumpRange(state, selectedHex) : 0;
             const all = getReachableHexes(state, selectedHex);
             const filtered = new Set();
             for (const key of all) {
                 const ctrl = getController(state, key);
                 if (ctrl === state.currentPlayer && !canEnterTower(state, moverDie, key)) continue;
-                if (ctrl !== null && ctrl !== state.currentPlayer && !canAttack(state, selectedHex, key)) continue;
+                if (ctrl !== null && ctrl !== state.currentPlayer) {
+                    // For a jump, effective strength is distance-dependent.
+                    // For a regular move, use base strength — unless the player has already
+                    // planned a trajectory through a friendly die, in which case the boost
+                    // they set up is reflected via getTrajectoryEffectiveStrength.
+                    // (getMoveAttackStrength is reserved for future auto path-aware highlighting.)
+                    const effectiveStrength = isJump
+                        ? (hexesDistance(hexFromKey(selectedHex), hexFromKey(key)) <= jumpBoostedRange
+                            ? getAttackStrength(state, selectedHex)
+                            : moverDie.value)
+                        : (trajectoryPath.length >= 2
+                            ? getTrajectoryEffectiveStrength(state, moverDie, trajectoryPath,
+                                { forArrival: key === trajectoryPath[trajectoryPath.length - 1] })
+                            : getAttackStrength(state, selectedHex));
+                    if (!canAttack(state, selectedHex, key, effectiveStrength)) continue;
+                }
                 filtered.add(key);
             }
             return filtered;
@@ -358,8 +393,10 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
         const dest = trajectoryPath[trajectoryPath.length - 1];
         const ctrl = getController(state, dest);
         if (ctrl === null || ctrl === state.currentPlayer) return null;
-        const dirs = getApproachDirections(state, selectedHex, dest, activeAction);
-        return dirs.size > 1 ? dest : null;
+        // Only count approach directions from paths that can actually win the combat.
+        const defStr = getAttackStrength(state, dest);
+        const dirs = getApproachDirections(state, selectedHex, dest, activeAction, defStr);
+        return dirs.size >= 1 ? dest : null;
     })();
 
     /**
@@ -367,7 +404,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      * Empty when the picker is not active.
      */
     const pickerApproachDirs = pickerEnemyKey && selectedHex
-        ? getApproachDirections(state, selectedHex, pickerEnemyKey, activeAction)
+        ? getApproachDirections(state, selectedHex, pickerEnemyKey, activeAction, getAttackStrength(state, pickerEnemyKey))
         : new Set();
 
     /**
@@ -570,8 +607,19 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                     setTrajectoryPath([...trajectoryPath, clickedKey]);
                     setPickerApproachKey(null);
                 } else {
-                    // Auto-path re-plan to a non-adjacent (or first) destination
-                    const path = getShortestPathToHex(state, selectedHex, clickedKey, activeAction);
+                    // Auto-path re-plan to a non-adjacent (or first) destination.
+                    // If trajectory ends on a friendly die, extend from there to preserve
+                    // any pass-through boost the player has set up.
+                    let path = [];
+                    if (trajectoryEnd && getController(state, trajectoryEnd) === state.currentPlayer) {
+                        const extPath = getShortestPathToHex(state, trajectoryEnd, clickedKey, activeAction);
+                        if (extPath.length > 0 && (trajectoryPath.length - 1) + (extPath.length - 1) <= moveRange) {
+                            path = [...trajectoryPath, ...extPath.slice(1)];
+                        }
+                    }
+                    if (path.length === 0) {
+                        path = getShortestPathToHex(state, selectedHex, clickedKey, activeAction);
+                    }
                     if (path.length > 0) {
                         setTrajectoryPath(path);
                         setPickerApproachKey(null);
@@ -628,7 +676,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
         >
             {/* ── Header ──────────────────────────────────────────── */}
             <header className="flex items-center justify-between px-4 py-2 shrink-0">
-                <Logo className="w-64" />
+                <Logo className="w-32 sm:w-64" />
                 <div className="flex items-center gap-2">
                     <button
                         aria-label="Open rules"
@@ -676,92 +724,201 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
                 />
             )}
 
-            {/* ── Board area + side shields ────────────────────── */}
-            <div className="flex-1 min-h-0 flex items-center px-2 py-1">
-
-                {/* Left spacer — balances right panel so board stays centred */}
-                <div className="flex-1"/>
-
-                {/* Three-column: left shield | board | right shield */}
-                <div className="flex items-start gap-2 h-full">
-
-                    {state.players.map((playerId, idx) => {
-                        const cfg = playerConfigs.find(c => c.id === playerId);
-                        const score = state.scores[playerId] ?? 0;
-                        const isActive = state.currentPlayer === playerId;
-
-                        const shield = (
-                            <PlayerShield
-                                key={playerId}
-                                playerId={playerId}
-                                cfg={cfg}
-                                score={score}
-                                isActive={isActive}
-                            />
-                        );
-
-                        if (idx === 0) return <>{shield}
-                            <div key="board" className="relative h-full" style={{aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}`}}>
-                                <Board
-                                    state={state}
-                                    selectedHex={selectedHex}
-                                    highlightedHexes={highlightedHexes}
-                                    clickableHexes={clickableHexes}
-                                    pendingMove={pendingMove}
-                                    debugMode={debugMode}
-                                    pickerData={pickerEnemyKey ? {
-                                        enemyKey: pickerEnemyKey,
-                                        approachDirs: pickerApproachDirs,
-                                        selectedApproachKey: effectiveApproachKey,
-                                        onApproachHover: setPickerApproachKey,
-                                    } : null}
-                                    onHexClick={handleHexClick}
-                                    onHexHover={setHoveredHex}
-                                />
-                                {state.phase === "combat" && (
-                                    <CombatOverlay
-                                        state={state}
-                                        options={combatOptions}
-                                        onChoose={handleCombatChoose}
-                                    />
-                                )}
-                            </div>
-                        </>;
-                        return shield;
-                    })}
-
-                </div>
-
-                {/* Right panel — hex element centred between board right edge and screen edge */}
-                <div className="flex-1 flex items-center">
-                    <div className="mx-auto ml-16">
-                        {(() => {
-                            const isReachableEnemy = hoveredHex &&
-                                selectedHex &&
-                                reachableKeys.has(hoveredHex) &&
-                                getController(state, hoveredHex) !== null &&
-                                getController(state, hoveredHex) !== state.currentPlayer;
-
-                            const versus = isReachableEnemy ? {
-                                attackerStrength: getAttackStrength(state, selectedHex),
-                                attackerColor: PLAYER_GLOW[state.currentPlayer] ?? "rgba(255,255,255,0.9)",
-                                defenderStrength: getAttackStrength(state, hoveredHex),
-                                defenderColor: PLAYER_GLOW[getController(state, hoveredHex)] ?? "rgba(255,255,255,0.9)",
-                            } : null;
-
+            {/* ── Board area ───────────────────────────────────── */}
+            {isMobile ? (
+                /* Mobile: compact player bar + full-width board */
+                <div className="flex-1 min-h-0 flex flex-col px-6 py-1 gap-1">
+                    <div className="relative flex justify-between items-center px-2 shrink-0">
+                        {state.players.map(playerId => {
+                            const cfg = playerConfigs.find(c => c.id === playerId);
+                            const score = state.scores[playerId] ?? 0;
+                            const isActive = state.currentPlayer === playerId;
                             return (
-                                <CombatPowerTooltip
-                                    color={PLAYER_GLOW[state.currentPlayer]}
-                                    combatStrength={!versus && hoveredHex && getController(state, hoveredHex) !== null ? getAttackStrength(state, hoveredHex) : null}
-                                    hoveredPlayerColor={hoveredHex ? PLAYER_GLOW[getController(state, hoveredHex)] ?? null : null}
-                                    versus={versus}
+                                <PlayerShield
+                                    key={playerId}
+                                    playerId={playerId}
+                                    cfg={cfg}
+                                    score={score}
+                                    isActive={isActive}
+                                    compact
                                 />
                             );
-                        })()}
+                        })}
+                        {/* Combat tooltip centred between the two shields */}
+                        <div className="absolute left-1/2 -translate-x-1/2">
+                            {(() => {
+                                const isReachableEnemy = hoveredHex &&
+                                    selectedHex &&
+                                    reachableKeys.has(hoveredHex) &&
+                                    getController(state, hoveredHex) !== null &&
+                                    getController(state, hoveredHex) !== state.currentPlayer;
+
+                                const versus = isReachableEnemy ? {
+                                    attackerStrength: (() => {
+                                        const stack = state.dice[selectedHex] ?? [];
+                                        if (activeAction === "move-die" && stack.length >= 2) {
+                                            const dist = hexesDistance(hexFromKey(selectedHex), hexFromKey(hoveredHex));
+                                            if (dist > getJumpRange(state, selectedHex)) {
+                                                return getTopDie(state, selectedHex).value;
+                                            }
+                                        }
+                                        if (activeAction === "move-die" && trajectoryPath.length >= 2) {
+                                            const mDie = getTopDie(state, selectedHex);
+                                            return getTrajectoryEffectiveStrength(state, mDie, trajectoryPath,
+                                                { forArrival: hoveredHex === trajectoryPath[trajectoryPath.length - 1] });
+                                        }
+                                        return getAttackStrength(state, selectedHex);
+                                    })(),
+                                    attackerColor: PLAYER_GLOW[state.currentPlayer] ?? "rgba(255,255,255,0.9)",
+                                    defenderStrength: getAttackStrength(state, hoveredHex),
+                                    defenderColor: PLAYER_GLOW[getController(state, hoveredHex)] ?? "rgba(255,255,255,0.9)",
+                                } : null;
+
+                                return (
+                                    <CombatPowerTooltip
+                                        color={PLAYER_GLOW[state.currentPlayer]}
+                                        combatStrength={!versus && hoveredHex && getController(state, hoveredHex) !== null ? getAttackStrength(state, hoveredHex) : null}
+                                        hoveredPlayerColor={hoveredHex ? PLAYER_GLOW[getController(state, hoveredHex)] ?? null : null}
+                                        versus={versus}
+                                    />
+                                );
+                            })()}
+                        </div>
+                    </div>
+                    <div className="flex-1 min-h-0 flex items-center justify-center">
+                        <div className="relative w-full h-full" style={{aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}`, maxHeight: "100%"}}>
+                            <Board
+                                state={state}
+                                selectedHex={selectedHex}
+                                highlightedHexes={highlightedHexes}
+                                clickableHexes={clickableHexes}
+                                pendingMove={pendingMove}
+                                debugMode={debugMode}
+                                pickerData={pickerEnemyKey ? {
+                                    enemyKey: pickerEnemyKey,
+                                    approachDirs: pickerApproachDirs,
+                                    selectedApproachKey: effectiveApproachKey,
+                                    onApproachHover: setPickerApproachKey,
+                                } : null}
+                                onHexClick={handleHexClick}
+                                onHexHover={setHoveredHex}
+                            />
+                            {state.phase === "combat" && (
+                                <CombatOverlay
+                                    state={state}
+                                    options={combatOptions}
+                                    onChoose={handleCombatChoose}
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-            {/* end flex-1 scroll area */}
+            ) : (
+                /* Desktop: shields on sides + combat tooltip */
+                <div className="flex-1 min-h-0 flex items-center px-2 py-1">
+
+                    {/* Left spacer — balances right panel so board stays centred */}
+                    <div className="flex-1"/>
+
+                    {/* Three-column: left shield | board | right shield */}
+                    <div className="flex items-start gap-2 h-full">
+
+                        {state.players.map((playerId, idx) => {
+                            const cfg = playerConfigs.find(c => c.id === playerId);
+                            const score = state.scores[playerId] ?? 0;
+                            const isActive = state.currentPlayer === playerId;
+
+                            const shield = (
+                                <PlayerShield
+                                    key={playerId}
+                                    playerId={playerId}
+                                    cfg={cfg}
+                                    score={score}
+                                    isActive={isActive}
+                                />
+                            );
+
+                            if (idx === 0) return <>{shield}
+                                <div key="board" className="relative h-full" style={{aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}`}}>
+                                    <Board
+                                        state={state}
+                                        selectedHex={selectedHex}
+                                        highlightedHexes={highlightedHexes}
+                                        clickableHexes={clickableHexes}
+                                        pendingMove={pendingMove}
+                                        debugMode={debugMode}
+                                        pickerData={pickerEnemyKey ? {
+                                            enemyKey: pickerEnemyKey,
+                                            approachDirs: pickerApproachDirs,
+                                            selectedApproachKey: effectiveApproachKey,
+                                            onApproachHover: setPickerApproachKey,
+                                        } : null}
+                                        onHexClick={handleHexClick}
+                                        onHexHover={setHoveredHex}
+                                    />
+                                    {state.phase === "combat" && (
+                                        <CombatOverlay
+                                            state={state}
+                                            options={combatOptions}
+                                            onChoose={handleCombatChoose}
+                                        />
+                                    )}
+                                </div>
+                            </>;
+                            return shield;
+                        })}
+
+                    </div>
+
+                    {/* Right panel — hex element centred between board right edge and screen edge */}
+                    <div className="flex-1 flex items-center">
+                        <div className="mx-auto ml-16">
+                            {(() => {
+                                const isReachableEnemy = hoveredHex &&
+                                    selectedHex &&
+                                    reachableKeys.has(hoveredHex) &&
+                                    getController(state, hoveredHex) !== null &&
+                                    getController(state, hoveredHex) !== state.currentPlayer;
+
+                                const versus = isReachableEnemy ? {
+                                    attackerStrength: (() => {
+                                        // When moving a die off a tower (jump), combat power is
+                                        // boosted to tower strength only within getJumpRange() steps;
+                                        // beyond that it reverts to the die's plain face value.
+                                        const stack = state.dice[selectedHex] ?? [];
+                                        if (activeAction === "move-die" && stack.length >= 2) {
+                                            const dist = hexesDistance(hexFromKey(selectedHex), hexFromKey(hoveredHex));
+                                            if (dist > getJumpRange(state, selectedHex)) {
+                                                return getTopDie(state, selectedHex).value;
+                                            }
+                                        }
+                                        // If the player planned a trajectory through a friendly die,
+                                        // show the boosted combat power in the tooltip.
+                                        if (activeAction === "move-die" && trajectoryPath.length >= 2) {
+                                            const mDie = getTopDie(state, selectedHex);
+                                            return getTrajectoryEffectiveStrength(state, mDie, trajectoryPath,
+                                                { forArrival: hoveredHex === trajectoryPath[trajectoryPath.length - 1] });
+                                        }
+                                        return getAttackStrength(state, selectedHex);
+                                    })(),
+                                    attackerColor: PLAYER_GLOW[state.currentPlayer] ?? "rgba(255,255,255,0.9)",
+                                    defenderStrength: getAttackStrength(state, hoveredHex),
+                                    defenderColor: PLAYER_GLOW[getController(state, hoveredHex)] ?? "rgba(255,255,255,0.9)",
+                                } : null;
+
+                                return (
+                                    <CombatPowerTooltip
+                                        color={PLAYER_GLOW[state.currentPlayer]}
+                                        combatStrength={!versus && hoveredHex && getController(state, hoveredHex) !== null ? getAttackStrength(state, hoveredHex) : null}
+                                        hoveredPlayerColor={hoveredHex ? PLAYER_GLOW[getController(state, hoveredHex)] ?? null : null}
+                                        versus={versus}
+                                    />
+                                );
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── Action panel + End turn ──────────────────────── */}
             <div className="flex flex-col items-center gap-2 shrink-0 pb-4 px-4">

@@ -14,29 +14,29 @@ function renderMarker(props) {
 }
 
 describe('FocalPointMarker', () => {
-    test('active marker renders a polygon (star)', () => {
+    test('active marker renders an image element', () => {
         const { container } = renderMarker({ isActive: true });
-        expect(container.querySelector('polygon')).not.toBeNull();
-        expect(container.querySelector('circle')).toBeNull();
+        expect(container.querySelector('image')).not.toBeNull();
     });
 
-    test('passive marker renders a circle', () => {
+    test('passive marker renders an image element', () => {
         const { container } = renderMarker({ isActive: false });
-        expect(container.querySelector('circle')).not.toBeNull();
-        expect(container.querySelector('polygon')).toBeNull();
+        expect(container.querySelector('image')).not.toBeNull();
     });
 
-    test('active polygon has a non-empty points attribute', () => {
-        const { container } = renderMarker({ isActive: true });
-        const polygon = container.querySelector('polygon');
-        expect(polygon.getAttribute('points').length).toBeGreaterThan(0);
+    test('active marker has higher opacity than passive', () => {
+        const { container: ca } = renderMarker({ isActive: true });
+        const { container: cp } = renderMarker({ isActive: false });
+        const activeOpacity  = parseFloat(ca.querySelector('image').getAttribute('opacity'));
+        const passiveOpacity = parseFloat(cp.querySelector('image').getAttribute('opacity'));
+        expect(activeOpacity).toBeGreaterThan(passiveOpacity);
     });
 
-    test('passive circle radius scales with hexSize', () => {
-        const { container: c1 } = renderMarker({ isActive: false, hexSize: 36 });
-        const { container: c2 } = renderMarker({ isActive: false, hexSize: 72 });
-        const r1 = parseFloat(c1.querySelector('circle').getAttribute('r'));
-        const r2 = parseFloat(c2.querySelector('circle').getAttribute('r'));
-        expect(r2).toBeCloseTo(r1 * 2, 5);
+    test('marker size scales with hexSize', () => {
+        const { container: c1 } = renderMarker({ isActive: true, hexSize: 36 });
+        const { container: c2 } = renderMarker({ isActive: true, hexSize: 72 });
+        const w1 = parseFloat(c1.querySelector('image').getAttribute('width'));
+        const w2 = parseFloat(c2.querySelector('image').getAttribute('width'));
+        expect(w2).toBeCloseTo(w1 * 2, 5);
     });
 });

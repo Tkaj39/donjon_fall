@@ -78,6 +78,7 @@ export function gameReducer(state, action) {
                 action.toHex,
                 action.approachDirection ?? null,
             );
+            if (next === state) return state;
             return { ...next, actionTaken: true };
         }
 
@@ -88,6 +89,7 @@ export function gameReducer(state, action) {
                 action.toHex,
                 action.approachDirection ?? null,
             );
+            if (next === state) return state;
             return { ...next, actionTaken: true };
         }
 
@@ -98,16 +100,19 @@ export function gameReducer(state, action) {
                 action.targetHex,
                 action.approachDirection ?? null,
             );
+            if (next === state) return state;
             return { ...next, actionTaken: true };
         }
 
         case "COLLAPSE": {
             const next = applyCollapseAction(state, action.hex);
+            if (next === state) return state;
             return { ...next, actionTaken: true };
         }
 
         case "REROLL": {
             const next = applyRerollAction(state, action.hex, action.newValue);
+            if (next === state) return state;
             return { ...next, actionTaken: true };
         }
 

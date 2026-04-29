@@ -35,8 +35,8 @@ describe('HexTile', () => {
             { owner: 'blue', value: 5 },
         ];
         const { container } = renderTile({ diceStack });
-        // Each Die renders one <rect>
-        expect(container.querySelectorAll('rect')).toHaveLength(2);
+        // Top die: 1 rect. Bottom (non-top) die: 2 rects (body + gradient overlay).
+        expect(container.querySelectorAll('rect')).toHaveLength(3);
     });
 
     test('top die rendered at full opacity, bottom die dimmed', () => {
@@ -45,26 +45,22 @@ describe('HexTile', () => {
             { owner: 'blue', value: 4 }, // index 1 → top    → full
         ];
         const { container } = renderTile({ diceStack });
-        const groups = [...container.querySelectorAll('g[opacity]')];
-        const opacities = groups.map(g => g.getAttribute('opacity'));
-        expect(opacities).toContain('1');
-        expect(opacities).toContain('0.55');
+        // Bottom (non-top) die has a gradient overlay rect; top die does not.
+        // Top die: 1 rect; bottom die: 2 rects.
+        expect(container.querySelectorAll('rect')).toHaveLength(3);
     });
 
     test('renders FocalPointMarker for focal point hex', () => {
         const fieldProperties = [{ type: 'focalPoint', active: true, group: 'main' }];
         const { container } = renderTile({ fieldProperties, isActiveFocalPoint: true });
-        // Active marker = <polygon> (star); the hex body polygon is already counted — check both
-        const polygons = container.querySelectorAll('polygon');
-        // One polygon for the hex, one for the star marker
-        expect(polygons.length).toBeGreaterThanOrEqual(2);
+        // FocalPointMarker renders an <image> element for the pictogram
+        expect(container.querySelector('image')).not.toBeNull();
     });
 
     test('no FocalPointMarker for regular hex', () => {
         const { container } = renderTile({ fieldProperties: [] });
-        // Only the hex body polygon — no extra marker polygon
-        const polygons = container.querySelectorAll('polygon');
-        expect(polygons).toHaveLength(1);
+        // No focal point marker image for a plain hex
+        expect(container.querySelector('image')).toBeNull();
     });
 
     test('calls onClick with hexKey when hex is clicked', () => {
@@ -84,12 +80,12 @@ describe('HexTile', () => {
 
     test('cursor is pointer when onClick provided', () => {
         const { container } = renderTile({ onClick: vi.fn() });
-        expect(container.querySelector('g').style.cursor).toBe('pointer');
+        expect(container.querySelector('g').classList.contains('cursor-pointer')).toBe(true);
     });
 
     test('cursor is default when onClick not provided', () => {
         const { container } = renderTile();
-        expect(container.querySelector('g').style.cursor).toBe('default');
+        expect(container.querySelector('g').classList.contains('cursor-default')).toBe(true);
     });
 
     test('playerColors.primary used for die fill', () => {

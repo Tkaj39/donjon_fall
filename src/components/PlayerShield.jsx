@@ -8,9 +8,10 @@ import {NAMED_PLAYER_COLORS} from "./Board.jsx";
  * @param {{ name?: string, coatOfArms?: string }} [props.cfg]     - Optional player config from setup screen.
  * @param {number}                             props.score       - Current victory-point score.
  * @param {boolean}                            props.isActive    - Whether this player is the current active player.
+ * @param {boolean}                            [props.compact]   - Compact inline layout for mobile.
  * @returns {JSX.Element}
  */
-export function PlayerShield({playerId, cfg, score, isActive}) {
+export function PlayerShield({playerId, cfg, score, isActive, compact = false}) {
     const shieldHref = SHIELD_BY_PLAYER[playerId] ?? SHIELD_BY_PLAYER.blue;
     const animalHref = ANIMAL_OPTIONS.find(a => a.id === cfg?.coatOfArms)?.href ?? ANIMAL_OPTIONS[0].href;
     const glowColor = NAMED_PLAYER_COLORS[playerId]?.glow;
@@ -18,6 +19,29 @@ export function PlayerShield({playerId, cfg, score, isActive}) {
     const glowStyle = isActive && glowColor
         ? {filter: `drop-shadow(0 0 10px ${glowColor}) drop-shadow(0 0 5px ${glowColor})`}
         : {filter: "grayscale(80%) brightness(50%)"};
+
+    if (compact) {
+        return (
+            <div className="flex flex-col items-center gap-0.5 shrink-0">
+                <div className="relative transition-all duration-300" style={glowStyle}>
+                    <div className="relative z-10 w-14 h-14 rounded-full">
+                        <img src={shieldHref} alt="" className="w-full h-full object-contain"/>
+                        <img src={animalHref} alt={cfg?.coatOfArms ?? ""}
+                             className="absolute inset-0 w-full h-full object-contain p-0.5"/>
+                    </div>
+                    <div className={`absolute ${playerId === "red" ? "-left-3" : "-right-3"} top-1/2 -translate-y-1/2 w-8 h-8 z-0`}>
+                        <img src={shieldHref} alt="" className="w-full h-full object-contain"/>
+                        <span className="absolute inset-0 flex items-center justify-center text-base font-bold text-stone-100/70 score-text-shadow">
+                            {score}
+                        </span>
+                    </div>
+                </div>
+                <p className="text-[0.6rem] font-semibold text-stone-100 text-center leading-tight max-w-14 truncate">
+                    {cfg?.name || playerId}
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col items-center gap-1 shrink-0">

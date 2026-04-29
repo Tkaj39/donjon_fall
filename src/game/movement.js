@@ -124,13 +124,16 @@ export function getReachableHexes(state, fromKey) {
     const maxSteps = moverDie.value;
     const reachable = new Set();
 
-    // minSteps[key] = fewest steps used to first reach that hex
-    const minSteps = new Map([[fromKey, 0]]);
-    const queue = [[fromKey, 0]]; // [hexKey, stepsUsed]
+    // minSteps keyed by "hexKey:boostLeft:boostStr" — boost state affects traversal
+    const minSteps = new Map([[`${fromKey}:0:0`, 0]]);
+    const queue = [[fromKey, 0, 0, 0]]; // [hexKey, stepsUsed, boostLeft, boostStr]
 
     while (queue.length > 0) {
-        const [currentKey, steps] = queue.shift();
+        const [currentKey, steps, boostLeft, boostStr] = queue.shift();
         if (steps >= maxSteps) continue;
+
+        const effectivePower = boostLeft > 0 ? boostStr : moverDie.value;
+        const effectiveDie = { ...moverDie, value: effectivePower };
 
         for (const neighbor of getNeighbors(hexFromKey(currentKey))) {
             if (!isOnBoard(neighbor)) continue;
@@ -139,19 +142,34 @@ export function getReachableHexes(state, fromKey) {
             if (neighborKey === fromKey) continue; // cannot return to start
 
             const newSteps = steps + 1;
-            const prevBest = minSteps.get(neighborKey);
-            if (prevBest !== undefined && prevBest <= newSteps) continue;
-
-            const isEnemy = getController(state, neighborKey) !== null &&
-                            getController(state, neighborKey) !== moverDie.owner;
+            const ctrl = getController(state, neighborKey);
+            const isEnemy = ctrl !== null && ctrl !== moverDie.owner;
 
             // Enemies and empty/own hexes are all valid landing spots
             reachable.add(neighborKey);
-            minSteps.set(neighborKey, newSteps);
 
             // Only continue traversal through non-enemy hexes
-            if (!isEnemy && canTraverseThrough(state, moverDie, neighborKey)) {
-                queue.push([neighborKey, newSteps]);
+            if (!isEnemy && canTraverseThrough(state, effectiveDie, neighborKey)) {
+                let newBoostLeft, newBoostStr;
+                if (ctrl === moverDie.owner) {
+                    // Passing through a friendly formation: compute virtual tower boost.
+                    // The mover forms a temporary tower here and jumps off — combat power
+                    // is boosted to the virtual tower's value for the next N hexes.
+                    const stack = getDiceAt(state, neighborKey);
+                    const existingOwn = stack.filter(d => d.owner === moverDie.owner).length;
+                    const existingEnemy = stack.length - existingOwn;
+                    newBoostStr = moverDie.value + existingOwn - existingEnemy;
+                    newBoostLeft = Math.max(1, existingOwn + 1 - existingEnemy);
+                } else {
+                    newBoostLeft = Math.max(0, boostLeft - 1);
+                    newBoostStr = newBoostLeft > 0 ? boostStr : 0;
+                }
+
+                const stateKey = `${neighborKey}:${newBoostLeft}:${newBoostStr}`;
+                const prevBest = minSteps.get(stateKey);
+                if (prevBest !== undefined && prevBest <= newSteps) continue;
+                minSteps.set(stateKey, newSteps);
+                queue.push([neighborKey, newSteps, newBoostLeft, newBoostStr]);
             }
         }
     }
@@ -189,22 +207,15 @@ export function getPathsToHex(state, fromKey, toKey) {
     const maxSteps = moverDie.value;
     const paths = [];
 
-    /**
-     * Depth-first search that builds all valid paths from `currentKey` to `toKey`.
-     * `visited` prevents cycles within the current path.
-     *
-     * @param {string}   currentKey   - Hex key of the current position.
-     * @param {number}   stepsLeft    - Remaining movement steps.
-     * @param {string[]} currentPath  - Ordered hex keys visited so far (start-inclusive).
-     * @param {Set<string>} visited   - Set of hex keys already in the current path.
-     * @returns {void}
-     */
-    function dfs(currentKey, stepsLeft, currentPath, visited) {
+    function dfs(currentKey, stepsLeft, currentPath, visited, boostLeft, boostStr) {
         if (currentKey === toKey) {
             paths.push([...currentPath]);
             return;
         }
         if (stepsLeft === 0) return;
+
+        const effectivePower = boostLeft > 0 ? boostStr : moverDie.value;
+        const effectiveDie = { ...moverDie, value: effectivePower };
 
         for (const neighbor of getNeighbors(hexFromKey(currentKey))) {
             if (!isOnBoard(neighbor)) continue;
@@ -214,19 +225,33 @@ export function getPathsToHex(state, fromKey, toKey) {
 
             const isDestination = neighborKey === toKey;
 
-            // Intermediate hexes must satisfy traversal rules
-            if (!isDestination && !canTraverseThrough(state, moverDie, neighborKey)) continue;
+            // Intermediate hexes must satisfy traversal rules with effective power
+            if (!isDestination && !canTraverseThrough(state, effectiveDie, neighborKey)) continue;
+
+            // Compute boost state for the next step
+            let newBoostLeft = Math.max(0, boostLeft - 1);
+            let newBoostStr = newBoostLeft > 0 ? boostStr : 0;
+            if (!isDestination) {
+                const ctrl = getController(state, neighborKey);
+                if (ctrl === moverDie.owner) {
+                    const stack = getDiceAt(state, neighborKey);
+                    const existingOwn = stack.filter(d => d.owner === moverDie.owner).length;
+                    const existingEnemy = stack.length - existingOwn;
+                    newBoostStr = moverDie.value + existingOwn - existingEnemy;
+                    newBoostLeft = Math.max(1, existingOwn + 1 - existingEnemy);
+                }
+            }
 
             currentPath.push(neighborKey);
             visited.add(neighborKey);
-            dfs(neighborKey, stepsLeft - 1, currentPath, visited);
+            dfs(neighborKey, stepsLeft - 1, currentPath, visited, newBoostLeft, newBoostStr);
             currentPath.pop();
             visited.delete(neighborKey);
         }
     }
 
     const visited = new Set([fromKey]);
-    dfs(fromKey, maxSteps, [fromKey], visited);
+    dfs(fromKey, maxSteps, [fromKey], visited, 0, 0);
     return paths;
 }
 
@@ -341,17 +366,129 @@ export function getShortestPathToHex(state, fromKey, toKey, actionType = "move-d
  * @param {"move-die"|"move-tower"} [actionType="move-die"]
  * @returns {Set<string>}  - set of hexKeys (last-step neighbors of toKey)
  */
-export function getApproachDirections(state, fromKey, toKey, actionType = "move-die") {
+export function getApproachDirections(state, fromKey, toKey, actionType = "move-die", defenderStr = null) {
     const paths = actionType === "move-tower"
         ? getTowerPathsToHex(state, fromKey, toKey)
         : getPathsToHex(state, fromKey, toKey);
+    const moverDie = defenderStr !== null ? getTopDie(state, fromKey) : null;
+    const baseStr = moverDie ? getAttackStrength(state, fromKey) : 0;
     const directions = new Set();
     for (const path of paths) {
-        if (path.length >= 2) {
-            directions.add(path[path.length - 2]);
+        if (path.length < 2) continue;
+        // When defenderStr is provided, exclude paths whose attack strength would not
+        // beat the defender — only combat-valid approach directions are shown in the picker.
+        if (defenderStr !== null && moverDie) {
+            if (computePathAttackStrength(state, moverDie, path, baseStr) <= defenderStr) continue;
         }
+        directions.add(path[path.length - 2]);
     }
     return directions;
+}
+
+// ---------------------------------------------------------------------------
+// Internal helper — effective attack strength along a path (pass-through boost)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the effective attack strength of `moverDie` when arriving at the last
+ * hex of `path`, accounting for pass-through boosts from any friendly formations
+ * traversed along the way.
+ *
+ * @param {import("./gameState.js").GameState} state
+ * @param {import("./gameState.js").Die} moverDie
+ * @param {string[]} path  - ordered hex array [fromKey, ..., destKey]
+ * @returns {number}
+ */
+function computePathAttackStrength(state, moverDie, path, baseStrength) {
+    let boostLeft = 0, boostStr = 0;
+    for (let i = 1; i < path.length; i++) {
+        const effectivePower = boostLeft > 0 ? boostStr : baseStrength;
+        if (i === path.length - 1) return effectivePower;
+        const ctrl = getController(state, path[i]);
+        if (ctrl === moverDie.owner) {
+            const stack = getDiceAt(state, path[i]);
+            const existingOwn = stack.filter(d => d.owner === moverDie.owner).length;
+            const existingEnemy = stack.length - existingOwn;
+            boostStr = moverDie.value + existingOwn - existingEnemy;
+            boostLeft = Math.max(1, existingOwn + 1 - existingEnemy);
+        } else {
+            boostLeft = Math.max(0, boostLeft - 1);
+            boostStr = boostLeft > 0 ? boostStr : 0;
+        }
+    }
+    return baseStrength;
+}
+
+// ---------------------------------------------------------------------------
+// 3.1d — getMoveAttackStrength
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the best effective attack strength achievable when moving the die at
+ * `fromKey` to attack `toKey`, considering pass-through boosts along all valid paths.
+ *
+ * NOTE: intentionally not used for enemy-hex highlight validation yet. Highlighting
+ * currently uses the die's base attack strength only (getAttackStrength), so a boost
+ * from passing through a friendly die is NOT shown until the player explicitly routes
+ * through it. When we want path-aware highlighting (show all hexes reachable via any
+ * route, including boosted ones), replace the getAttackStrength call in Game.jsx
+ * reachableKeys → move-die branch with getMoveAttackStrength(state, selectedHex, key).
+ *
+ * @param {import("./gameState.js").GameState} state
+ * @param {string} fromKey
+ * @param {string} toKey
+ * @returns {number}
+ */
+export function getMoveAttackStrength(state, fromKey, toKey) {
+    const moverDie = getTopDie(state, fromKey);
+    if (!moverDie) return 0;
+    const baseStr = getAttackStrength(state, fromKey);
+    const paths = getPathsToHex(state, fromKey, toKey);
+    if (paths.length === 0) return baseStr;
+    return Math.max(...paths.map(p => computePathAttackStrength(state, moverDie, p, baseStr)));
+}
+
+// ---------------------------------------------------------------------------
+// 3.1e — getTrajectoryEffectiveStrength
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the effective attack strength along a player-chosen trajectory.
+ *
+ * Two modes via `forArrival`:
+ *  - false (default): returns strength for hexes *beyond* the trajectory end —
+ *    use when the trajectory ends on a friendly die and you want to know how
+ *    strong the die will be as it continues moving.
+ *  - true: returns strength *when arriving at* the last hex — use when the
+ *    trajectory already ends on the enemy target and you want the attack value
+ *    that should be shown in the tooltip and used for reachability checks.
+ *
+ * @param {import("./gameState.js").GameState} state
+ * @param {import("./gameState.js").Die} moverDie
+ * @param {string[]} trajectoryPath - ordered hex array [fromKey, ..., currentEnd]
+ * @param {{ forArrival?: boolean }} [opts]
+ * @returns {number}
+ */
+export function getTrajectoryEffectiveStrength(state, moverDie, trajectoryPath, { forArrival = false } = {}) {
+    const baseStr = getAttackStrength(state, trajectoryPath[0]);
+    if (trajectoryPath.length < 2) return baseStr;
+    let boostLeft = 0, boostStr = 0;
+    for (let i = 1; i < trajectoryPath.length; i++) {
+        const effectivePower = boostLeft > 0 ? boostStr : baseStr;
+        if (forArrival && i === trajectoryPath.length - 1) return effectivePower;
+        const ctrl = getController(state, trajectoryPath[i]);
+        if (ctrl === moverDie.owner) {
+            const stack = getDiceAt(state, trajectoryPath[i]);
+            const existingOwn = stack.filter(d => d.owner === moverDie.owner).length;
+            const existingEnemy = stack.length - existingOwn;
+            boostStr = moverDie.value + existingOwn - existingEnemy;
+            boostLeft = Math.max(1, existingOwn + 1 - existingEnemy);
+        } else {
+            boostLeft = Math.max(0, boostLeft - 1);
+            boostStr = boostLeft > 0 ? boostStr : 0;
+        }
+    }
+    return boostLeft > 0 ? boostStr : baseStr;
 }
 
 // ---------------------------------------------------------------------------
@@ -428,7 +565,14 @@ export function applyMoveAction(state, fromKey, toKey, approachDirection = null)
     }
 
     // --- Enemy die: set up combat (die does NOT move yet) ---
-    if (!canAttack(state, fromKey, toKey)) return state;
+    // Base strength (preserves tower-move-die behavior); pass-through boost can only increase it.
+    const baseStr = getAttackStrength(state, fromKey);
+    const paths = getPathsToHex(state, fromKey, toKey);
+    const attackStr = paths.length > 0
+        ? Math.max(...paths.map(p => computePathAttackStrength(state, moverDie, p, baseStr)))
+        : baseStr;
+    if (!canAttack(state, fromKey, toKey, attackStr)) return state;
+
     let resolvedDirection = approachDirection;
     if (!resolvedDirection) {
         const dirs = getApproachDirections(state, fromKey, toKey);
@@ -443,6 +587,7 @@ export function applyMoveAction(state, fromKey, toKey, approachDirection = null)
             attackerHex: fromKey,
             defenderHex: toKey,
             approachDirection: resolvedDirection,
+            attackStrengthOverride: attackStr,
             options: ["push", "occupy"],
         },
     };
@@ -471,13 +616,16 @@ export function getJumpRange(state, towerKey) {
 
 /**
  * Returns the set of hexKeys reachable by the top die jumping out of `towerKey`.
- * The jumping die uses only its face value for attack-strength purposes (no tower bonus),
- * but the *range* is determined by getJumpRange (own − enemy, min 1).
+ *
+ * Movement range = die's face value (same as a standalone die).
+ * Combat power is boosted to the former tower's combat value for the first
+ * `getJumpRange` (own − enemy, min 1) hexes, then reverts to the die's plain face value.
+ * This boosted combat power is used when checking traversal through friendly formations.
  *
  * Traversal rules:
  * - Cannot pass through enemy dice.
- * - Can pass through own dice only if, as a solo die, it could enter that tower
- *   (i.e. its face value + 1 own − 0 enemy > top die strength there).
+ * - Can pass through own dice only if the jumper's effective combat power at that
+ *   step exceeds the top die's combat power there.
  * - Cannot land back on the source tower.
  *
  * @param {import("./gameState.js").GameState} state
@@ -488,7 +636,9 @@ export function getJumpReachableHexes(state, towerKey) {
     const stack = getDiceAt(state, towerKey);
     if (stack.length < 2) return new Set(); // need at least 2 dice to jump
     const jumper = stack[stack.length - 1];
-    const maxSteps = getJumpRange(state, towerKey);
+    const maxSteps = jumper.value; // jump range = die's own face value
+    const boostedRange = getJumpRange(state, towerKey); // steps where tower combat power applies
+    const towerStrength = getAttackStrength(state, towerKey); // former tower's combat power
     const reachable = new Set();
     const minSteps = new Map([[towerKey, 0]]);
     const queue = [[towerKey, 0]];
@@ -512,10 +662,13 @@ export function getJumpReachableHexes(state, towerKey) {
             reachable.add(neighborKey);
             minSteps.set(neighborKey, newSteps);
 
-            // Traversal: enemy blocks further movement; own only if jumper (solo) can enter
+            // Traversal: enemy blocks further movement; own only if jumper's effective
+            // combat power (boosted within boostedRange, face value beyond) allows entry.
             if (!isEnemy) {
-                const soloCanTraverse = ctrl === null || canEnterTower(state, jumper, neighborKey);
-                if (soloCanTraverse) queue.push([neighborKey, newSteps]);
+                const effectiveValue = newSteps <= boostedRange ? towerStrength : jumper.value;
+                const effectiveDie = { ...jumper, value: effectiveValue };
+                const canTraverse = ctrl === null || canEnterTower(state, effectiveDie, neighborKey);
+                if (canTraverse) queue.push([neighborKey, newSteps]);
             }
         }
     }
@@ -556,10 +709,15 @@ export function applyJumpAction(state, towerKey, targetKey, approachDirection = 
         return { ...moveTopDie(state, towerKey, targetKey), phase: "action" };
     }
 
-    // Enemy — set up combat (jump variant: face value only)
-    const jumperStrength = getAttackStrength(state, towerKey, { jumped: true });
-    const defenseStrength = getAttackStrength(state, targetKey);
-    if (jumperStrength <= defenseStrength) return state;
+    // Enemy — set up combat.
+    // Combat power is boosted to the former tower's value for the first boostedRange hexes;
+    // beyond that it reverts to the jumper's plain face value.
+    const jumpBoostedRange = getJumpRange(state, towerKey);
+    const distToTarget = hexesDistance(hexFromKey(towerKey), hexFromKey(targetKey));
+    const jumperStrength = distToTarget <= jumpBoostedRange
+        ? getAttackStrength(state, towerKey)
+        : jumper.value;
+    if (!canAttack(state, towerKey, targetKey, jumperStrength)) return state;
 
     let resolvedDirection = approachDirection;
     if (!resolvedDirection) {
@@ -630,6 +788,7 @@ export function getTowerReachableHexes(state, towerKey) {
     const maxSteps = getTowerMoveRange(state, towerKey);
     if (maxSteps === 0) return new Set();
 
+    const topDie = getTopDie(state, towerKey);
     const reachable = new Set();
     const minSteps = new Map([[towerKey, 0]]);
     const queue = [[towerKey, 0]];
@@ -649,6 +808,9 @@ export function getTowerReachableHexes(state, towerKey) {
 
             const ctrl = getController(state, neighborKey);
             const isOccupied = ctrl !== null;
+
+            // Friendly destination is only reachable if the tower can legally stack there
+            if (ctrl === state.currentPlayer && !canEnterTower(state, topDie, neighborKey)) continue;
 
             reachable.add(neighborKey);
             minSteps.set(neighborKey, newSteps);

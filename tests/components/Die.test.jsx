@@ -24,16 +24,16 @@ describe('Die', () => {
         expect(circles).toHaveLength(pipCount);
     });
 
-    test('isTop=true renders at full opacity', () => {
+    test('isTop=true renders no gradient overlay rect', () => {
         const { container } = renderDie({ value: 3, isTop: true });
-        const g = container.querySelector('g');
-        expect(g).toHaveAttribute('opacity', '1');
+        // Top die has only one rect (the die body); no gradient dimming overlay.
+        expect(container.querySelectorAll('rect')).toHaveLength(1);
     });
 
-    test('isTop=false (default false) renders dimmed', () => {
+    test('isTop=false renders a gradient overlay rect for dimming', () => {
         const { container } = renderDie({ value: 3, isTop: false });
-        const g = container.querySelector('g');
-        expect(g).toHaveAttribute('opacity', '0.55');
+        // Non-top die has two rects: die body + gradient dimming overlay.
+        expect(container.querySelectorAll('rect')).toHaveLength(2);
     });
 
     test('renders a rect for the die body', () => {

@@ -3,6 +3,8 @@ import {
     getReachableHexes,
     getPathsToHex,
     getApproachDirections,
+    getMoveAttackStrength,
+    getTrajectoryEffectiveStrength,
     applyMoveAction,
     getJumpRange,
     getJumpReachableHexes,
@@ -158,6 +160,64 @@ describe('getReachableHexes', () => {
         // Should reach many hexes on empty board
         expect(result.size).toBeGreaterThan(20);
     });
+
+    it('pass-through boost: die can traverse a second friendly that plain face value cannot enter', () => {
+        // Mover red(3) at CENTER, friendly red(2) at N1 (strength 2), second friendly red(3) at N1_N1 (strength 3).
+        // Plain face value 3: canEnterTower(N1_N1) = 3 > 3? No — cannot traverse N1_N1.
+        // After passing through N1 (1 own die, 0 enemy): boostStr = 3+1-0 = 4, boostLeft = 2.
+        // Boosted: canEnterTower(N1_N1) = 4 > 3? Yes — can traverse N1_N1.
+        // Target '3,-3,0' is ONLY reachable in 3 steps via CENTER→N1→N1_N1 (no other 3-step path exists
+        // on the board). With boost the mover traverses N1_N1 and lands there.
+        const N1_N1_DEEP = '3,-3,0';
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'red', value: 3 }],
+            },
+        });
+        const result = getReachableHexes(state, CENTER);
+        expect(result.has(N1_N1)).toBe(true);    // N1_N1 is a valid landing spot
+        expect(result.has(N1_N1_DEEP)).toBe(true); // reachable only via boosted traversal of N1_N1
+    });
+
+    it('pass-through boost does not enable traversal through a formation stronger than the boost', () => {
+        // Mover red(3) at CENTER, friendly red(2) at N1 (strength 2, traversable):
+        //   boostStr = 3+1-0 = 4, boostLeft = 2.
+        // N1_N1 has red(4) (strength 4). Boost power 4 not > 4 — cannot traverse N1_N1.
+        // '3,-3,0' is ONLY reachable via CENTER→N1→N1_N1→'3,-3,0'; since N1_N1 blocks traversal,
+        // the deep hex is NOT reachable.
+        const N1_N1_DEEP = '3,-3,0';
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'red', value: 4 }],
+            },
+        });
+        const result = getReachableHexes(state, CENTER);
+        expect(result.has(N1_N1)).toBe(true);       // N1_N1 is a valid landing spot
+        expect(result.has(N1_N1_DEEP)).toBe(false); // blocked: boost=4 not > strength=4
+    });
+
+    it('pass-through boost from larger friendly tower provides greater boost and enables traversal of stronger formation', () => {
+        // Mover red(4) at CENTER. N1 has tower [red(1), red(2)] (top=red(2), strength=3).
+        //   Entry check: mover value 4 > strength 3 ✓.
+        //   Boost: boostStr = 4+2-0 = 6, boostLeft = max(1, 3-0) = 3.
+        // N1_N1 has red(5) (strength 5). Single-die boost (5) not > 5. Tower boost (6) > 5 ✓.
+        // '3,-3,0' (only reachable via N1→N1_N1) is reachable with the larger tower boost.
+        const N1_N1_DEEP = '3,-3,0';
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 4 }],
+                [N1]: [{ owner: 'red', value: 1 }, { owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'red', value: 5 }],
+            },
+        });
+        const result = getReachableHexes(state, CENTER);
+        // With boost 6 the mover CAN traverse N1_N1 (6 > 5) and reach the deep hex.
+        expect(result.has(N1_N1_DEEP)).toBe(true);
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -292,6 +352,26 @@ describe('getPathsToHex', () => {
             expect(path[path.length - 1]).toBe(N1);
         }
     });
+
+    it('pass-through boost: includes path through second friendly that plain face value cannot traverse', () => {
+        // Mover red(3) at CENTER, friendly red(2) at N1 (strength 2), second friendly red(3) at N1_N1 (strength 3).
+        // Without boost: cannot traverse N1_N1 (3 not > 3).
+        // With boost from N1 (boostStr=4): 4 > 3 ✓ — can traverse N1_N1.
+        // '3,-3,0' is only reachable in 3 steps via CENTER→N1→N1_N1, so a path through both
+        // N1 and N1_N1 to that target must exist when boost is active.
+        const N1_N1_DEEP = '3,-3,0';
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'red', value: 3 }],
+            },
+        });
+        const result = getPathsToHex(state, CENTER, N1_N1_DEEP);
+        expect(result.length).toBeGreaterThan(0);
+        const pathThroughBothFriendlies = result.some(p => p.includes(N1) && p.includes(N1_N1));
+        expect(pathThroughBothFriendlies).toBe(true);
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -424,6 +504,188 @@ describe('getApproachDirections', () => {
             const result = getApproachDirections(state2, CENTER, N1_N1, 'move-tower');
             expect(result.size).toBe(0);
         });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getApproachDirections — defenderStr filtering
+// ---------------------------------------------------------------------------
+
+describe('getApproachDirections with defenderStr', () => {
+    // Setup: mover (red, value 3) at CENTER, friendly (red, value 2) at N4,
+    // enemy (blue, value 3) at N3 (adjacent to both CENTER and N4).
+    // Direct path CENTER→N3 has effective strength 3 (no boost).
+    // Path CENTER→N4→N3 passes through friendly: effective strength 3+1=4.
+    // defenderStr=3 should filter out the direct path (3 ≤ 3), keeping only N4 approach.
+
+    function makeBoostState() {
+        return makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N4]:     [{ owner: 'red',  value: 2 }],
+                [N3]:     [{ owner: 'blue', value: 3 }],
+            },
+        });
+    }
+
+    it('returns both approach directions when defenderStr is not provided', () => {
+        const state = makeBoostState();
+        const result = getApproachDirections(state, CENTER, N3);
+        // CENTER (direct) and N4 (via friendly) are both geometric approaches
+        expect(result.has(CENTER)).toBe(true);
+        expect(result.has(N4)).toBe(true);
+    });
+
+    it('filters out paths whose attack strength does not exceed defenderStr', () => {
+        const state = makeBoostState();
+        // defenderStr=3: direct path (strength 3) is excluded, only boost path (strength 4) remains
+        const result = getApproachDirections(state, CENTER, N3, 'move-die', 3);
+        expect(result.has(N4)).toBe(true);
+        expect(result.has(CENTER)).toBe(false);
+    });
+
+    it('returns empty set when no path beats defenderStr', () => {
+        const state = makeBoostState();
+        // defenderStr=4: even the boosted path (strength 4) does not strictly exceed it
+        const result = getApproachDirections(state, CENTER, N3, 'move-die', 4);
+        expect(result.size).toBe(0);
+    });
+
+    it('returns all directions when defenderStr is low enough for every path', () => {
+        const state = makeBoostState();
+        // defenderStr=2: both paths (strength 3 and 4) beat it
+        const result = getApproachDirections(state, CENTER, N3, 'move-die', 2);
+        expect(result.has(CENTER)).toBe(true);
+        expect(result.has(N4)).toBe(true);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getMoveAttackStrength
+// ---------------------------------------------------------------------------
+
+describe('getMoveAttackStrength', () => {
+    it('returns 0 when no die at fromKey', () => {
+        const state = makeState({ dice: { [N1]: [{ owner: 'blue', value: 3 }] } });
+        expect(getMoveAttackStrength(state, CENTER, N1)).toBe(0);
+    });
+
+    it('returns base strength when toKey is unreachable (no paths found)', () => {
+        // Die value 1 cannot reach a 2-step target
+        const state = makeState({ dice: { [CENTER]: [{ owner: 'red', value: 1 }] } });
+        expect(getMoveAttackStrength(state, CENTER, N1_N1)).toBe(1);
+    });
+
+    it('returns face value for direct attack with no intermediates', () => {
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N1]:     [{ owner: 'blue', value: 1 }],
+            },
+        });
+        expect(getMoveAttackStrength(state, CENTER, N1)).toBe(3);
+    });
+
+    it('returns boosted strength when best path passes through a friendly die', () => {
+        // CENTER(red,3) → N4(red,2) → N3(blue,3)
+        // Via friendly N4: effective = 3+1 = 4
+        // Direct CENTER → N3: effective = 3
+        // Best = 4
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N4]:     [{ owner: 'red',  value: 2 }],
+                [N3]:     [{ owner: 'blue', value: 3 }],
+            },
+        });
+        expect(getMoveAttackStrength(state, CENTER, N3)).toBe(4);
+    });
+
+    it('returns base strength when friendly is not traversable (mover too weak)', () => {
+        // CENTER(red,1) cannot pass through N4(red,3) since 1 ≤ 3 (canEnterTower fails)
+        // No path through N4, direct path CENTER→N3 = base strength 1
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 1 }],
+                [N4]:     [{ owner: 'red',  value: 3 }],
+                [N3]:     [{ owner: 'blue', value: 1 }],
+            },
+        });
+        expect(getMoveAttackStrength(state, CENTER, N3)).toBe(1);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// getTrajectoryEffectiveStrength
+// ---------------------------------------------------------------------------
+
+describe('getTrajectoryEffectiveStrength', () => {
+    const mover = { owner: 'red', value: 3 };
+
+    it('returns base strength for single-element trajectory', () => {
+        const state = makeState({ dice: { [CENTER]: [{ owner: 'red', value: 3 }] } });
+        expect(getTrajectoryEffectiveStrength(state, mover, [CENTER])).toBe(3);
+    });
+
+    it('returns base strength when trajectory passes through empty hex', () => {
+        const state = makeState({ dice: { [CENTER]: [{ owner: 'red', value: 3 }] } });
+        expect(getTrajectoryEffectiveStrength(state, mover, [CENTER, N1])).toBe(3);
+    });
+
+    it('returns boosted strength when trajectory ends on a friendly die', () => {
+        // CENTER(red,3) → N1(red,2): boost = 3+1-0 = 4; boostLeft=2 after N1 → returns 4
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]:     [{ owner: 'red', value: 2 }],
+            },
+        });
+        expect(getTrajectoryEffectiveStrength(state, mover, [CENTER, N1])).toBe(4);
+    });
+
+    it('returns base strength when trajectory ends on enemy (forArrival=false, boost expired)', () => {
+        // CENTER→N1(friendly)→N1_N1(empty)→N1_N2(enemy): boost expires at N1_N2
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N1]:     [{ owner: 'red',  value: 2 }],
+                [N1_N2]:  [{ owner: 'blue', value: 3 }],
+            },
+        });
+        const result = getTrajectoryEffectiveStrength(
+            state, mover, [CENTER, N1, N1_N1, N1_N2], { forArrival: false },
+        );
+        expect(result).toBe(3);
+    });
+
+    it('returns boosted arrival strength when forArrival=true and boost still active at enemy', () => {
+        // Same path as above; boost lasts 2 steps after N1 — still active at N1_N2 (2nd step)
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N1]:     [{ owner: 'red',  value: 2 }],
+                [N1_N2]:  [{ owner: 'blue', value: 3 }],
+            },
+        });
+        const result = getTrajectoryEffectiveStrength(
+            state, mover, [CENTER, N1, N1_N1, N1_N2], { forArrival: true },
+        );
+        expect(result).toBe(4);
+    });
+
+    it('returns boosted strength when enemy is 1 step from friendly (forArrival=true)', () => {
+        // CENTER→N1(friendly)→N1_N1(enemy): boost active at N1_N1 (1st step after N1)
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red',  value: 3 }],
+                [N1]:     [{ owner: 'red',  value: 2 }],
+                [N1_N1]:  [{ owner: 'blue', value: 3 }],
+            },
+        });
+        const result = getTrajectoryEffectiveStrength(
+            state, mover, [CENTER, N1, N1_N1], { forArrival: true },
+        );
+        expect(result).toBe(4);
     });
 });
 
@@ -562,6 +824,26 @@ describe('applyMoveAction', () => {
         const result = applyMoveAction(state, CENTER, N2);
         expect(result.combat.approachDirection).toBe(null);
     });
+
+    it('pass-through boost: sets attackStrengthOverride to boosted value when path traverses a friendly', () => {
+        // Mover red(3) at CENTER, friendly red(2) at N1 (intermediate), enemy blue(1) at N1_N1.
+        // baseStr = getAttackStrength(CENTER) = 3 (standalone).
+        // Path CENTER→N1→N1_N1: after N1 (own, 1 own die, 0 enemy), boostStr = 3+1-0 = 4, boostLeft = 2.
+        // At N1_N1 (destination, last step): effectivePower = boostStr = 4.
+        // So attackStrengthOverride = max(baseStr=3, boosted=4) = 4.
+        const state = makeState({
+            dice: {
+                [CENTER]: [{ owner: 'red', value: 3 }],
+                [N1]: [{ owner: 'red', value: 2 }],
+                [N1_N1]: [{ owner: 'blue', value: 1 }],
+            },
+        });
+        const result = applyMoveAction(state, CENTER, N1_N1, N1);
+        expect(result.phase).toBe('combat');
+        expect(result.combat.attackStrengthOverride).toBe(4);
+        // Confirm it is strictly greater than the base (non-boosted) attack strength of 3
+        expect(result.combat.attackStrengthOverride).toBeGreaterThan(3);
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -671,7 +953,9 @@ describe('getJumpReachableHexes', () => {
         expect(result.has(CENTER)).toBe(false);
     });
 
-    it('includes enemy hex but does not traverse through it', () => {
+    it('includes enemy hex and can reach beyond it via other paths', () => {
+        // Range = jumper face value = 4; enemy at N1 blocks traversal through N1,
+        // but N1_N1 is reachable via other paths (range allows it)
         const state = makeState({
             dice: {
                 [CENTER]: [
@@ -682,8 +966,8 @@ describe('getJumpReachableHexes', () => {
             },
         });
         const result = getJumpReachableHexes(state, CENTER);
-        expect(result.has(N1)).toBe(true);      // can land on enemy
-        expect(result.has(N1_N1)).toBe(false);  // cannot traverse through enemy
+        expect(result.has(N1)).toBe(true);     // can land on enemy
+        expect(result.has(N1_N1)).toBe(true);  // reachable via paths not through N1
     });
 
     it('can traverse through own hex if jumper (solo) can enter tower', () => {
@@ -718,16 +1002,16 @@ describe('getJumpReachableHexes', () => {
         expect(result.has(N1_N1)).toBe(false);  // only reachable via N1 which blocks traversal
     });
 
-    it('respects range from getJumpRange', () => {
-        // 1 own - 1 enemy = 0 → max(1, 0) = 1, so range is 1
+    it('respects range equal to jumper face value', () => {
+        // Jumper face value 1 → range is 1; only direct neighbors reachable
         const state = makeState({
             dice: { [CENTER]: [
                 { owner: 'blue', value: 2 },
-                { owner: 'red', value: 5 },
+                { owner: 'red', value: 1 },
             ]},
         });
         const result = getJumpReachableHexes(state, CENTER);
-        expect(result.has(N1)).toBe(true);      // 1-step neighbor
+        expect(result.has(N1)).toBe(true);      // 1-step neighbor, within range
         expect(result.has(N1_N1)).toBe(false);  // 2-step neighbor, out of range
     });
 });
@@ -752,11 +1036,11 @@ describe('applyJumpAction', () => {
     });
 
     it('returns state unchanged when target is not reachable', () => {
-        // N1_N1 is out of range for jump range 1
+        // Jumper face value 1 → range is 1; N1_N1 is 2 steps away, out of range
         const state = makeState({
             dice: { [CENTER]: [
                 { owner: 'blue', value: 2 },
-                { owner: 'red', value: 4 },
+                { owner: 'red', value: 1 },
             ]},
         });
         const result = applyJumpAction(state, CENTER, N1_N1);
@@ -860,9 +1144,10 @@ describe('applyJumpAction', () => {
         expect(result.dice[N1]).toEqual([{ owner: 'blue', value: 3 }]);
     });
 
-    it('sets combat with attackStrengthOverride equal to jumper face value only', () => {
-        // Jumper value 4 in a tower of 2 red dice: normal strength would be 4+1-0=5,
-        // but jump uses only face value = 4
+    it('sets combat with attackStrengthOverride equal to tower strength when within boosted range', () => {
+        // Jumper value 4 in a tower of 2 red dice: tower strength = 4+1-0 = 5.
+        // boostedRange = getJumpRange = max(1, 2-0) = 2; N1 is 1 step away (within range).
+        // So attackStrengthOverride = tower strength = 5.
         const state = makeState({
             dice: {
                 [CENTER]: [
@@ -873,7 +1158,25 @@ describe('applyJumpAction', () => {
             },
         });
         const result = applyJumpAction(state, CENTER, N1);
-        expect(result.combat.attackStrengthOverride).toBe(4);
+        expect(result.combat.attackStrengthOverride).toBe(5);
+    });
+
+    it('sets combat with attackStrengthOverride equal to face value beyond boosted range', () => {
+        // Jumper value 4 in a tower of 2 red dice: tower strength = 5, boostedRange = 2.
+        // N1_N1 is 2 steps away from CENTER — exactly at the edge of boostedRange (<=2 qualifies),
+        // so use tower strength = 5. For a target 3+ steps away, use face value = 4.
+        // Use a blue+red tower: boostedRange = max(1,1-1)=1; N1_N1 at distance 2 > 1 → face value.
+        const state = makeState({
+            dice: {
+                [CENTER]: [
+                    { owner: 'blue', value: 2 },
+                    { owner: 'red', value: 4 },
+                ],
+                [N1_N1]: [{ owner: 'blue', value: 2 }],
+            },
+        });
+        const result = applyJumpAction(state, CENTER, N1_N1);
+        expect(result.combat.attackStrengthOverride).toBe(4); // face value, beyond boostedRange
     });
 
     it('sets combat.attackerHex and combat.defenderHex when jumping to enemy hex', () => {
@@ -1024,7 +1327,9 @@ describe('getTowerReachableHexes', () => {
         expect(result.has(N1_N1)).toBe(true);  // 2-step neighbor via empty hexes
     });
 
-    it('includes own die blocking hex but does not traverse through it', () => {
+    it('excludes own hex where tower cannot enter and does not traverse through it', () => {
+        // Tower top value 4; N1 has red(5) with strength 5 > 4 — tower cannot enter N1.
+        // N1 is excluded from reachable hexes (BUG-014 fix) and cannot be traversed.
         const state = makeState({
             dice: {
                 [CENTER]: [
@@ -1035,8 +1340,8 @@ describe('getTowerReachableHexes', () => {
             },
         });
         const result = getTowerReachableHexes(state, CENTER);
-        expect(result.has(N1)).toBe(true);      // can land on own
-        expect(result.has(N1_N1)).toBe(false);  // cannot traverse through own
+        expect(result.has(N1)).toBe(false);     // cannot enter: top value 4 ≤ N1 strength 5
+        expect(result.has(N1_N1)).toBe(false);  // cannot traverse through N1
     });
 
     it('includes enemy hex but does not traverse through it', () => {

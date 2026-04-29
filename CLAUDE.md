@@ -48,11 +48,11 @@ npm run preview   # Preview production build
 
 * **Move die** — move one of your dice up to its face value in hexes along any path (direction may change mid-move). 
   - Cannot pass through enemy dice. 
-  - Can pass through your own dice only if your die has higher combat power on that field. 
+  - Can pass through your own dice only if your die has higher combat power on that field. Passing through a friendly die is treated as forming a temporary tower at that point: the remaining movement continues as if jumping off that tower — combat power is boosted to the virtual tower's combat value for the next (own dice − enemy dice, min 1) hexes, then reverts to the die's plain face value. No extra movement is granted; steps already taken count against the die's face value.
   - Moving onto an empty field just moves there.
   - Moving onto a friendly occupied field forms a tower, only if the moving die's combat power exceeds the tower's combat power on that field.
   - Moving onto an enemy field triggers either **Combat** or makes a **tower** (current player's choice). 
-  - **Jump from tower**: a die on top of a tower may detach and jump up to (own dice in tower − enemy dice in tower, min 1) hexes; attack strength uses the jumping die's value alone.
+  - **Jump from tower**: a die on top of a tower may detach and jump up to its own face value in hexes (same as a standalone die). Its combat power equals the former tower's combat power for the first (own dice in tower − enemy dice in tower, min 1) hexes of the jump; beyond that distance, combat power reverts to the die's plain face value.
 * **Tower collapse** — available when the tower has **3+ dice**.
   - Only the player whose die is on **top** can trigger it. 
   - The **bottom** die is removed from the game. If it was an enemy die, you score 1 point.

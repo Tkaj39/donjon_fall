@@ -69,7 +69,7 @@ describe('App', () => {
         const highlighted = container.querySelectorAll('g[data-highlight]');
         const types = [...highlighted].map(g => g.getAttribute('data-highlight'));
         // Should contain 'reachable' and/or 'enemy-reachable' (or 'selected' for the chosen hex)
-        const validTypes = new Set(['reachable', 'enemy-reachable', 'trajectory', 'selected']);
+        const validTypes = new Set(['reachable', 'enemy-reachable', 'trajectory', 'selected', 'dimmed']);
         expect(types.every(t => validTypes.has(t))).toBe(true);
     });
 

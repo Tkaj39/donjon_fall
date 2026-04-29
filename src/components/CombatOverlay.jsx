@@ -27,8 +27,8 @@ const OPTION_ICONS = {
  * @returns {JSX.Element}
  */
 export function CombatOverlay({ state, options, onChoose }) {
-    const { attackerHex, defenderHex } = state.combat;
-    const attackerStrength = getAttackStrength(state, attackerHex);
+    const { attackerHex, defenderHex, attackStrengthOverride } = state.combat;
+    const attackerStrength = attackStrengthOverride ?? getAttackStrength(state, attackerHex);
     const defenderStrength = getAttackStrength(state, defenderHex);
     const attackerColor = NAMED_PLAYER_COLORS[getController(state, attackerHex)]?.primary ?? "#e2e8f0";
     const defenderColor = NAMED_PLAYER_COLORS[getController(state, defenderHex)]?.primary ?? "#e2e8f0";
