@@ -264,6 +264,11 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      * @returns {void}
      */
     function handleActionSelect(action) {
+        if (action === "reroll" && selectedHex) {
+            dispatch({type: "REROLL", hex: selectedHex, newValue: rollD6()});
+            deselect();
+            return;
+        }
         setActiveAction(action);
         setTrajectoryPath([]);
     }
