@@ -13,8 +13,10 @@
 
 ## Open Bugs
 
-| ID | Component | Description                                                                                                                                                                                                                                                                                                    | Priority | Status | Resolution |
-|----|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|--------|------------|
+| ID | Component | Description                                                                                                                                                                                | Priority | Status | Resolution |
+|----|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|--------|------------|
+| BUG-016 | Game / Board | Cannot deselect a selected die by clicking an unreachable hex or off-map area — clicking outside valid destinations should deselect the die | P3 | open | |
+| BUG-017 | Game / CombatScreen | Combat screen cannot be dismissed by clicking outside it or pressing Esc | P3 | open | |
 
 ---
 

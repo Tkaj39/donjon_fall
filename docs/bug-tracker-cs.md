@@ -15,6 +15,8 @@
 
 | ID | Komponenta | Popis                                                                                                                                                                                    | Priorita | Stav | Řešení |
 |----|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|------|--------|
+| BUG-016 | Game / Board | Vybranou kostku nelze odznačit kliknutím na nedosažitelný hex nebo mimo mapu — klik mimo platné cíle by měl kostku odznačit | P3 | otevřená | |
+| BUG-017 | Game / CombatScreen | Obrazovku souboje nelze zavřít kliknutím vedle ní ani stisknutím Esc | P3 | otevřená | |
 
 ---
 
