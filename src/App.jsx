@@ -41,7 +41,7 @@ export function App() {
     /** @type {[import("./components/PlayerSetup.jsx").PlayerConfig[]|null, Function]} */
     const [playerConfigs, setPlayerConfigs] = useState(null);
 
-    /** @type {[{ players: string[], boardFields: import("./hex/fieldProperties.js").HexField[], diceValues: number[]|null, scenario: object|null }|null, Function]} */
+    /** @type {[{ players: string[], boardFields: import("./hex/fieldProperties.js").HexField[], diceValues: number[]|null, scenario: object|null, botPlayer: string|null }|null, Function]} */
     const [gameSetup, setGameSetup] = useState(null);
 
     /** Initial sub-screen for MainMenu — "main" normally, "settings" when navigating from in-game settings. */
@@ -73,7 +73,7 @@ export function App() {
                             { id: "red",  name: "Red",  coatOfArms: randomAnimal() },
                             { id: "blue", name: "Blue", coatOfArms: randomAnimal() },
                         ]);
-                        setGameSetup(prev => ({ ...(prev ?? {}), diceValues: randomDice, scenario: null }));
+                        setGameSetup(prev => ({ ...(prev ?? {}), diceValues: randomDice, scenario: null, botPlayer: "red", firstPlayer: "blue" }));
                         navigate("gameLoading");
                     }}
                 />
@@ -99,14 +99,14 @@ export function App() {
                     playerConfigs={playerConfigs}
                     map={selectedMap}
                     onDone={(players, boardFields) => {
-                        setGameSetup(prev => ({ diceValues: prev?.diceValues ?? null, scenario: prev?.scenario ?? null, players, boardFields }));
+                        setGameSetup(prev => ({ diceValues: prev?.diceValues ?? null, scenario: prev?.scenario ?? null, botPlayer: prev?.botPlayer ?? null, firstPlayer: prev?.firstPlayer ?? null, players, boardFields }));
                         navigate("game");
                     }}
                 />
             );
         case "game":
             return gameSetup
-                ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} playerConfigs={playerConfigs ?? []} diceValues={gameSetup.diceValues} scenario={gameSetup.scenario ?? null} onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />
+                ? <Game players={gameSetup.players} boardFields={gameSetup.boardFields} playerConfigs={playerConfigs ?? []} diceValues={gameSetup.diceValues} scenario={gameSetup.scenario ?? null} botPlayer={gameSetup.botPlayer ?? null} firstPlayer={gameSetup.firstPlayer ?? null} onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />
                 : <Game onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />;
         default:
             return <Game onExit={() => { setMenuInitialScreen("main"); navigate("mainMenu"); }} onSettings={() => { setMenuInitialScreen("settings"); navigate("mainMenu"); }} />;

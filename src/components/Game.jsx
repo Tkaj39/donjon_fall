@@ -18,7 +18,7 @@
  * Victory is detected and shown via VictoryScreen.
  */
 
-import {useState, useMemo, useEffect, useRef} from "react";
+import {useState, useMemo, useEffect, useRef, useCallback} from "react";
 import {getAvailableCombatOptions, canAttack} from "../game/combat.js";
 import {getController, getTopDie, getTowerSize, canEnterTower, getAttackStrength} from "../game/gameState.js";
 import {
@@ -33,6 +33,7 @@ import {
     getApproachDirections,
 } from "../game/movement.js";
 import {hasLegalMoves} from "../game/turnManager.js";
+import {getBotMoveAsync} from "../game/bot.js";
 import {BOARD_FIELDS, BOARD_HEX_SET} from "../hex/boardConstants.js";
 import {hexFromKey, hexesDistance} from "../hex/hexUtils.js";
 import {useGameState} from "../hooks/useGameState.js";
@@ -91,7 +92,7 @@ function rollD6() {
  * @returns {JSX.Element}
  */
 // TESTING ONLY — scenario prop accepts a debug board state; probably removed for production.
-export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null, diceValues = null, scenario = null, onExit, onSettings}) {
+export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, playerConfigs = [], firstPlayer = null, diceValues = null, scenario = null, botPlayer = null, onExit, onSettings}) {
     const {state, dispatch, recordedActions, initialState} = useGameState(players, boardFields, firstPlayer, diceValues, scenario);
 
     // -----------------------------------------------------------------------
@@ -173,6 +174,36 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
 
     /** Guards against double-dispatch for the auto-end-turn effect. */
     const endTurnFiredRef = useRef(false);
+
+    /** Cancel function for any in-flight bot computation. */
+    const botCancelRef = useRef(null);
+
+    // -----------------------------------------------------------------------
+    // Bot: run MCTS on the bot's turn and dispatch the chosen move
+    // -----------------------------------------------------------------------
+
+    useEffect(() => {
+        if (!botPlayer) return;
+        if (state.currentPlayer !== botPlayer) return;
+        if (state.phase === "victory") return;
+        if (state.phase === "focal") return; // handled by the focal effect
+        if (state.phase === "action" && state.actionTaken) return;
+
+        botCancelRef.current?.();
+        botCancelRef.current = getBotMoveAsync(state, botPlayer, {
+            onMove: (move) => {
+                botCancelRef.current = null;
+                if (move) dispatch(move);
+            },
+            timeoutMs: 1500,
+        });
+
+        return () => {
+            botCancelRef.current?.();
+            botCancelRef.current = null;
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state.phase, state.currentPlayer, state.actionTaken, botPlayer]);
 
     // -----------------------------------------------------------------------
     // Auto-end turn: when action is taken and no combat is pending, advance
@@ -531,6 +562,7 @@ export function Game({players = DEFAULT_PLAYERS, boardFields = BOARD_FIELDS, pla
      */
     function handleHexClick(clickedKey) {
         if (state.phase !== "action" || winner || pendingMove) return;
+        if (botPlayer && state.currentPlayer === botPlayer) return;
 
         const ctrl = getController(state, clickedKey);
         const isOwn = ctrl === state.currentPlayer;
