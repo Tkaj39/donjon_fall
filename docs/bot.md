@@ -68,11 +68,16 @@ Scores a position from the bot's perspective. A finished game (5 VP reached) ret
 | Component | Weight | Reasoning |
 |---|---|---|
 | VP lead (own − opponent) | ×10 | Victory points are the win condition |
-| Material lead (sum of own die faces − enemy die faces) | ×0.5 | Higher-value dice hit harder and survive longer |
+| Formation combat power lead | ×0.5 | Per rules: `top die value + own supporting count − enemy count`; buried dice contribute ±1 regardless of face value |
+| Friendly die buried in enemy-controlled tower | −1 each | At risk of tower collapse (enemy scores 1 VP) |
 | Own die on an active focal point | +3 each | Focal points score VP at the start of next turn |
 | Enemy die on an active focal point | −3 each | Opponent will score unless displaced |
+| Own die on a passive focal point | +3 ÷ passive count in group | Uniform probability it becomes the next active focal point |
+| Enemy die on a passive focal point | −3 ÷ passive count in group | Same reasoning, from opponent's side |
 | Win (5+ VP) | +1000 | Terminal |
 | Loss | −1000 | Terminal |
+
+> **TODO**: The passive focal point weight assumes a uniform draw among passive focal points in the same group. When future maps introduce focal point groups of different sizes or non-uniform activation rules, this formula may need revisiting.
 
 ## Best Move Selection
 

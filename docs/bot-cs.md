@@ -67,12 +67,17 @@ Ohodnocuje stav z perspektivy bota. Ukončená hra (dosaženo 5 bodů vítězstv
 
 | Komponenta | Váha | Zdůvodnění |
 |---|---|---|
-| VP lead (vlastní − opponent) | ×10 | Body vítězství jsou podmínkou výhry |
-| Material lead (součet vlastních hodnot kostek − nepřátelské hodnoty) | ×0.5 | Kostky s vyšší hodnotou útočí tvrdě a déle přežívají |
+| VP lead (vlastní − soupeř) | ×10 | Body vítězství jsou podmínkou výhry |
+| Rozdíl útočné síly formací | ×0.5 | Dle pravidel: `hodnota horní kostky + počet vlastních podpůrných − počet nepřátelských`; pohřbené kostky přispívají ±1 bez ohledu na hodnotu |
+| Vlastní kostka pohřbená ve věži pod nepřátelskou kontrolou | −1 za každou | Hrozí zřícení věže (soupeř skóruje 1 bod vítězství) |
 | Vlastní kostka na aktivním ohnisku | +3 za každou | Ohniska skórují body na začátku příštího tahu |
 | Nepřátelská kostka na aktivním ohnisku | −3 za každou | Soupeř bude skórovat, pokud jej nevytlačíme |
+| Vlastní kostka na pasivním ohnisku | +3 ÷ počet pasivních v skupině | Rovnoměrná pravděpodobnost, že se stane dalším aktivním ohniskem |
+| Nepřátelská kostka na pasivním ohnisku | −3 ÷ počet pasivních v skupině | Stejná logika z pohledu soupeře |
 | Výhra (5+ bodů vítězství) | +1000 | Terminál |
 | Prohra | −1000 | Terminál |
+
+> **TODO**: Váha pasivního ohniska předpokládá rovnoměrné losování mezi pasivními ohnisky ve stejné skupině. Pokud budoucí mapy zavedou skupiny ohnisek různé velikosti nebo nerovnoměrná pravidla aktivace, může být nutné tento vzorec přehodnotit.
 
 ## Výběr nejlepšího tahu
 

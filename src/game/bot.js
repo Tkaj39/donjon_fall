@@ -18,7 +18,7 @@ import {
     canCollapse,
 } from "./movement.js";
 import { getAvailableCombatOptions } from "./combat.js";
-import { getController, getActiveFocalPoints } from "./gameState.js";
+import { getController, getAttackStrength } from "./gameState.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -145,21 +145,42 @@ function evaluateState(state, player) {
     const opponent = state.players.find(p => p !== player);
     let score = ((state.scores[player] ?? 0) - (state.scores[opponent] ?? 0)) * 10;
 
-    // Material: sum of own die values vs enemy
-    let myMat = 0, theirMat = 0;
-    for (const stack of Object.values(state.dice)) {
-        for (const die of stack) {
-            if (die.owner === player) myMat += die.value;
-            else theirMat += die.value;
+    // Formation combat power: top die value + own supporting count − enemy count (per rules).
+    // Buried dice contribute ±1 to their tower's combat power regardless of face value.
+    let myPower = 0, theirPower = 0;
+    for (const [hexKey, stack] of Object.entries(state.dice)) {
+        if (stack.length === 0) continue;
+        const ctrl = getController(state, hexKey);
+        const strength = getAttackStrength(state, hexKey);
+        if (ctrl === player) myPower += strength;
+        else if (ctrl === opponent) theirPower += strength;
+
+        // Friendly dice buried in an enemy-controlled tower risk being collapsed (enemy scores 1 VP).
+        if (ctrl === opponent) {
+            const buriedFriendly = stack.slice(0, -1).filter(d => d.owner === player).length;
+            score -= buriedFriendly;
         }
     }
-    score += (myMat - theirMat) * 0.5;
+    score += (myPower - theirPower) * 0.5;
 
-    // Focal point control
-    for (const hexKey of getActiveFocalPoints(state)) {
+    // Focal point control — generalized over all focal points and groups.
+    // Active focal point: full weight. Passive: weight / passive count in same group,
+    // reflecting the uniform probability that it becomes the next active one.
+    const allFocalEntries = Object.entries(state.focalPoints);
+    for (const [hexKey, fp] of allFocalEntries) {
         const ctrl = getController(state, hexKey);
-        if (ctrl === player) score += 3;
-        else if (ctrl === opponent) score -= 3;
+        if (!ctrl) continue;
+        let weight;
+        if (fp.isActive) {
+            weight = 3;
+        } else {
+            const passiveInGroup = allFocalEntries.filter(
+                ([, f]) => f.group === fp.group && !f.isActive
+            ).length;
+            weight = 3 / passiveInGroup;
+        }
+        if (ctrl === player) score += weight;
+        else if (ctrl === opponent) score -= weight;
     }
 
     return score;
