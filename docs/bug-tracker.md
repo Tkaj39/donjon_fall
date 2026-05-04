@@ -17,6 +17,8 @@
 |----|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|--------|------------|
 | BUG-016 | Game / Board | Cannot deselect a selected die by clicking an unreachable hex or off-map area — clicking outside valid destinations should deselect the die | P3 | open | |
 | BUG-017 | Game / CombatScreen | Combat screen cannot be dismissed by clicking outside it or pressing Esc | P3 | open | |
+| BUG-018 | game / movement | A tower (Move whole tower) can illegally occupy a single enemy die — after choosing Occupy in combat, the entire attacking tower is stacked on top of the lone defender, which should not be possible; tower-on-tower occupy is the only legal outcome when the attacker is a tower | P1 | open | |
+| BUG-019 | game / movement | A tower can illegally jump onto a friendly tower — when a die jumps off a tower, it can land on a friendly tower even though joining an existing friendly tower is never a legal destination for a jump (same rule as for a single die: you can only pass through a friendly die, not permanently land on a tower you did not form by moving) | P2 | open | |
 
 ---
 

@@ -17,6 +17,8 @@
 |----|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|------|--------|
 | BUG-016 | Game / Board | Vybranou kostku nelze odznačit kliknutím na nedosažitelný hex nebo mimo mapu — klik mimo platné cíle by měl kostku odznačit | P3 | otevřená | |
 | BUG-017 | Game / CombatScreen | Obrazovku souboje nelze zavřít kliknutím vedle ní ani stisknutím Esc | P3 | otevřená | |
+| BUG-018 | game / movement | Věž (Přesun celé věže) může nelegálně obsadit jedinou nepřátelskou kostku — po zvolení možnosti Obsadit v souboji je celá útočící věž naskládána na osamělého obránce, což není povoleno; obsazení věže na věž je jediný platný výsledek, pokud útočník je věž | P1 | otevřená | |
+| BUG-019 | game / movement | Věž může nelegálně skočit na přátelskou věž — při skoku kostky z věže může přistát na přátelské věži, přestože připojení k existující přátelské věži není platným cílem skoku (stejné pravidlo jako pro samostatnou kostku: přes přátelskou kostku lze projít, ale nelze na věž trvale přistát) | P2 | otevřená | |
 
 ---
 
