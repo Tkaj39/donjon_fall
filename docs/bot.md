@@ -101,6 +101,14 @@ Scores a position from the bot's perspective. A finished game (5 VP reached) ret
 > **Reward sparsity**: win/loss signal only arrives at the end of the game, which makes learning slow. The existing heuristic can be used as reward shaping (an auxiliary signal during the game) to accelerate convergence — paradoxically making the handcrafted heuristic useful even in the deep learning pipeline.
 >
 > **Hardware**: training requires hundreds of thousands of self-play games with MCTS, which takes days on a standard machine. Access to stronger hardware (GPU cluster) would reduce this significantly. This is a long-term research direction, not a near-term task.
+>
+> **TODO**: Improve weight calibration and branch efficiency using transposition tables and pattern-based evaluation.
+>
+> **Transposition tables**: Different sequences of moves can lead to the same game state (a transposition). Without a transposition table, MCTS evaluates the same position multiple times via different branches — wasted computation. A transposition table is a hash map keyed by a hash of the game state (e.g. Zobrist hashing — each (hex, die owner, die value) combination is assigned a random bitstring; XORing them together gives a fast, collision-resistant state hash). When MCTS reaches a position already in the table, it reuses the stored `visits` and `totalScore` instead of re-evaluating. This effectively merges branches that converge to the same state, reducing the search tree size and making the time budget go further.
+>
+> **Pattern-based evaluation**: Rather than calibrating component weights abstractly, define a library of concrete game situations — for example: "own die surrounded by three enemy dice", "two enemy dice on the same focal point", "own tower of 3 with enemy die on top". Each pattern is assigned a weight derived from sensitivity analysis or self-play data. During evaluation, the current position is matched against the pattern library and matching patterns contribute their weights to the score. This grounds the evaluation in real recurring tactical situations rather than generic heuristics, and makes it easier to reason about and extend.
+>
+> **Combining both**: A practical pipeline would be — (1) collect a database of key positions from self-play or expert games; (2) run sensitivity analysis on those positions to measure the actual influence of each component; (3) extract recurring patterns and assign weights; (4) add a transposition table to MCTS so positions identified in the database are reused rather than re-searched. The result is a more accurate evaluation function calibrated on real game situations and a more efficient search that avoids redundant computation.
 
 ## Best Move Selection
 

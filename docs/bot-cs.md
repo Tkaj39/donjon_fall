@@ -101,6 +101,14 @@ Ohodnocuje stav z perspektivy bota. Ukončená hra (dosaženo 5 bodů vítězstv
 > **Řídkost odměny**: signál výhra/prohra přichází až na konci hry, což učení zpomaluje. Existující heuristiku lze použít jako reward shaping (pomocný signál během hry) pro urychlení konvergence — paradoxně tak zůstává ručně navržená heuristika užitečná i v pipeline hlubokého učení.
 >
 > **Hardware**: trénink vyžaduje stovky tisíc self-play her s MCTS, což na běžném stroji trvá dny. Přístup k silnějšímu hardware (GPU cluster) by dobu výrazně zkrátil. Jde o dlouhodobý výzkumný směr, nikoli o blízkou úlohu.
+>
+> **TODO**: Zlepšit kalibraci vah a efektivitu prohledávání pomocí transpozičních tabulek a vyhodnocování na základě vzorů.
+>
+> **Transpoziční tabulky**: Různé sekvence tahů mohou vést ke stejnému hernímu stavu (transpozice). Bez transpoziční tabulky MCTS vyhodnocuje stejnou pozici opakovaně přes různé větve — zbytečná výpočetní zátěž. Transpoziční tabulka je hash mapa klíčovaná hashem herního stavu (např. Zobristovo hashování — každé kombinaci (hex, vlastník kostky, hodnota kostky) je přiřazen náhodný bitový řetězec; jejich XOR dává rychlý a kolizně odolný hash stavu). Pokud MCTS dosáhne pozice již uložené v tabulce, použije uložené hodnoty `visits` a `totalScore` místo opakovaného vyhodnocování. Tím se efektivně slučují větve konvergující do stejného stavu, zmenšuje se prohledávaný strom a časový budget je využit efektivněji.
+>
+> **Vyhodnocování na základě vzorů (pattern-based evaluation)**: Místo abstraktní kalibrace vah komponent se definuje knihovna konkrétních herních situací — například: „vlastní kostka obklopena třemi nepřátelskými kostkami", „dvě nepřátelské kostky na stejném ohnisku", „vlastní věž se třemi kostkami s nepřátelskou kostkou nahoře". Každému vzoru je přiřazena váha odvozená z analýzy citlivosti nebo self-play dat. Při vyhodnocování se aktuální pozice porovná s knihovnou vzorů a každý shodný vzor přispěje svou váhou do celkového skóre. Tím se evaluace zakotví v reálných opakujících se taktických situacích místo obecných heuristik a je snazší ji rozšiřovat a vysvětlovat.
+>
+> **Kombinace obou přístupů**: Praktická pipeline by vypadala takto — (1) sestavit databázi klíčových pozic ze self-play nebo expertních her; (2) provést analýzu citlivosti na těchto pozicích a změřit skutečný vliv každé komponenty; (3) extrahovat opakující se vzory a přiřadit jim váhy; (4) přidat transpoziční tabulku do MCTS, aby pozice z databáze byly znovu použity místo opakovaného prohledávání. Výsledkem je přesnější evaluační funkce kalibrovaná na reálných herních situacích a efektivnější prohledávání bez redundantních výpočtů.
 
 ## Výběr nejlepšího tahu
 
