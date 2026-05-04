@@ -85,6 +85,8 @@ Ohodnocuje stav z perspektivy bota. Ukončená hra (dosaženo 5 bodů vítězstv
 | Prohra | −1000 | Terminál |
 
 > **TODO**: Váha pasivního ohniska předpokládá rovnoměrné losování mezi pasivními ohnisky ve stejné skupině. Pokud budoucí mapy zavedou skupiny ohnisek různé velikosti nebo nerovnoměrná pravidla aktivace, může být nutné tento vzorec přehodnotit.
+>
+> **TODO**: Provést analýzu citlivosti komponent pro lepší kalibraci vah. Princip: porovnat ohodnocení mezi dvojicemi pozic lišícími se v právě jedné vlastnosti (např. hodnota kostky změněna o 1) a změřit, o kolik každá komponenta posune celkové skóre. Komponenty s nepřiměřeně velkým nebo malým vlivem jsou kandidáty na přehodnocení vah nebo odebrání. Analýza může také odhalit problémy s vyvážením hry — pokud jedna komponenta konzistentně dominuje, může to znamenat, že odpovídající akce nebo mechanika je příliš silná oproti ostatním. Poznámka: analýza citlivosti zpřesňuje existující heuristiku, ale sama o sobě nemůže konvergovat ke skutečné herní hodnotě (to by vyžadovalo self-play s učením na základě výsledků her).
 
 ## Výběr nejlepšího tahu
 

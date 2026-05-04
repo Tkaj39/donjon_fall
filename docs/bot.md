@@ -85,6 +85,8 @@ Scores a position from the bot's perspective. A finished game (5 VP reached) ret
 | Loss | −1000 | Terminal |
 
 > **TODO**: The passive focal point weight assumes a uniform draw among passive focal points in the same group. When future maps introduce focal point groups of different sizes or non-uniform activation rules, this formula may need revisiting.
+>
+> **TODO**: Run a component sensitivity analysis to better calibrate the weights. The idea: compare evaluation scores between pairs of positions that differ in exactly one property (e.g. one die value changed by 1) and measure how much each component shifts the total score. Components with disproportionately large or small influence are candidates for reweighting or removal. This can also reveal game balance issues — if one component consistently dominates, it may indicate that the corresponding action or mechanic is too strong relative to others. Note that sensitivity analysis refines the existing heuristic; it cannot by itself converge to true game value (that would require self-play with outcome-based learning).
 
 ## Best Move Selection
 
