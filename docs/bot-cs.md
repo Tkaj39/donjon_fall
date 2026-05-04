@@ -111,6 +111,16 @@ Ohodnocuje stav z perspektivy bota. Ukončená hra (dosaženo 5 bodů vítězstv
 > **Vyhodnocování na základě vzorů (pattern-based evaluation)**: Místo abstraktní kalibrace vah komponent se definuje knihovna konkrétních herních situací — například: „vlastní kostka obklopena třemi nepřátelskými kostkami", „dvě nepřátelské kostky na stejném ohnisku", „vlastní věž se třemi kostkami s nepřátelskou kostkou nahoře". Každému vzoru je přiřazena váha odvozená z analýzy citlivosti nebo self-play dat. Při vyhodnocování se aktuální pozice porovná s knihovnou vzorů a každý shodný vzor přispěje svou váhou do celkového skóre. Tím se evaluace zakotví v reálných opakujících se taktických situacích místo obecných heuristik a je snazší ji rozšiřovat a vysvětlovat.
 >
 > **Kombinace obou přístupů**: Praktická pipeline by vypadala takto — (1) sestavit databázi klíčových pozic ze self-play nebo expertních her; (2) provést analýzu citlivosti na těchto pozicích a změřit skutečný vliv každé komponenty; (3) extrahovat opakující se vzory a přiřadit jim váhy; (4) přidat transpoziční tabulku do MCTS, aby pozice z databáze byly znovu použity místo opakovaného prohledávání. Výsledkem je přesnější evaluační funkce kalibrovaná na reálných herních situacích a efektivnější prohledávání bez redundantních výpočtů.
+>
+> **TODO**: Dlouhodobý cíl — zrychlit horkou smyčku MCTS kompilací výkonnostně kritického kódu do **WebAssembly (WASM)**. Přehled:
+>
+> **Proč**: JavaScript je úzkým hrdlem pro výpočetně intenzivní smyčky. Rollout simulace (`simulate`) a generování tahů (`getReachableHexes`, `gameReducer`, `getAttackStrength`) se volají tisíckrát za sekundu uvnitř prohledávací smyčky. Přepsání těchto částí do kompilovaného jazyka a jejich spuštění jako WASM typicky přináší **3–10× vyšší propustnost** oproti čistému JS — do stejného časového rozpočtu se vejde více iterací MCTS a bot hraje silnější tahy.
+>
+> **C vs Rust**: Oba jazyky se kompilují do WASM. Doporučenou volbou je dnes **Rust** — `wasm-pack` poskytuje vynikající tooling pro sestavení a propojení Rust → WASM modulů pro použití v JS/prohlížečovém prostředí, paměťový model je bezpečný by default (žádné undefined behaviour, žádná manuální správa paměti) a výkon je srovnatelný s C. C/C++ je realizovatelné přes Emscripten, ale vyžaduje více manuální práce a nese vyšší riziko paměťových chyb.
+>
+> **Co kompilovat**: Do WASM je potřeba přesunout pouze horkou smyčku bota — UI, React komponenty a zobrazení herního stavu mohou zůstat celé v JS. Hranice by vypadala takto: JS zavolá jedinou WASM funkci `getBotMove(stateJson)`, která spustí celý MCTS nativní rychlostí a vrátí zvolenou akci jako JSON. Vše ostatní zůstane beze změny.
+>
+> **Praktická překážka**: Herní logika (`gameReducer`, validátory tahů, řešení boje) je momentálně sdílena mezi UI a botem, vše napsáno v JS. Přesun horké smyčky bota do WASM znamená buď (a) zduplikovat herní logiku v Rustu/C a udržovat dvě implementace synchronizované, nebo (b) refaktorovat tak, aby WASM modul vlastnil autoritativní herní logiku a JS UI do něj volalo. Varianta (b) je architektonicky čistší, ale jde o zásadní přepis. Tuto cestu je vhodné zvolit až poté, co budou pravidla a logika hry plně stabilní.
 
 ## Výběr nejlepšího tahu
 

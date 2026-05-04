@@ -111,6 +111,16 @@ Scores a position from the bot's perspective. A finished game (5 VP reached) ret
 > **Pattern-based evaluation**: Rather than calibrating component weights abstractly, define a library of concrete game situations — for example: "own die surrounded by three enemy dice", "two enemy dice on the same focal point", "own tower of 3 with enemy die on top". Each pattern is assigned a weight derived from sensitivity analysis or self-play data. During evaluation, the current position is matched against the pattern library and matching patterns contribute their weights to the score. This grounds the evaluation in real recurring tactical situations rather than generic heuristics, and makes it easier to reason about and extend.
 >
 > **Combining both**: A practical pipeline would be — (1) collect a database of key positions from self-play or expert games; (2) run sensitivity analysis on those positions to measure the actual influence of each component; (3) extract recurring patterns and assign weights; (4) add a transposition table to MCTS so positions identified in the database are reused rather than re-searched. The result is a more accurate evaluation function calibrated on real game situations and a more efficient search that avoids redundant computation.
+>
+> **TODO**: Long-term — accelerate the MCTS hot path by compiling performance-critical code to **WebAssembly (WASM)**. Overview:
+>
+> **Why**: JavaScript is the bottleneck for compute-intensive loops. The MCTS rollout (`simulate`) and move generation (`getReachableHexes`, `gameReducer`, `getAttackStrength`) are called thousands of times per second inside the search loop. Rewriting these in a compiled language and running them as WASM typically yields **3–10× throughput improvement** over pure JS, meaning more MCTS iterations fit within the same time budget and the bot plays stronger moves.
+>
+> **C vs Rust**: Both compile to WASM. **Rust** is the recommended choice today — `wasm-pack` provides excellent tooling for building and binding Rust → WASM modules for use in JS/browser environments, the memory model is safe by default (no undefined behaviour, no manual memory management), and performance is on par with C. C/C++ is viable via Emscripten but requires more manual effort and carries higher risk of memory bugs.
+>
+> **What to compile**: Only the bot's inner loop needs to move to WASM — the UI, React components, and game state display can stay in JS entirely. The boundary would be: JS calls a single `getBotMove(stateJson)` WASM function, which runs the full MCTS in native speed and returns the chosen action as JSON. Everything else remains unchanged.
+>
+> **Practical obstacle**: The game logic (`gameReducer`, move validators, combat resolution) is currently shared between the UI and the bot, all written in JS. Moving the bot's hot path to WASM means either (a) duplicating the game logic in Rust/C and maintaining two implementations in sync, or (b) refactoring so the WASM module owns the authoritative game logic and the JS UI calls into it. Option (b) is architecturally cleaner but is a significant rewrite. This should only be pursued once the game rules and logic are fully stable.
 
 ## Best Move Selection
 
