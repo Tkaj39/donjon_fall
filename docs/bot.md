@@ -87,6 +87,20 @@ Scores a position from the bot's perspective. A finished game (5 VP reached) ret
 > **TODO**: The passive focal point weight assumes a uniform draw among passive focal points in the same group. When future maps introduce focal point groups of different sizes or non-uniform activation rules, this formula may need revisiting.
 >
 > **TODO**: Run a component sensitivity analysis to better calibrate the weights. The idea: compare evaluation scores between pairs of positions that differ in exactly one property (e.g. one die value changed by 1) and measure how much each component shifts the total score. Components with disproportionately large or small influence are candidates for reweighting or removal. This can also reveal game balance issues — if one component consistently dominates, it may indicate that the corresponding action or mechanic is too strong relative to others. Note that sensitivity analysis refines the existing heuristic; it cannot by itself converge to true game value (that would require self-play with outcome-based learning).
+>
+> **TODO**: Long-term — replace the handcrafted evaluation function with a neural network trained via AlphaZero-style self-play. Overview of the approach:
+>
+> - Replace `evaluateState` with a neural network (input = game state tensor, output = position score). MCTS stays intact but calls the network instead of the heuristic.
+> - The bot plays against itself repeatedly. Each game's outcome (win/loss) is back-propagated to train the network. No handcrafted heuristic is needed as a starting point — training begins from random weights.
+> - The process is iterative: a stronger bot generates higher-quality training data, which produces an even stronger bot.
+>
+> **Technology stack**: PyTorch or TensorFlow for the network. The game logic would need to be available in Python — either rewritten or called via JSON state export (slower). Recommended: rewrite the core game logic in Python for training, keeping the JS version for the UI.
+>
+> **Input encoding**: the hexagonal grid needs to be encoded as a tensor. Options: (a) axial coordinates mapped to a 2D array with padding for missing cells; (b) specialised hex convolutions. AlphaZero uses convolutional layers on a square grid — hex grids require adaptation.
+>
+> **Reward sparsity**: win/loss signal only arrives at the end of the game, which makes learning slow. The existing heuristic can be used as reward shaping (an auxiliary signal during the game) to accelerate convergence — paradoxically making the handcrafted heuristic useful even in the deep learning pipeline.
+>
+> **Hardware**: training requires hundreds of thousands of self-play games with MCTS, which takes days on a standard machine. Access to stronger hardware (GPU cluster) would reduce this significantly. This is a long-term research direction, not a near-term task.
 
 ## Best Move Selection
 

@@ -87,6 +87,20 @@ Ohodnocuje stav z perspektivy bota. Ukončená hra (dosaženo 5 bodů vítězstv
 > **TODO**: Váha pasivního ohniska předpokládá rovnoměrné losování mezi pasivními ohnisky ve stejné skupině. Pokud budoucí mapy zavedou skupiny ohnisek různé velikosti nebo nerovnoměrná pravidla aktivace, může být nutné tento vzorec přehodnotit.
 >
 > **TODO**: Provést analýzu citlivosti komponent pro lepší kalibraci vah. Princip: porovnat ohodnocení mezi dvojicemi pozic lišícími se v právě jedné vlastnosti (např. hodnota kostky změněna o 1) a změřit, o kolik každá komponenta posune celkové skóre. Komponenty s nepřiměřeně velkým nebo malým vlivem jsou kandidáty na přehodnocení vah nebo odebrání. Analýza může také odhalit problémy s vyvážením hry — pokud jedna komponenta konzistentně dominuje, může to znamenat, že odpovídající akce nebo mechanika je příliš silná oproti ostatním. Poznámka: analýza citlivosti zpřesňuje existující heuristiku, ale sama o sobě nemůže konvergovat ke skutečné herní hodnotě (to by vyžadovalo self-play s učením na základě výsledků her).
+>
+> **TODO**: Dlouhodobý cíl — nahradit ručně navrženou evaluační funkci neuronovou sítí trénovanou metodou self-play ve stylu AlphaZero. Přehled přístupu:
+>
+> - `evaluateState` se nahradí neuronovou sítí (vstup = tenzor herního stavu, výstup = skóre pozice). MCTS zůstane beze změny, ale místo heuristiky volá síť.
+> - Bot hraje sám proti sobě opakovaně. Výsledek každé hry (výhra/prohra) se zpětně propaguje a trénuje síť. Jako výchozí bod nejsou potřeba žádné ručně navržené váhy — trénink začíná od náhodných vah.
+> - Proces je iterativní: silnější bot generuje kvalitnější trénovací data, která vyprodukují ještě silnějšího bota.
+>
+> **Technologie**: PyTorch nebo TensorFlow pro síť. Herní logika musí být dostupná v Pythonu — buď přepsána, nebo volána přes export stavu do JSONu (pomalejší). Doporučení: přepsat jádro herní logiky do Pythonu pro účely trénování, JS verzi zachovat pro UI.
+>
+> **Kódování vstupu**: hexagonální mřížka se musí zakódovat jako tenzor. Možnosti: (a) axiální souřadnice mapované na 2D pole s paddingem pro chybějící buňky; (b) specializované hex konvoluce. AlphaZero používá konvoluční vrstvy na čtvercové mřížce — pro hex mřížky je nutná adaptace.
+>
+> **Řídkost odměny**: signál výhra/prohra přichází až na konci hry, což učení zpomaluje. Existující heuristiku lze použít jako reward shaping (pomocný signál během hry) pro urychlení konvergence — paradoxně tak zůstává ručně navržená heuristika užitečná i v pipeline hlubokého učení.
+>
+> **Hardware**: trénink vyžaduje stovky tisíc self-play her s MCTS, což na běžném stroji trvá dny. Přístup k silnějšímu hardware (GPU cluster) by dobu výrazně zkrátil. Jde o dlouhodobý výzkumný směr, nikoli o blízkou úlohu.
 
 ## Výběr nejlepšího tahu
 
