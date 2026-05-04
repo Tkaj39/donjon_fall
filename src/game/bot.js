@@ -19,6 +19,9 @@ import {
 } from "./movement.js";
 import { getAvailableCombatOptions } from "./combat.js";
 import { getController, getAttackStrength } from "./gameState.js";
+import { hexFromKey, getNeighbors, hexesDistance } from "../hex/hexUtils.js";
+import { isOnBoard } from "../hex/boardUtils.js";
+import { BOARD_HEX_SET } from "../hex/boardConstants.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -167,6 +170,7 @@ function evaluateState(state, player) {
     // Active focal point: full weight. Passive: weight / passive count in same group,
     // reflecting the uniform probability that it becomes the next active one.
     const allFocalEntries = Object.entries(state.focalPoints);
+    const focalHexKeys = new Set(allFocalEntries.map(([k]) => k));
     for (const [hexKey, fp] of allFocalEntries) {
         const ctrl = getController(state, hexKey);
         if (!ctrl) continue;
@@ -182,6 +186,83 @@ function evaluateState(state, player) {
         if (ctrl === player) score += weight;
         else if (ctrl === opponent) score -= weight;
     }
+
+    // Die count: each surviving die is worth 0.3 — losing a die permanently reduces
+    // mobility and combat power for the rest of the game.
+    // Tower collapse threat: if a tower has 3+ dice and the top die belongs to the
+    // opponent, the opponent can collapse it next turn and score 1 VP per buried
+    // friendly die. Penalise 1.5 per collapsible position (on top of the buried-die
+    // penalty already applied above).
+    let myDieCount = 0, theirDieCount = 0;
+    for (const [hexKey, stack] of Object.entries(state.dice)) {
+        if (stack.length === 0) continue;
+        for (const die of stack) {
+            if (die.owner === player) myDieCount++;
+            else theirDieCount++;
+        }
+        if (stack.length >= 3) {
+            const ctrl = getController(state, hexKey);
+            if (ctrl === opponent) score -= 1.5;
+            else if (ctrl === player) score += 1.5;
+        }
+    }
+    score += (myDieCount - theirDieCount) * 0.3;
+
+    // Mobility: sum of face values of own top dice (standalone or tower top).
+    // Higher face value = more reachable hexes per turn.
+    // Focal-point proximity: for each own top die, reward closeness to the nearest
+    // active focal point not already controlled by the player (BFS distance via
+    // hexesDistance — no board-path cost, intentionally approximate).
+    const activeFocals = allFocalEntries
+        .filter(([, fp]) => fp.isActive)
+        .map(([k]) => k);
+    let myMobility = 0, theirMobility = 0;
+    for (const [hexKey, stack] of Object.entries(state.dice)) {
+        if (stack.length === 0) continue;
+        const ctrl = getController(state, hexKey);
+        const top = stack[stack.length - 1];
+        if (ctrl === player) {
+            myMobility += top.value;
+            if (activeFocals.length > 0) {
+                const hex = hexFromKey(hexKey);
+                const minDist = Math.min(
+                    ...activeFocals
+                        .filter(fk => getController(state, fk) !== player)
+                        .map(fk => hexesDistance(hex, hexFromKey(fk)))
+                );
+                if (isFinite(minDist) && minDist > 0) score += 1 / minDist;
+            }
+        } else if (ctrl === opponent) {
+            theirMobility += top.value;
+            if (activeFocals.length > 0) {
+                const hex = hexFromKey(hexKey);
+                const minDist = Math.min(
+                    ...activeFocals
+                        .filter(fk => getController(state, fk) !== opponent)
+                        .map(fk => hexesDistance(hex, hexFromKey(fk)))
+                );
+                if (isFinite(minDist) && minDist > 0) score -= 1 / minDist;
+            }
+        }
+    }
+    score += (myMobility - theirMobility) * 0.1;
+
+    // Edge proximity: count valid board neighbors for each own top die.
+    // Fewer valid neighbors = closer to edge/hole = more vulnerable to being pushed off.
+    // Max 6 neighbors; reward the difference in average neighbor count.
+    let myEdgeSum = 0, myEdgeCount = 0, theirEdgeSum = 0, theirEdgeCount = 0;
+    for (const [hexKey, stack] of Object.entries(state.dice)) {
+        if (stack.length === 0) continue;
+        const ctrl = getController(state, hexKey);
+        if (ctrl !== player && ctrl !== opponent) continue;
+        const validNeighbors = getNeighbors(hexFromKey(hexKey))
+            .filter(n => isOnBoard(n)).length;
+        if (ctrl === player) { myEdgeSum += validNeighbors; myEdgeCount++; }
+        else { theirEdgeSum += validNeighbors; theirEdgeCount++; }
+    }
+    const myEdgeAvg = myEdgeCount > 0 ? myEdgeSum / myEdgeCount : 0;
+    const theirEdgeAvg = theirEdgeCount > 0 ? theirEdgeSum / theirEdgeCount : 0;
+    score += (myEdgeAvg - theirEdgeAvg) * 0.2;
 
     return score;
 }

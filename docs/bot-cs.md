@@ -74,6 +74,13 @@ Ohodnocuje stav z perspektivy bota. Ukončená hra (dosaženo 5 bodů vítězstv
 | Nepřátelská kostka na aktivním ohnisku | −3 za každou | Soupeř bude skórovat, pokud jej nevytlačíme |
 | Vlastní kostka na pasivním ohnisku | +3 ÷ počet pasivních v skupině | Rovnoměrná pravděpodobnost, že se stane dalším aktivním ohniskem |
 | Nepřátelská kostka na pasivním ohnisku | −3 ÷ počet pasivních v skupině | Stejná logika z pohledu soupeře |
+| Rozdíl v počtu kostek (vlastní − soupeř) | ×0.3 | Ztráta kostky je permanentní a snižuje mobilitu i útočnou sílu po zbytek hry |
+| Zřítitelná věž pod vlastní kontrolou (3+ kostky, vlastní kostka nahoře) | +1.5 za každou | Lze zřítit příští tah a okamžitě skórovat |
+| Zřítitelná věž pod nepřátelskou kontrolou (3+ kostky, nepřátelská kostka nahoře) | −1.5 za každou | Soupeř může zřítit příští tah; kumuluje se s penalizací pohřbených kostek výše |
+| Rozdíl mobility — součet hodnot vlastních top kostek minus soupeřových | ×0.1 | Vyšší hodnota kostky = více dosažitelných hexů za tah |
+| Blízkost k nejbližšímu neobsazenému aktivnímu ohnisku (vlastní top kostky) | +1 ÷ vzdálenost | Přibližné (kubická vzdálenost, ne délka cesty); odměňuje postup k bodovacím příležitostem |
+| Blízkost k nejbližšímu neobsazenému aktivnímu ohnisku (nepřátelské top kostky) | −1 ÷ vzdálenost | Penalizuje soupeře ohrožujícího neobsazené ohnisko |
+| Blízkost okraje/díry — průměrný počet platných sousedů (rozdíl) | ×0.2 | Méně platných sousedů = blíže k okraji nebo díře = vyšší riziko vystrčení z mapy; nezávislé na tvaru mapy |
 | Výhra (5+ bodů vítězství) | +1000 | Terminál |
 | Prohra | −1000 | Terminál |
 

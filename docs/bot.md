@@ -74,6 +74,13 @@ Scores a position from the bot's perspective. A finished game (5 VP reached) ret
 | Enemy die on an active focal point | −3 each | Opponent will score unless displaced |
 | Own die on a passive focal point | +3 ÷ passive count in group | Uniform probability it becomes the next active focal point |
 | Enemy die on a passive focal point | −3 ÷ passive count in group | Same reasoning, from opponent's side |
+| Die count lead (own − opponent) | ×0.3 | Losing a die is permanent and reduces mobility and combat power for the rest of the game |
+| Collapsible tower controlled by own player (3+ dice, own die on top) | +1.5 each | Can be collapsed next turn for an immediate scoring opportunity |
+| Collapsible tower controlled by opponent (3+ dice, enemy die on top) | −1.5 each | Opponent can collapse it next turn; stacks with the buried-die penalty above |
+| Mobility lead — sum of own top-die face values minus opponent's | ×0.1 | Higher face value = more reachable hexes per turn |
+| Proximity to nearest uncontrolled active focal point (own top dice) | +1 ÷ distance | Approximate (cube-coordinate distance, not path distance); rewards advancing toward scoring opportunities |
+| Proximity to nearest uncontrolled active focal point (enemy top dice) | −1 ÷ distance | Penalises opponent threatening an uncontrolled focal point |
+| Edge/hole proximity — average valid-neighbor count lead | ×0.2 | Fewer valid board neighbours = closer to an edge or hole = more vulnerable to being pushed off; map-shape agnostic |
 | Win (5+ VP) | +1000 | Terminal |
 | Loss | −1000 | Terminal |
 
